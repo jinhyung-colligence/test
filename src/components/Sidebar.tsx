@@ -1,0 +1,212 @@
+'use client'
+
+import { 
+  HomeIcon, 
+  ClockIcon, 
+  UsersIcon, 
+  CogIcon, 
+  ShieldCheckIcon,
+  BuildingOfficeIcon,
+  UserIcon,
+  GiftIcon,
+  ChevronDownIcon
+} from '@heroicons/react/24/outline'
+import { useState, useEffect } from 'react'
+import { ServicePlan } from '@/app/page'
+import { DashboardTab } from './Dashboard'
+import { useLanguage } from '@/contexts/LanguageContext'
+
+interface SidebarProps {
+  plan: ServicePlan
+  activeTab: DashboardTab
+  onTabChange: (tab: DashboardTab) => void
+  onPlanChange: (plan: ServicePlan) => void
+}
+
+export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: SidebarProps) {
+  const { t } = useLanguage()
+  const [showPlanDropdown, setShowPlanDropdown] = useState(false)
+  
+  const getPlanInfo = () => {
+    switch (plan) {
+      case 'enterprise':
+        return {
+          name: t('plan.enterprise.name'),
+          icon: BuildingOfficeIcon,
+          color: 'text-primary-600 bg-primary-50'
+        }
+      case 'premium':
+        return {
+          name: t('plan.premium.name'),
+          icon: UserIcon,
+          color: 'text-purple-600 bg-purple-50'
+        }
+      case 'free':
+        return {
+          name: t('plan.free.name'),
+          icon: GiftIcon,
+          color: 'text-green-600 bg-green-50'
+        }
+      default:
+        return {
+          name: t('plan.default.name'),
+          icon: ShieldCheckIcon,
+          color: 'text-gray-600 bg-gray-50'
+        }
+    }
+  }
+
+  const planInfo = getPlanInfo()
+  const PlanIcon = planInfo.icon
+
+  const allPlans = [
+    {
+      id: 'enterprise' as const,
+      name: t('plan.enterprise.name'),
+      icon: BuildingOfficeIcon,
+      color: 'text-primary-600 bg-primary-50'
+    },
+    {
+      id: 'premium' as const,
+      name: t('plan.premium.name'),
+      icon: UserIcon,
+      color: 'text-purple-600 bg-purple-50'
+    },
+    {
+      id: 'free' as const,
+      name: t('plan.free.name'),
+      icon: GiftIcon,
+      color: 'text-green-600 bg-green-50'
+    }
+  ]
+
+  const handlePlanSelect = (planId: ServicePlan) => {
+    onPlanChange(planId)
+    setShowPlanDropdown(false)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.plan-dropdown-container')) {
+        setShowPlanDropdown(false)
+      }
+    }
+
+    if (showPlanDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPlanDropdown])
+
+  const menuItems = [
+    {
+      id: 'overview' as DashboardTab,
+      name: t('menu.overview'),
+      icon: HomeIcon,
+      available: true
+    },
+    {
+      id: 'transactions' as DashboardTab,
+      name: t('menu.transactions'),
+      icon: ClockIcon,
+      available: true
+    },
+    {
+      id: 'users' as DashboardTab,
+      name: t('menu.users'),
+      icon: UsersIcon,
+      available: plan === 'enterprise' || plan === 'premium'
+    },
+    {
+      id: 'services' as DashboardTab,
+      name: t('menu.services'),
+      icon: CogIcon,
+      available: true
+    },
+    {
+      id: 'security' as DashboardTab,
+      name: t('menu.security'),
+      icon: ShieldCheckIcon,
+      available: true
+    }
+  ]
+
+  return (
+    <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col">
+      <div className="p-6 relative plan-dropdown-container">
+        <button
+          onClick={() => setShowPlanDropdown(!showPlanDropdown)}
+          className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
+        >
+          <div className="flex items-center">
+            <PlanIcon className="h-8 w-8 mr-3" />
+            <div>
+              <p className="font-semibold text-sm">{planInfo.name}</p>
+              <p className="text-xs opacity-75">{t('plan.active')}</p>
+            </div>
+          </div>
+          <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Plan Dropdown */}
+        {showPlanDropdown && (
+          <div className="absolute top-full left-6 right-6 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            {allPlans.map((planOption) => {
+              const OptionIcon = planOption.icon
+              return (
+                <button
+                  key={planOption.id}
+                  onClick={() => handlePlanSelect(planOption.id)}
+                  className={`w-full flex items-center p-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                    plan === planOption.id ? 'bg-gray-50' : ''
+                  }`}
+                >
+                  <OptionIcon className="h-6 w-6 mr-3 text-gray-600" />
+                  <div className="text-left">
+                    <p className="font-medium text-sm text-gray-900">{planOption.name}</p>
+                    {plan === planOption.id && (
+                      <p className="text-xs text-primary-600">{t('plan.active')}</p>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <nav className="px-4 flex-1 flex flex-col">
+        <ul className="space-y-1">
+          {menuItems.map((item) => {
+            if (!item.available) return null
+            
+            const Icon = item.icon
+            const isActive = activeTab === item.id
+            
+            return (
+              <li key={item.id}>
+                <button
+                  onClick={() => onTabChange(item.id)}
+                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 mr-3 ${isActive ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        
+        <div className="mt-auto pt-4 px-4 py-3 text-xs text-gray-500 border-t border-gray-200">
+          <p>{t('footer.mpc_security')}</p>
+          <p className="text-green-600 font-medium">{t('footer.connected')}</p>
+        </div>
+      </nav>
+    </div>
+  )
+}
