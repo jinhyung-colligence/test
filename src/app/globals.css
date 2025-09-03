@@ -5,11 +5,11 @@
 @layer base {
   html {
     font-family: system-ui, sans-serif;
-    overflow: hidden;
   }
   
   body {
-    overflow: hidden;
+    margin: 0;
+    padding: 0;
   }
 }
 

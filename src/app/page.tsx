@@ -15,7 +15,7 @@ export default function HomePage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         
-        <main>
+        <main className="pt-20">
           <Dashboard plan={selectedPlan} onPlanChange={setSelectedPlan} />
         </main>
       </div>

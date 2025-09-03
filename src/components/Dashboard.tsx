@@ -43,7 +43,7 @@ export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar 
         plan={plan} 
         activeTab={activeTab} 
@@ -51,8 +51,8 @@ export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
         onPlanChange={onPlanChange}
       />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 p-8">
           {renderContent()}
         </div>
       </div>
