@@ -31,7 +31,7 @@ const translations = {
     'plan.active': '활성 플랜',
     
     // Menu Items
-    'menu.overview': '자산 현황',
+    'menu.overview': '대시보드',
     'menu.transactions': '거래 내역',
     'menu.users': '사용자 관리',
     'menu.services': '부가 서비스',
@@ -42,8 +42,8 @@ const translations = {
     'footer.connected': '● 연결됨',
     
     // Asset Overview
-    'overview.title': '자산 현황',
-    'overview.subtitle': '전체 자산 및 포트폴리오 상태를 확인하세요',
+    'overview.title': '대시보드',
+    'overview.subtitle': '디지털 자산 현황과 포트폴리오를 한눈에 확인하세요',
     'overview.hide_balance': '잔액 숨김',
     'overview.show_balance': '잔액 표시',
     'overview.total_asset_value': '총 자산 가치',
@@ -208,7 +208,7 @@ const translations = {
     'plan.active': 'Active Plan',
     
     // Menu Items
-    'menu.overview': 'Asset Overview',
+    'menu.overview': 'Dashboard',
     'menu.transactions': 'Transaction History',
     'menu.users': 'User Management',
     'menu.services': 'Additional Services',
@@ -219,8 +219,8 @@ const translations = {
     'footer.connected': '● Connected',
     
     // Asset Overview
-    'overview.title': 'Asset Overview',
-    'overview.subtitle': 'Check your total assets and portfolio status',
+    'overview.title': 'Dashboard',
+    'overview.subtitle': 'Monitor your digital assets and portfolio at a glance',
     'overview.hide_balance': 'Hide Balance',
     'overview.show_balance': 'Show Balance',
     'overview.total_asset_value': 'Total Asset Value',
