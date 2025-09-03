@@ -20,12 +20,15 @@ export default function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <LanguageToggle />
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">관리자</p>
               <p className="text-xs text-gray-600">{t('header.admin')}</p>
             </div>
-            <UserCircleIcon className="h-8 w-8 text-gray-400" />
+            <div className="flex items-center space-x-3">
+              <LanguageToggle />
+              <div className="w-px h-6 bg-gray-300"></div>
+              <UserCircleIcon className="h-8 w-8 text-gray-400" />
+            </div>
           </div>
         </div>
       </div>
