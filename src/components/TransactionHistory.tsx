@@ -232,12 +232,9 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
               {filteredTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getTransactionIcon(tx.type)}
-                      <span className="ml-2 font-medium text-gray-900">
-                        {getTransactionTypeName(tx.type)}
-                      </span>
-                    </div>
+                    <span className="font-medium text-gray-900">
+                      {getTransactionTypeName(tx.type)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">
                     {tx.asset}
