@@ -24,32 +24,32 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
 
   const securityStatus = [
     {
+      name: '100% 콜드 월렛',
+      status: 'active',
+      description: '인터넷 완전 분리 - 오프라인 전용 지갑',
+      icon: ShieldCheckIcon,
+      color: 'green'
+    },
+    {
       name: 'MPC 키 관리',
       status: 'active',
-      description: plan === 'enterprise' || plan === 'premium' ? 'Blockdaemon MPC 활성' : '자체 MPC 활성',
+      description: plan === 'enterprise' ? '분산 키 관리 - 3/5 임계값 서명' : '표준 MPC 보안',
       icon: KeyIcon,
       color: 'green'
     },
     {
-      name: '2단계 인증 (2FA)',
-      status: twoFactorEnabled ? 'active' : 'inactive',
-      description: twoFactorEnabled ? 'Google Authenticator 연결됨' : '비활성화',
-      icon: DevicePhoneMobileIcon,
-      color: twoFactorEnabled ? 'green' : 'red'
-    },
-    {
       name: 'IP 화이트리스트',
       status: ipWhitelistEnabled ? 'active' : 'inactive',
-      description: ipWhitelistEnabled ? '허용된 IP에서만 접근 가능' : '모든 IP에서 접근 가능',
+      description: ipWhitelistEnabled ? '승인된 IP만 접근 허용 - 계정 탈취 방지' : '모든 IP에서 접근 가능',
       icon: GlobeAltIcon,
       color: ipWhitelistEnabled ? 'green' : 'yellow'
     },
     {
-      name: '세션 관리',
-      status: 'active',
-      description: `${sessionTimeout}분 후 자동 로그아웃`,
-      icon: ClockIcon,
-      color: 'green'
+      name: '2단계 인증 (2FA)',
+      status: twoFactorEnabled ? 'active' : 'inactive',
+      description: twoFactorEnabled ? 'TOTP 기반 다중 인증 활성' : '비활성화',
+      icon: DevicePhoneMobileIcon,
+      color: twoFactorEnabled ? 'green' : 'red'
     }
   ]
 
@@ -74,7 +74,55 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">보안 설정</h1>
-        <p className="text-gray-600 mt-1">계정 보안 및 접근 제어 설정을 관리하세요</p>
+        <p className="text-gray-600 mt-1">최고 수준의 보안으로 디지털 자산을 보호합니다</p>
+        
+        {/* 핵심 보안 기능 강조 */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center mb-3">
+              <div className="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center mr-3">
+                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.586-3L12 6.414 7.414 11M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">100% 콜드 월렛</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              인터넷과 완전히 분리된 전용 오프라인 지갑으로 자산을 안전하게 보관합니다.
+            </p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center mb-3">
+              <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center mr-3">
+                <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.029 5.912c-.563-.097-1.159-.026-1.792.127L10.5 16.5l-3.5-3.5 1.461-2.679c.153-.633.224-1.229.127-1.792A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <div className="h-3 w-3 bg-blue-500 rounded-full"></div>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">MPC 키 관리</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              비밀 키를 여러 조각으로 분산시켜 내부자 키 유출 및 외부 해킹 위험을 철저히 방지합니다.
+            </p>
+          </div>
+          
+          <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center mb-3">
+              <div className="h-12 w-12 bg-purple-50 rounded-lg flex items-center justify-center mr-3">
+                <svg className="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div className="h-3 w-3 bg-purple-500 rounded-full"></div>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">IP 화이트리스트</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              IP 화이트리스트 기능으로 승인된 IP에서만 접근을 허용하여 계정 탈취 위험을 방지합니다.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">

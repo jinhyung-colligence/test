@@ -8,13 +8,15 @@ import TransactionHistory from './TransactionHistory'
 import UserManagement from './UserManagement'
 import AdditionalServices from './AdditionalServices'
 import SecuritySettings from './SecuritySettings'
+import GroupWalletManagement from './GroupWalletManagement'
+import WithdrawalManagement from './WithdrawalManagement'
 
 interface DashboardProps {
   plan: ServicePlan
   onPlanChange: (plan: ServicePlan) => void
 }
 
-export type DashboardTab = 'overview' | 'transactions' | 'users' | 'services' | 'security'
+export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'withdrawal' | 'services' | 'security'
 
 export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
@@ -27,6 +29,10 @@ export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
         return <TransactionHistory plan={plan} />
       case 'users':
         return <UserManagement plan={plan} />
+      case 'groups':
+        return <GroupWalletManagement plan={plan} />
+      case 'withdrawal':
+        return <WithdrawalManagement plan={plan} />
       case 'services':
         return <AdditionalServices plan={plan} />
       case 'security':

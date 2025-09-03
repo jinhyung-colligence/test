@@ -9,7 +9,9 @@ import {
   BuildingOfficeIcon,
   UserIcon,
   GiftIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  UserGroupIcon,
+  ArrowUpOnSquareIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import { ServicePlan } from '@/app/page'
@@ -117,6 +119,18 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       name: t('menu.users'),
       icon: UsersIcon,
       available: plan === 'enterprise' || plan === 'premium'
+    },
+    {
+      id: 'groups' as DashboardTab,
+      name: '그룹 지갑',
+      icon: UserGroupIcon,
+      available: plan === 'enterprise'
+    },
+    {
+      id: 'withdrawal' as DashboardTab,
+      name: '출금 관리',
+      icon: ArrowUpOnSquareIcon,
+      available: plan === 'enterprise'
     },
     {
       id: 'services' as DashboardTab,

@@ -64,7 +64,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('overview.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('overview.subtitle')}</p>
+          <p className="text-gray-600 mt-1">최고 수준의 보안으로 지키는 디지털 자산</p>
         </div>
         <button
           onClick={() => setShowBalances(!showBalances)}
