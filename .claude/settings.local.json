@@ -9,7 +9,9 @@
       "Bash(git push:*)",
       "Bash(npm run build:*)",
       "Bash(git checkout:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

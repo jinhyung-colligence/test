@@ -1,0 +1,29 @@
+'use client'
+
+import Header from '@/components/Header'
+import Sidebar from '@/components/Sidebar'
+import WithdrawalManagement from '@/components/WithdrawalManagement'
+import { useServicePlan } from '@/contexts/ServicePlanContext'
+
+export default function WithdrawalPage() {
+  const { selectedPlan, setSelectedPlan } = useServicePlan()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="flex pt-20">
+        <Sidebar 
+          plan={selectedPlan} 
+          activeTab="withdrawal" 
+          onTabChange={() => {}}
+          onPlanChange={setSelectedPlan}
+        />
+        
+        <div className="flex-1 p-8">
+          <WithdrawalManagement plan={selectedPlan} />
+        </div>
+      </div>
+    </div>
+  )
+}

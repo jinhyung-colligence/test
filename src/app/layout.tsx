@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { LanguageProvider } from '@/contexts/LanguageContext'
+import { ServicePlanProvider } from '@/contexts/ServicePlanContext'
 
 export const metadata: Metadata = {
   title: 'Custody Dashboard - 커스터디 서비스',
@@ -13,7 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>
+          <ServicePlanProvider>
+            {children}
+          </ServicePlanProvider>
+        </LanguageProvider>
+      </body>
     </html>
   )
 }

@@ -14,6 +14,7 @@ import {
   ArrowUpOnSquareIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { ServicePlan } from '@/app/page'
 import { DashboardTab } from './Dashboard'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -27,7 +28,35 @@ interface SidebarProps {
 
 export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: SidebarProps) {
   const { t } = useLanguage()
+  const router = useRouter()
+  const pathname = usePathname()
   const [showPlanDropdown, setShowPlanDropdown] = useState(false)
+  
+  // Get active tab from current pathname
+  const getCurrentTab = (): DashboardTab => {
+    switch (pathname) {
+      case '/overview':
+        return 'overview'
+      case '/transactions':
+        return 'transactions'
+      case '/users':
+        return 'users'
+      case '/groups':
+        return 'groups'
+      case '/withdrawal':
+        return 'withdrawal'
+      case '/services':
+        return 'services'
+      case '/security':
+        return 'security'
+      case '/':
+        return 'overview'
+      default:
+        return 'overview'
+    }
+  }
+  
+  const currentTab = getCurrentTab()
   
   const getPlanInfo = () => {
     switch (plan) {
@@ -106,42 +135,49 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       id: 'overview' as DashboardTab,
       name: t('menu.overview'),
       icon: HomeIcon,
+      path: '/overview',
       available: true
     },
     {
       id: 'transactions' as DashboardTab,
       name: t('menu.transactions'),
       icon: ClockIcon,
+      path: '/transactions',
       available: true
     },
     {
       id: 'users' as DashboardTab,
       name: t('menu.users'),
       icon: UsersIcon,
+      path: '/users',
       available: plan === 'enterprise' || plan === 'premium'
     },
     {
       id: 'groups' as DashboardTab,
       name: '그룹 지갑',
       icon: UserGroupIcon,
+      path: '/groups',
       available: plan === 'enterprise'
     },
     {
       id: 'withdrawal' as DashboardTab,
       name: '출금 관리',
       icon: ArrowUpOnSquareIcon,
+      path: '/withdrawal',
       available: plan === 'enterprise'
     },
     {
       id: 'services' as DashboardTab,
       name: t('menu.services'),
       icon: CogIcon,
+      path: '/services',
       available: true
     },
     {
       id: 'security' as DashboardTab,
       name: t('menu.security'),
       icon: ShieldCheckIcon,
+      path: '/security',
       available: true
     }
   ]
@@ -196,12 +232,12 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
             if (!item.available) return null
             
             const Icon = item.icon
-            const isActive = activeTab === item.id
+            const isActive = currentTab === item.id
             
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => router.push(item.path)}
                   className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
                     isActive
                       ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
