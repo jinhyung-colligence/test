@@ -24,6 +24,7 @@ interface AssetOverviewProps {
 export default function AssetOverview({ plan }: AssetOverviewProps) {
   const [showBalances, setShowBalances] = useState(true)
   const [selectedAssetIndex, setSelectedAssetIndex] = useState(0)
+  const [activeWalletTab, setActiveWalletTab] = useState<'all' | 'warm' | 'cold'>('all')
   const { t, language } = useLanguage()
   const router = useRouter()
 
@@ -77,16 +78,42 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
     { name: t('overview.months.jun'), value: 275000000 }
   ]
 
-  const pieData = mockAssets.map((asset, index) => ({
-    name: asset.symbol,
-    value: asset.value,
-    color: ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'][index]
-  }))
+  // 지갑 유형별 자산 데이터 (색상은 고정)
+  const getWalletData = (type: 'all' | 'warm' | 'cold') => {
+    const colors = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'] // 고정된 색상
+    
+    switch (type) {
+      case 'all':
+        return mockAssets.map((asset, index) => ({
+          name: asset.symbol,
+          value: asset.value,
+          color: colors[index]
+        }))
+      case 'warm':
+        return mockAssets.map((asset, index) => ({
+          name: asset.symbol,
+          value: asset.value * 0.2, // 20%
+          color: colors[index]
+        }))
+      case 'cold':
+        return mockAssets.map((asset, index) => ({
+          name: asset.symbol,
+          value: asset.value * 0.8, // 80%
+          color: colors[index]
+        }))
+    }
+  }
 
-  const totalValue = mockAssets.reduce((sum, asset) => sum + asset.value, 0)
+  const pieData = getWalletData(activeWalletTab)
 
-  const selectedAsset = mockAssets[selectedAssetIndex]
-  const selectedPercentage = ((selectedAsset.value / totalValue) * 100).toFixed(1)
+  // 현재 탭에 따른 총 자산 가치 계산
+  const getCurrentTotalValue = () => {
+    return pieData.reduce((sum, item) => sum + item.value, 0)
+  }
+
+  const totalValue = getCurrentTotalValue()
+  const selectedAsset = pieData[selectedAssetIndex]
+  const selectedPercentage = selectedAsset ? ((selectedAsset.value / totalValue) * 100).toFixed(1) : '0'
 
   const handlePieClick = (data: any, index: number) => {
     setSelectedAssetIndex(index)
@@ -289,7 +316,31 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('overview.asset_distribution')}</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">{t('overview.asset_distribution')}</h3>
+            
+            {/* 지갑 유형 탭 */}
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              {[
+                { id: 'all', name: 'All', desc: '전체 자산' },
+                { id: 'warm', name: 'Warm', desc: '온라인 지갑 (20%)' },
+                { id: 'cold', name: 'Cold', desc: '오프라인 지갑 (80%)' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveWalletTab(tab.id as typeof activeWalletTab)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    activeWalletTab === tab.id
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  title={tab.desc}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Donut Chart - Left */}
             <div className="flex-shrink-0">
@@ -326,10 +377,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                       {selectedPercentage}%
                     </div>
                     <div className="text-sm font-semibold text-gray-600 mt-1">
-                      {selectedAsset.symbol}
+                      {selectedAsset?.name || mockAssets[selectedAssetIndex]?.symbol}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {selectedAsset.name}
+                      {mockAssets[selectedAssetIndex]?.name}
                     </div>
                   </div>
                 </div>
@@ -406,8 +457,22 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                 <tr key={asset.symbol} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="font-semibold text-gray-700">{asset.symbol}</span>
+                      <div className="h-10 w-10 mr-3">
+                        <img 
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${asset.symbol.toLowerCase()}.png`}
+                          alt={asset.symbol}
+                          className="w-10 h-10 rounded-full"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                                <circle cx="20" cy="20" r="20" fill="#f3f4f6"/>
+                                <text x="20" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#6b7280">
+                                  ${asset.symbol}
+                                </text>
+                              </svg>
+                            `)}`
+                          }}
+                        />
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">{asset.symbol}</p>

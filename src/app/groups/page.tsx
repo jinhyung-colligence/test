@@ -12,17 +12,14 @@ export default function GroupsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="flex pt-20">
+      <div className="ml-64 pt-20 p-8">
         <Sidebar 
           plan={selectedPlan} 
           activeTab="groups" 
           onTabChange={() => {}}
           onPlanChange={setSelectedPlan}
         />
-        
-        <div className="flex-1 p-8">
-          <GroupWalletManagement plan={selectedPlan} />
-        </div>
+        <GroupWalletManagement plan={selectedPlan} />
       </div>
     </div>
   )

@@ -183,7 +183,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   ]
 
   return (
-    <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col">
+    <div className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col z-40">
       <div className="p-6 relative plan-dropdown-container">
         <button
           onClick={() => setShowPlanDropdown(!showPlanDropdown)}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { 
   ArrowUpOnSquareIcon,
   PlusIcon,
@@ -437,67 +437,83 @@ export default function WithdrawalManagement({ plan }: WithdrawalManagementProps
         </button>
       </div>
 
-      {/* 보안 상태 표시 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="h-10 w-10 bg-green-50 rounded-lg flex items-center justify-center mr-3">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.586-3L12 6.414 7.414 11M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center">
-                <p className="font-semibold text-gray-900">100% 콜드 월렛</p>
-                <div className="h-2 w-2 bg-green-500 rounded-full ml-2 animate-pulse"></div>
-              </div>
-              <p className="text-sm text-gray-600">인터넷 완전 분리</p>
-            </div>
+
+      {/* 출금 프로세스 플로우 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+
+        <div className="relative">
+          {/* 프로세스 단계들 */}
+          <div className="flex items-center justify-between px-4 min-w-max overflow-x-auto">
+            {[
+              {
+                step: 1,
+                title: '출금 신청',
+                subtitle: '기안자 작성',
+                description: '출금 내용, 금액, 주소 입력'
+              },
+              {
+                step: 2,
+                title: '결재 승인',
+                subtitle: '결재자 승인',
+                description: '필수 결재자 순차 승인'
+              },
+              {
+                step: 3,
+                title: '출금 대기',
+                subtitle: '오출금 방지',
+                description: '변심 취소 대응 기간'
+              },
+              {
+                step: 4,
+                title: '보안 검증',
+                subtitle: 'AML/트래블룰',
+                description: '이상거래 탐지 및 규제 검사'
+              },
+              {
+                step: 5,
+                title: 'Air-gap 서명',
+                subtitle: '물리적 격리',
+                description: 'MPC 분산키 디지털 서명'
+              },
+              {
+                step: 6,
+                title: '블록체인 전송',
+                subtitle: '네트워크 확인',
+                description: '트랜잭션 브로드캐스팅'
+              }
+            ].map((item, index) => (
+              <Fragment key={item.step}>
+                {/* 단계 */}
+                <div className="flex flex-col items-center group flex-shrink-0">
+                  {/* 단계 제목 */}
+                  <div className="px-3 py-2 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 transition-all hover:from-primary-50 hover:to-primary-100 hover:border-primary-200 hover:shadow-md whitespace-nowrap">
+                    <span className="text-xs font-medium text-gray-700 hover:text-primary-700 transition-colors">{item.title}</span>
+                  </div>
+                  
+                  {/* 단계 정보 */}
+                  <div className="text-center mt-2">
+                    <p className="text-xs text-gray-500 whitespace-nowrap">{item.subtitle}</p>
+                  </div>
+
+                  {/* 호버 툴팁 */}
+                  <div className="absolute top-16 left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                    {item.description}
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                  </div>
+                </div>
+                
+                {/* 화살표 */}
+                {index < 5 && (
+                  <div className="mx-6 flex items-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+                    </svg>
+                  </div>
+                )}
+              </Fragment>
+            ))}
           </div>
-        </div>
-        <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center mr-3">
-              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.029 5.912c-.563-.097-1.159-.026-1.792.127L10.5 16.5l-3.5-3.5 1.461-2.679c.153-.633.224-1.229.127-1.792A6 6 0 1121 9z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center">
-                <p className="font-semibold text-gray-900">MPC 키 분산</p>
-                <div className="h-2 w-2 bg-blue-500 rounded-full ml-2"></div>
-              </div>
-              <p className="text-sm text-gray-600">키 유출 방지</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="h-10 w-10 bg-purple-50 rounded-lg flex items-center justify-center mr-3">
-              <LockClosedIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center">
-                <p className="font-semibold text-gray-900">Air-gap 실행</p>
-                <div className="h-2 w-2 bg-purple-500 rounded-full ml-2"></div>
-              </div>
-              <p className="text-sm text-gray-600">물리적 격리 환경</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center">
-            <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center mr-3">
-              <EyeIcon className="h-6 w-6 text-orange-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center">
-                <p className="font-semibold text-gray-900">완전 감사 추적</p>
-                <div className="h-2 w-2 bg-orange-500 rounded-full ml-2"></div>
-              </div>
-              <p className="text-sm text-gray-600">모든 활동 기록</p>
-            </div>
-          </div>
+
         </div>
       </div>
 

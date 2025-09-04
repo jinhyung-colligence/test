@@ -12,17 +12,14 @@ export default function UsersPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="flex pt-20">
+      <div className="ml-64 pt-20 p-8">
         <Sidebar 
           plan={selectedPlan} 
           activeTab="users" 
           onTabChange={() => {}}
           onPlanChange={setSelectedPlan}
         />
-        
-        <div className="flex-1 p-8">
-          <UserManagement plan={selectedPlan} />
-        </div>
+        <UserManagement plan={selectedPlan} />
       </div>
     </div>
   )

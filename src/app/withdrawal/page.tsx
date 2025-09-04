@@ -12,17 +12,14 @@ export default function WithdrawalPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="flex pt-20">
+      <div className="ml-64 pt-20 p-8">
         <Sidebar 
           plan={selectedPlan} 
           activeTab="withdrawal" 
           onTabChange={() => {}}
           onPlanChange={setSelectedPlan}
         />
-        
-        <div className="flex-1 p-8">
-          <WithdrawalManagement plan={selectedPlan} />
-        </div>
+        <WithdrawalManagement plan={selectedPlan} />
       </div>
     </div>
   )

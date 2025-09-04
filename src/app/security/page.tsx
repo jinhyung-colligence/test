@@ -12,17 +12,14 @@ export default function SecurityPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="flex pt-20">
+      <div className="ml-64 pt-20 p-8">
         <Sidebar 
           plan={selectedPlan} 
           activeTab="security" 
           onTabChange={() => {}}
           onPlanChange={setSelectedPlan}
         />
-        
-        <div className="flex-1 p-8">
-          <SecuritySettings plan={selectedPlan} />
-        </div>
+        <SecuritySettings plan={selectedPlan} />
       </div>
     </div>
   )
