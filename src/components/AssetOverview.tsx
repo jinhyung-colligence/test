@@ -317,28 +317,37 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">{t('overview.asset_distribution')}</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('overview.asset_distribution')}</h3>
+              
+              {/* 지갑 유형 탭을 제목 아래로 이동 */}
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+                {[
+                  { id: 'all', name: 'All', desc: '전체 자산' },
+                  { id: 'warm', name: 'Warm', desc: '온라인 지갑 (20%)' },
+                  { id: 'cold', name: 'Cold', desc: '오프라인 지갑 (80%)' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveWalletTab(tab.id as typeof activeWalletTab)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      activeWalletTab === tab.id
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    title={tab.desc}
+                  >
+                    {tab.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            {/* 지갑 유형 탭 */}
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-              {[
-                { id: 'all', name: 'All', desc: '전체 자산' },
-                { id: 'warm', name: 'Warm', desc: '온라인 지갑 (20%)' },
-                { id: 'cold', name: 'Cold', desc: '오프라인 지갑 (80%)' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveWalletTab(tab.id as typeof activeWalletTab)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                    activeWalletTab === tab.id
-                      ? 'bg-white text-primary-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  title={tab.desc}
-                >
-                  {tab.name}
-                </button>
-              ))}
+            {/* 전체 자산을 오른쪽 위에 심플하게 배치 */}
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-900">
+                {showBalances ? formatCurrency(totalValue) : '***,***,***'}
+              </div>
             </div>
           </div>
           <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -370,18 +379,22 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                   </PieChart>
                 </ResponsiveContainer>
                 
-                {/* Center content */}
+                {/* Center content - 선택한 자산 정보 */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {selectedPercentage}%
-                    </div>
-                    <div className="text-sm font-semibold text-gray-600 mt-1">
-                      {selectedAsset?.name || mockAssets[selectedAssetIndex]?.symbol}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {mockAssets[selectedAssetIndex]?.name}
-                    </div>
+                    {selectedAsset && (
+                      <>
+                        <div className="text-xl font-bold text-gray-900">
+                          {selectedAsset.name}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {selectedPercentage}%
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 mt-1">
+                          {showBalances ? formatCurrency(selectedAsset.value) : '***,***,***'}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -389,40 +402,30 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
             
             {/* Legend - Right */}
             <div className="flex-1">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {pieData.map((entry, index) => (
-                  <button
+                  <div
                     key={entry.name}
-                    onClick={() => setSelectedAssetIndex(index)}
-                    className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      selectedAssetIndex === index 
-                        ? 'bg-gray-100 shadow-sm border border-gray-200' 
-                        : 'hover:bg-gray-50'
+                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+                      selectedAssetIndex === index ? 'bg-gray-50' : 'hover:bg-gray-25'
                     }`}
+                    onClick={() => setSelectedAssetIndex(index)}
                   >
                     <div className="flex items-center space-x-3">
                       <div 
-                        className="w-4 h-4 rounded-full" 
+                        className="w-3 h-3 rounded-full" 
                         style={{ backgroundColor: entry.color }}
                       ></div>
-                      <div className="text-left">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {entry.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {mockAssets[index].name}
-                        </div>
-                      </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {entry.name}
+                      </span>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-gray-900">
-                        {((entry.value / totalValue) * 100).toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {showBalances ? formatCurrency(entry.value) : '***,***,***'}
+                      <div className="text-sm font-medium text-gray-900">
+                        {showBalances ? `₩${entry.value.toLocaleString()}` : '₩***,***'}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
