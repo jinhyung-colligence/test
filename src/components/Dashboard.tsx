@@ -51,7 +51,7 @@ export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
         onPlanChange={onPlanChange}
       />
       
-      <div className="ml-64 pt-16">
+      <div className="ml-64 pt-24">
         <div className="p-8">
           {renderContent()}
         </div>

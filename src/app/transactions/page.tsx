@@ -12,7 +12,7 @@ export default function TransactionsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="ml-64 pt-20 p-8">
+      <div className="ml-64 pt-28 p-8">
         <Sidebar 
           plan={selectedPlan} 
           activeTab="transactions" 

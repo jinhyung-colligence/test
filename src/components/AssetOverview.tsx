@@ -25,6 +25,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   const [showBalances, setShowBalances] = useState(true)
   const [selectedAssetIndex, setSelectedAssetIndex] = useState(0)
   const [activeWalletTab, setActiveWalletTab] = useState<'all' | 'warm' | 'cold'>('all')
+  const [timePeriod, setTimePeriod] = useState<'hour' | 'day' | 'month'>('month')
   const { t, language } = useLanguage()
   const router = useRouter()
 
@@ -69,14 +70,42 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
     }
   ]
 
-  const chartData = [
-    { name: t('overview.months.jan'), value: 200000000 },
-    { name: t('overview.months.feb'), value: 220000000 },
-    { name: t('overview.months.mar'), value: 180000000 },
-    { name: t('overview.months.apr'), value: 250000000 },
-    { name: t('overview.months.may'), value: 275000000 },
-    { name: t('overview.months.jun'), value: 275000000 }
-  ]
+  // 시간대별 차트 데이터
+  const getChartData = (period: 'hour' | 'day' | 'month') => {
+    switch (period) {
+      case 'hour':
+        return [
+          { name: '00:00', value: 275000000 },
+          { name: '04:00', value: 278000000 },
+          { name: '08:00', value: 272000000 },
+          { name: '12:00', value: 280000000 },
+          { name: '16:00', value: 285000000 },
+          { name: '20:00', value: 282000000 }
+        ]
+      case 'day':
+        return [
+          { name: '월', value: 270000000 },
+          { name: '화', value: 275000000 },
+          { name: '수', value: 268000000 },
+          { name: '목', value: 282000000 },
+          { name: '금', value: 285000000 },
+          { name: '토', value: 280000000 },
+          { name: '일', value: 275000000 }
+        ]
+      case 'month':
+      default:
+        return [
+          { name: t('overview.months.jan'), value: 200000000 },
+          { name: t('overview.months.feb'), value: 220000000 },
+          { name: t('overview.months.mar'), value: 180000000 },
+          { name: t('overview.months.apr'), value: 250000000 },
+          { name: t('overview.months.may'), value: 275000000 },
+          { name: t('overview.months.jun'), value: 275000000 }
+        ]
+    }
+  }
+
+  const chartData = getChartData(timePeriod)
 
   // 지갑 유형별 자산 데이터 (색상은 고정)
   const getWalletData = (type: 'all' | 'warm' | 'cold') => {
@@ -301,13 +330,44 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('overview.price_trend')}</h3>
-          <div className="h-64">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('overview.price_trend')}</h3>
+            
+            {/* 시간 주기 선택 버튼을 제목 아래로 이동 */}
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+              {[
+                { id: 'hour', name: '시간', desc: '시간별 추이' },
+                { id: 'day', name: '일', desc: '일별 추이' },
+                { id: 'month', name: '월', desc: '월별 추이' }
+              ].map((period) => (
+                <button
+                  key={period.id}
+                  onClick={() => setTimePeriod(period.id as typeof timePeriod)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    timePeriod === period.id
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  title={period.desc}
+                >
+                  {period.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value) => formatCurrency(value as number)} />
                 <Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={2} />
               </LineChart>
