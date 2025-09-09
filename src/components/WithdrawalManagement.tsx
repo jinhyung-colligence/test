@@ -1369,7 +1369,7 @@ export default function WithdrawalManagement({
                               // 출금 완료 (블록체인 전송 완료)
                               return {
                                 progress: 100,
-                                step: "출금 완료",
+                                step: "블록체인 전송",
                                 eta: "완료됨",
                                 type: "completed",
                                 txHash: request.txHash,
