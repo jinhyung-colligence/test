@@ -36,37 +36,17 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
     { symbol: 'USDT', name: 'Tether', balance: '25000', value: 25000000, change: -0.02, currentPrice: 1000 }
   ]
 
-  // Mock withdrawal approval data
+  // Mock withdrawal approval data - only submitted status (pending approval)
   const mockWithdrawalApprovals = [
     {
-      id: 'WD-2024-001',
-      user: '김철수',
-      asset: 'BTC',
-      amount: '0.5',
-      value: 25000000,
-      requestDate: '2024-03-15T14:30:00Z',
-      urgency: 'high',
-      destination: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2'
-    },
-    {
-      id: 'WD-2024-002', 
-      user: '이영희',
-      asset: 'ETH',
-      amount: '10.0',
-      value: 16580000,
-      requestDate: '2024-03-15T11:15:00Z',
-      urgency: 'normal',
-      destination: '0x742d35cc6ad4cfc7cc5a0e0e68b4b55a2c7e9f3a'
-    },
-    {
-      id: 'WD-2024-003',
-      user: '박민수',
-      asset: 'USDC',
-      amount: '5000',
-      value: 5000000,
-      requestDate: '2024-03-15T09:45:00Z',
-      urgency: 'normal',
-      destination: '0x8ba1f109551bd432803012645hac136c'
+      id: '2025-09-0003',
+      user: '박인사팀장',
+      asset: 'USDT',
+      amount: '50000',
+      value: 50000000, // 50,000 USDT * 1,000 KRW
+      requestDate: '2025-09-02T16:00:00Z',
+      urgency: 'normal', // priority: 'medium' -> 보통
+      destination: '0x...9c8d'
     }
   ]
 
@@ -171,10 +151,12 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case 'high':
+      case 'critical':
         return 'text-red-600 bg-red-50 border-red-200'
-      case 'normal':
+      case 'high':
         return 'text-orange-600 bg-orange-50 border-orange-200'
+      case 'normal':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200'
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200'
     }
@@ -296,9 +278,14 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                     <td className="px-4 py-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-900">#{approval.id}</span>
+                        {approval.urgency === 'critical' && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded">
+                            긴급
+                          </span>
+                        )}
                         {approval.urgency === 'high' && (
                           <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded">
-                            긴급
+                            높음
                           </span>
                         )}
                       </div>
