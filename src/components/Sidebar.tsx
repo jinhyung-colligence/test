@@ -11,7 +11,8 @@ import {
   GiftIcon,
   ChevronDownIcon,
   UserGroupIcon,
-  ArrowUpOnSquareIcon
+  ArrowUpOnSquareIcon,
+  ArrowDownOnSquareIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -43,6 +44,8 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         return 'users'
       case '/groups':
         return 'groups'
+      case '/deposit':
+        return 'deposit'
       case '/withdrawal':
         return 'withdrawal'
       case '/services':
@@ -157,6 +160,13 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       name: '그룹 지갑',
       icon: UserGroupIcon,
       path: '/groups',
+      available: plan === 'enterprise'
+    },
+    {
+      id: 'deposit' as DashboardTab,
+      name: '입금 관리',
+      icon: ArrowDownOnSquareIcon,
+      path: '/deposit',
       available: plan === 'enterprise'
     },
     {

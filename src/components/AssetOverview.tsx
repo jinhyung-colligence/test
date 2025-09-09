@@ -24,7 +24,7 @@ interface AssetOverviewProps {
 export default function AssetOverview({ plan }: AssetOverviewProps) {
   const [showBalances, setShowBalances] = useState(true)
   const [selectedAssetIndex, setSelectedAssetIndex] = useState(0)
-  const [activeWalletTab, setActiveWalletTab] = useState<'all' | 'warm' | 'cold'>('all')
+  const [activeWalletTab, setActiveWalletTab] = useState<'all' | 'hot' | 'cold'>('all')
   const [timePeriod, setTimePeriod] = useState<'hour' | 'day' | 'month'>('month')
   const { t, language } = useLanguage()
   const router = useRouter()
@@ -108,7 +108,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   const chartData = getChartData(timePeriod)
 
   // 지갑 유형별 자산 데이터 (색상은 고정)
-  const getWalletData = (type: 'all' | 'warm' | 'cold') => {
+  const getWalletData = (type: 'all' | 'hot' | 'cold') => {
     const colors = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'] // 고정된 색상
     
     switch (type) {
@@ -118,7 +118,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
           value: asset.value,
           color: colors[index]
         }))
-      case 'warm':
+      case 'hot':
         return mockAssets.map((asset, index) => ({
           name: asset.symbol,
           value: asset.value * 0.2, // 20%
@@ -384,7 +384,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
               <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
                 {[
                   { id: 'all', name: 'All', desc: '전체 자산' },
-                  { id: 'warm', name: 'Warm', desc: '온라인 지갑 (20%)' },
+                  { id: 'hot', name: 'Hot', desc: '온라인 지갑 (20%)' },
                   { id: 'cold', name: 'Cold', desc: '오프라인 지갑 (80%)' }
                 ].map((tab) => (
                   <button
