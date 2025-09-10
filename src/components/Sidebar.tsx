@@ -203,7 +203,6 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
             <PlanIcon className="h-8 w-8 mr-3" />
             <div>
               <p className="font-semibold text-sm">{planInfo.name}</p>
-              <p className="text-xs opacity-75">{t('plan.active')}</p>
             </div>
           </div>
           <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
@@ -250,7 +249,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
                   onClick={() => router.push(item.path)}
                   className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
+                      ? 'bg-primary-50 text-primary-700'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
