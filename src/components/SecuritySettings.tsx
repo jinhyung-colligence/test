@@ -615,6 +615,49 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
         </div>
       )}
 
+      {plan === 'enterprise' && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">다중 승인 정책</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">거래 승인 정책</h4>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                  <span className="text-sm">1천만원 이상 거래 시 다중 승인</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                  <span className="text-sm">신규 주소로의 출금 시 추가 승인</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" />
+                  <span className="text-sm">모든 거래에 다중 승인 적용</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">IP 제한 정책</h4>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                  <span className="text-sm">허용된 IP에서만 접근 허용</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" />
+                  <span className="text-sm">VPN 접속 차단</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" />
+                  <span className="text-sm">특정 국가 IP 차단</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           보안 감사 로그

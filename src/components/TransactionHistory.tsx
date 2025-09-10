@@ -257,7 +257,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                   일시
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  액션
+                  작업
                 </th>
               </tr>
             </thead>
@@ -265,7 +265,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
               {filteredTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-semibold text-gray-900">
                       {getTransactionTypeName(tx.type)}
                     </span>
                   </td>
@@ -349,11 +349,15 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {tx.amount}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="font-semibold text-gray-900">
+                      {tx.amount}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {formatCurrency(tx.value)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="font-semibold text-gray-900">
+                      {formatCurrency(tx.value)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -364,7 +368,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                       {getStatusName(tx.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(tx.timestamp)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -491,7 +495,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                       </h5>
                       <div className="space-y-4">
                         {transaction.txHash && (
-                          <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="bg-gray-50 p-4 rounded-lg border">
                             <div className="flex items-start justify-between mb-2">
                               <span className="text-sm font-medium text-gray-700">
                                 트랜잭션 해시
@@ -509,23 +513,28 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {transaction.from && (
                             <div className="bg-gray-50 p-4 rounded-lg border">
-                              <div className="flex items-center mb-2">
-                                <svg
-                                  className="w-4 h-4 text-gray-600 mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 11l5-5m0 0l5 5m-5-5v12"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-700">
-                                  보낸 주소
-                                </span>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center">
+                                  <svg
+                                    className="w-4 h-4 text-gray-600 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M7 11l5-5m0 0l5 5m-5-5v12"
+                                    />
+                                  </svg>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    보낸 주소
+                                  </span>
+                                </div>
+                                <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
+                                  복사
+                                </button>
                               </div>
                               <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
                                 {transaction.from}
@@ -535,23 +544,28 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
 
                           {transaction.to && (
                             <div className="bg-gray-50 p-4 rounded-lg border">
-                              <div className="flex items-center mb-2">
-                                <svg
-                                  className="w-4 h-4 text-gray-600 mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 13l-5 5m0 0l-5-5m5 5V6"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-700">
-                                  받는 주소
-                                </span>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center">
+                                  <svg
+                                    className="w-4 h-4 text-gray-600 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 13l-5 5m0 0l-5-5m5 5V6"
+                                    />
+                                  </svg>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    받는 주소
+                                  </span>
+                                </div>
+                                <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
+                                  복사
+                                </button>
                               </div>
                               <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
                                 {transaction.to}

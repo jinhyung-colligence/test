@@ -394,48 +394,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
         )}
       </div>
 
-      {plan === 'enterprise' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('approval.title')}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">{t('approval.transaction_policy')}</h4>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" defaultChecked />
-                  <span className="text-sm">{t('approval.over_10m')}</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" defaultChecked />
-                  <span className="text-sm">{t('approval.new_address')}</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  <span className="text-sm">{t('approval.all_transactions')}</span>
-                </label>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">{t('approval.ip_restrictions')}</h4>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" defaultChecked />
-                  <span className="text-sm">{t('approval.allowed_ip_only')}</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  <span className="text-sm">{t('approval.block_vpn')}</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  <span className="text-sm">{t('approval.block_countries')}</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
