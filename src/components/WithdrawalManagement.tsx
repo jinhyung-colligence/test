@@ -92,8 +92,8 @@ interface WithdrawalRequest {
     timestamp: string;
     action: string;
     userId: string;
-    userName: string;
-    details: string;
+    userName?: string;
+    details?: string;
     ipAddress?: string;
   }>;
 }
@@ -109,9 +109,6 @@ export default function WithdrawalManagement({
   const [selectedProcessingRequest, setSelectedProcessingRequest] = useState<
     string | null
   >(null);
-  const [filterStatus, setFilterStatus] = useState<WithdrawalStatus | "all">(
-    "all"
-  );
   const { t, language } = useLanguage();
 
   const [newRequest, setNewRequest] = useState({
@@ -216,22 +213,18 @@ export default function WithdrawalManagement({
           timestamp: "2025-09-02T09:00:00Z",
           action: "출금 신청",
           userId: "1",
-          userName: "김기안자",
-          details: "출금 신청서 작성 완료",
+          userName: "김재무담당자",
+          details: "3분기 파트너사 정산을 위한 출금 요청 제출",
         },
         {
           timestamp: "2025-09-02T10:30:00Z",
-          action: "1차 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "CFO 승인 완료",
         },
         {
           timestamp: "2025-09-02T11:15:00Z",
-          action: "최종 승인",
+          action: "이CISO 승인",
           userId: "3",
-          userName: "이CISO",
-          details: "CISO 최종 승인 완료",
         },
       ],
     },
@@ -278,36 +271,30 @@ export default function WithdrawalManagement({
           timestamp: "2025-09-03T14:20:00Z",
           action: "출금 신청",
           userId: "5",
-          userName: "최투자팀장",
-          details: "고액 출금 신청서 작성",
+          userName: "최DeFi운영자",
+          details: "DeFi 프로토콜 유동성 공급을 위한 출금 신청",
         },
         {
           timestamp: "2025-09-03T15:00:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "재무 검토 및 승인",
         },
         {
           timestamp: "2025-09-03T15:30:00Z",
-          action: "CISO 승인",
+          action: "이CISO 승인",
           userId: "3",
-          userName: "이CISO",
-          details: "보안 검토 및 승인",
         },
         {
           timestamp: "2025-09-03T16:00:00Z",
-          action: "CTO 승인",
+          action: "김CTO 승인",
           userId: "4",
-          userName: "김CTO",
-          details: "기술 검토 및 최종 승인",
         },
         {
           timestamp: "2025-09-03T16:30:00Z",
           action: "Air-gap 진입",
           userId: "6",
           userName: "이보안담당자",
-          details: "Air-gap 환경으로 이관, 보안 검토 시작",
+          details: "고액 거래 보안 검증을 위한 Air-gap 환경 진입",
         },
       ],
     },
@@ -333,7 +320,7 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "7",
           userName: "박인사팀장",
-          details: "3월 급여 지급 신청서 제출",
+          details: "9월 급여 지급을 위한 USDT 출금 신청",
         },
       ],
     },
@@ -366,14 +353,14 @@ export default function WithdrawalManagement({
           action: "긴급 출금 신청",
           userId: "8",
           userName: "정트레이더",
-          details: "차익거래 기회로 인한 긴급 출금 요청",
+          details: "김치프리미엄 차익거래 기회 포착으로 인한 긴급 BTC 출금 요청",
         },
         {
           timestamp: "2025-09-01T09:00:00Z",
           action: "신청 반려",
           userId: "3",
           userName: "이CISO",
-          details: "리스크 한도 초과로 인한 반려",
+          details: "리스크 관리 정책 위반 - 단일 거래 한도 초과로 인한 반려",
         },
       ],
     },
@@ -406,21 +393,19 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "12",
           userName: "한스테이킹팀장",
-          details: "스테이킹 보상 정산 출금 신청",
+          details: "Ethereum 2.0 스테이킹 보상 분배를 위한 ETH 출금 신청",
         },
         {
           timestamp: "2025-08-30T09:30:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "스테이킹 수익 검토 완료 및 승인",
         },
         {
           timestamp: "2025-08-30T09:45:00Z",
           action: "처리 대기",
           userId: "system",
-          userName: "System",
-          details: "출금 처리 대기열에 추가됨",
+          userName: "시스템",
+          details: "승인 완료 후 자동으로 처리 대기 상태로 전환",
         },
       ],
     },
@@ -453,21 +438,19 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "13",
           userName: "김비즈데브",
-          details: "파트너십 계약금 출금 신청",
+          details: "블록체인 프로젝트 파트너십 계약금 지급을 위한 BTC 출금",
         },
         {
           timestamp: "2025-08-29T11:45:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "계약서 검토 후 승인",
         },
         {
           timestamp: "2025-08-29T12:00:00Z",
           action: "처리 대기",
           userId: "system",
-          userName: "System",
-          details: "출금 처리 순서 대기 중",
+          userName: "시스템",
+          details: "승인 완료 후 자동으로 처리 대기 큐에 등록",
         },
       ],
     },
@@ -501,21 +484,19 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "14",
           userName: "이마케팅팀장",
-          details: "마케팅 캠페인 정산 출금 신청",
+          details: "Q1 마케팅 캠페인 최종 정산을 위한 USDC 출금 신청",
         },
         {
           timestamp: "2025-08-28T11:00:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "예산 검토 완료 및 승인",
         },
         {
           timestamp: "2025-08-28T11:15:00Z",
           action: "출금 대기 시작",
           userId: "system",
-          userName: "System",
-          details: "오출금 방지를 위한 대기 기간 시작",
+          userName: "시스템",
+          details: "출금 처리를 위한 대기 프로세스 시작",
         },
       ],
     },
@@ -556,50 +537,46 @@ export default function WithdrawalManagement({
           timestamp: "2025-08-27T15:30:00Z",
           action: "출금 신청",
           userId: "4",
-          userName: "최CTO",
-          details: "개발팀 성과 보너스 출금 신청",
+          userName: "김CTO",
+          details: "Q3 성과 평가에 따른 개발팀 보너스 지급 신청",
         },
         {
           timestamp: "2025-08-27T16:00:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "예산 확인 및 승인",
         },
         {
           timestamp: "2025-08-27T16:30:00Z",
-          action: "CISO 승인",
+          action: "이CISO 승인",
           userId: "3",
-          userName: "이CISO",
-          details: "보안 검토 완료",
         },
         {
           timestamp: "2025-08-28T09:00:00Z",
           action: "출금 대기 완료",
           userId: "system",
-          userName: "System",
-          details: "24시간 대기 기간 완료",
+          userName: "시스템",
+          details: "모든 승인 완료 후 출금 프로세스 진행",
         },
         {
           timestamp: "2025-08-28T09:15:00Z",
           action: "이상거래 검토 시작",
           userId: "15",
-          userName: "김AML담당자",
-          details: "AML/CFT 검토 시작",
+          userName: "박컴플라이언스담당자",
+          details: "대량 거래에 대한 이상거래 탐지 시스템 검토 시작",
         },
         {
           timestamp: "2025-08-28T09:45:00Z",
           action: "트래블룰 검사 완료",
           userId: "16",
-          userName: "박컴플라이언스",
-          details: "트래블룰 준수 확인 완료",
+          userName: "이법무담당자",
+          details: "규정 준수 확인 완료, 출금 진행 승인",
         },
         {
           timestamp: "2025-08-28T10:00:00Z",
           action: "Air-gap 서명 시작",
           userId: "17",
-          userName: "이보안엔지니어",
-          details: "Air-gap 환경에서 디지털 서명 진행",
+          userName: "최보안운영자",
+          details: "Air-gap 환경에서 트랜잭션 서명 프로세스 시작",
         },
       ],
     },
@@ -637,42 +614,40 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "18",
           userName: "한NFT사업팀장",
-          details: "NFT 로열티 정산 출금 신청",
+          details: "아티스트 NFT 로열티 8월 정산 분배를 위한 ETH 출금",
         },
         {
           timestamp: "2025-08-26T15:00:00Z",
-          action: "CFO 승인",
+          action: "박CFO 승인",
           userId: "2",
-          userName: "박CFO",
-          details: "로열티 계산 검토 후 승인",
         },
         {
           timestamp: "2025-08-27T09:00:00Z",
           action: "출금 대기 완료",
           userId: "system",
-          userName: "System",
-          details: "대기 기간 완료",
+          userName: "시스템",
+          details: "승인 완료 후 출금 처리 대기열 진입",
         },
         {
           timestamp: "2025-08-27T09:30:00Z",
           action: "보안 검증 완료",
           userId: "19",
-          userName: "정보안분석가",
-          details: "이상거래 검토 및 트래블룰 검사 완료",
+          userName: "최보안관리자",
+          details: "트랜잭션 보안 검증 및 위험도 평가 완료",
         },
         {
           timestamp: "2025-08-27T10:00:00Z",
           action: "Air-gap 서명 완료",
           userId: "17",
-          userName: "이보안엔지니어",
-          details: "디지털 서명 완료",
+          userName: "최보안운영자",
+          details: "Air-gap 환경에서 트랜잭션 서명 완료",
         },
         {
           timestamp: "2025-08-27T10:15:00Z",
           action: "블록체인 전송 완료",
           userId: "system",
-          userName: "System",
-          details: "이더리움 네트워크 전송 완료, 25회 확인",
+          userName: "시스템",
+          details: "Ethereum 네트워크로 트랜잭션 브로드캐스트 완료",
         },
       ],
     },
@@ -709,21 +684,21 @@ export default function WithdrawalManagement({
           action: "출금 신청",
           userId: "4",
           userName: "박트레이더",
-          details: "차익거래용 개인 지갑 이체 신청",
+          details: "차익거래를 위한 개인 지갑으로의 BTC 이체 신청",
         },
         {
           timestamp: "2025-08-15T15:30:00Z",
           action: "신청 반려",
           userId: "3",
           userName: "이CISO",
-          details: "개인 지갑 이체 정책 위반으로 반려",
+          details: "개인 지갑으로의 대량 이체는 보안 정책상 승인 불가",
         },
         {
           timestamp: "2025-08-20T09:15:00Z",
           action: "처리 완료",
           userId: "4",
           userName: "박트레이더",
-          details: "반려 사유 확인 후 처리 완료 처리",
+          details: "반려된 신청 아카이브 처리 완료",
         },
       ],
     },
@@ -896,8 +871,8 @@ export default function WithdrawalManagement({
           timestamp: new Date().toISOString(),
           action: "재신청 생성",
           userId: "current-user",
-          userName: "현재 사용자",
-          details: `원본 신청(${originalRequest.id})을 기반으로 재신청 생성`,
+          userName: "현재사용자",
+          details: `기존 신청(${originalRequest.id})을 기반으로 재신청 생성`,
         }
       ]
     };
@@ -945,6 +920,17 @@ export default function WithdrawalManagement({
     console.log(`Request ${showApprovalModal.requestId} ${showApprovalModal.action}`, {
       rejectionReason: showApprovalModal.action === "reject" ? rejectionReason : null
     });
+
+    if (showApprovalModal.action === "approve") {
+      // 승인 시 자동으로 pending 상태로 전환
+      alert("출금 신청이 승인되어 출금 처리 대기 상태로 전환되었습니다.");
+      
+      // 실제로는 API를 통해 상태 업데이트: status: "approved" → "pending"
+      // updateRequestStatus(showApprovalModal.requestId, "pending");
+      
+    } else {
+      alert("출금 신청이 반려되었습니다.");
+    }
     
     setShowApprovalModal({ show: false, requestId: null, action: null });
     setRejectionReason("");
@@ -956,9 +942,8 @@ export default function WithdrawalManagement({
     setRejectionReason("");
   };
 
-  const filteredRequests = mockRequests.filter(
-    (request) => filterStatus === "all" || request.status === filterStatus
-  );
+  // 필터 기능 제거 - 모든 요청 표시
+  const filteredRequests = mockRequests;
 
   // 감사 추적 필터링 로직
   const getFilteredAuditRequests = () => {
@@ -1171,25 +1156,10 @@ export default function WithdrawalManagement({
       {/* 출금 신청 관리 탭 */}
       {activeTab === "requests" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div>
             <h3 className="text-lg font-semibold text-gray-900">
               출금 신청 현황
             </h3>
-            <select
-              value={filterStatus}
-              onChange={(e) =>
-                setFilterStatus(e.target.value as typeof filterStatus)
-              }
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="all">전체 상태</option>
-              <option value="submitted">출금 신청</option>
-              <option value="approved">결재 승인</option>
-              <option value="pending">출금 대기</option>
-              <option value="processing">출금 진행</option>
-              <option value="completed">출금 완료</option>
-              <option value="rejected">반려</option>
-            </select>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -1226,7 +1196,7 @@ export default function WithdrawalManagement({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredRequests
                     .filter((r) =>
-                      ["submitted", "approved", "rejected"].includes(r.status)
+                      ["submitted", "rejected"].includes(r.status)
                     )
                     .map((request) => {
                       const statusInfo = getStatusInfo(request.status);
@@ -2426,9 +2396,9 @@ export default function WithdrawalManagement({
                         </div>
 
                         <div className="p-6">
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* 출금 요약 */}
-                            <div className="lg:col-span-1">
+                            <div>
                               <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                                 출금 요약
                               </h5>
@@ -2494,9 +2464,98 @@ export default function WithdrawalManagement({
                               </div>
                             </div>
 
-                            {/* 블록체인 정보 */}
-                            <div className="lg:col-span-2">
+                            {/* 승인 정보 */}
+                            <div>
                               <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                                결재 승인 정보
+                              </h5>
+                              <div className="space-y-4">
+                                {/* 승인 진행률 */}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-medium text-gray-700">승인 진행률</span>
+                                    <span className="text-sm text-gray-600">
+                                      {request.approvals.length}/{request.requiredApprovals.length}
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                    <div
+                                      className="h-2 rounded-full bg-green-500"
+                                      style={{
+                                        width: `${(request.approvals.length / request.requiredApprovals.length) * 100}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    필요 승인수: {request.requiredApprovals.length}개
+                                  </div>
+                                </div>
+
+                                {/* 필수 결재자 승인 현황 */}
+                                <div className="bg-gray-50 p-4 rounded-lg border">
+                                  <h6 className="text-sm font-medium text-gray-700 mb-3">필수 결재자 승인 현황</h6>
+                                  <div className="space-y-2">
+                                    {request.requiredApprovals.map((approver) => {
+                                      const approval = request.approvals.find(
+                                        (a) => a.userName === approver
+                                      );
+                                      return (
+                                        <div
+                                          key={approver}
+                                          className="flex items-center justify-between p-3 bg-white rounded border"
+                                        >
+                                          <div className="flex items-center">
+                                            {approval ? (
+                                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
+                                            ) : (
+                                              <ClockIcon className="h-5 w-5 text-yellow-500 mr-3" />
+                                            )}
+                                            <span className="font-medium text-gray-900">
+                                              {approver}
+                                            </span>
+                                          </div>
+                                          <div className="text-right">
+                                            {approval ? (
+                                              <div>
+                                                <span className="text-sm font-medium text-green-700">
+                                                  승인 완료
+                                                </span>
+                                                <div className="text-xs text-gray-500">
+                                                  {new Date(approval.approvedAt).toLocaleString('ko-KR')}
+                                                </div>
+                                                {approval.signature && (
+                                                  <div className="text-xs text-green-600 mt-1">디지털 서명 완료</div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span className="text-sm font-medium text-yellow-700">
+                                                승인 대기
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* 대기 중인 승인자 */}
+                                {request.requiredApprovals.length > request.approvals.length && (
+                                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <h6 className="text-sm font-medium text-gray-900 mb-2">승인 대기 중</h6>
+                                    <div className="text-sm text-gray-600">
+                                      {request.requiredApprovals.length - request.approvals.length}명의 승인이 추가로 필요합니다.
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                          </div>
+                          
+                          {/* 블록체인 정보 - 전체 너비 */}
+                          <div className="mt-6">
+                            <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                                 블록체인 정보
                               </h5>
                               <div className="space-y-4">
@@ -2706,7 +2765,6 @@ export default function WithdrawalManagement({
                                   </p>
                                 </div>
                               </div>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -2918,26 +2976,132 @@ export default function WithdrawalManagement({
                 </div>
 
                 <div className="space-y-3">
-                  {request.auditTrail.map((entry, index) => (
-                    <div key={index} className="flex items-start">
-                      <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-4"></div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">
-                            {entry.action}
-                          </p>
-                          <span className="text-xs text-gray-500">
-                            {formatDateTime(entry.timestamp)}
+                  {request.auditTrail.map((entry, index) => {
+                    // Check if this is an approval action (ends with "승인")
+                    const isApprovalAction = entry.action.endsWith('승인');
+                    
+                    return (
+                      <div key={index} className="flex items-start">
+                        <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-4"></div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-900">
+                              {entry.action}
+                            </p>
+                            <span className="text-xs text-gray-500">
+                              {formatDateTime(entry.timestamp)}
+                            </span>
+                          </div>
+                          {/* Show details and userName only for non-approval actions */}
+                          {!isApprovalAction && (
+                            <>
+                              {entry.details && (
+                                <p className="text-sm text-gray-600">{entry.details}</p>
+                              )}
+                              {entry.userName && (
+                                <p className="text-xs text-gray-400">
+                                  담당자: {entry.userName}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 블록체인 정보 섹션 */}
+                {(request.status === "completed" || request.status === "processing" || request.txHash) && (
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3">블록체인 정보</h5>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                      {/* 네트워크 정보 */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">네트워크</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {request.currency === "BTC" ? "Bitcoin" :
+                             request.currency === "ETH" ? "Ethereum" :
+                             request.currency === "USDC" ? "Ethereum (ERC-20)" :
+                             request.currency === "USDT" ? "Ethereum (ERC-20)" :
+                             "Unknown"}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600">{entry.details}</p>
-                        <p className="text-xs text-gray-400">
-                          담당자: {entry.userName}
-                        </p>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">자산</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {formatAmount(request.amount, request.currency)} {request.currency}
+                          </span>
+                        </div>
                       </div>
+
+                      {/* 트랜잭션 해시 */}
+                      {request.txHash && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-500">트랜잭션 해시</span>
+                            <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
+                              복사
+                            </button>
+                          </div>
+                          <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
+                            {request.txHash}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 주소 정보 */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-500">보낸 주소</span>
+                            <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
+                              복사
+                            </button>
+                          </div>
+                          <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
+                            {request.fromAddress}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-500">받은 주소</span>
+                            <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
+                              복사
+                            </button>
+                          </div>
+                          <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
+                            {request.toAddress}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 블록체인 확인 정보 */}
+                      {request.status === "completed" && request.blockConfirmations && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">블록체인 확인</span>
+                            <span className="font-medium text-green-600">
+                              {request.blockConfirmations}회 확인 완료
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {request.status === "processing" && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <div className="flex items-center text-sm">
+                            <svg className="w-4 h-4 text-yellow-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span className="text-gray-600">블록체인 전송 진행 중</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
               ))
             )}
