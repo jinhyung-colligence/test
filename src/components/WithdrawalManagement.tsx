@@ -16,7 +16,7 @@ import {
   DocumentTextIcon,
   CpuChipIcon,
   FireIcon,
-  CogIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -33,6 +33,7 @@ type WithdrawalStatus =
   | "processing" // 출금 진행 (Air-gap)
   | "completed" // 출금 완료
   | "rejected" // 반려
+  | "archived" // 처리 완료 (반려 후 아카이브)
   | "cancelled"; // 취소
 
 type UserRole =
@@ -80,6 +81,12 @@ interface WithdrawalRequest {
   txHash?: string;
   blockConfirmations?: number;
 
+  // 재신청 관련
+  originalRequestId?: string; // 원본 신청 ID (재신청인 경우)
+  reapplicationCount?: number; // 재신청 횟수
+  archivedAt?: string; // 아카이브 처리 시간
+  archivedBy?: string; // 아카이브 처리자
+
   // 감사 추적
   auditTrail: Array<{
     timestamp: string;
@@ -95,7 +102,7 @@ export default function WithdrawalManagement({
   plan,
 }: WithdrawalManagementProps) {
   const [activeTab, setActiveTab] = useState<
-    "requests" | "approval" | "airgap" | "audit" | "settings"
+    "requests" | "approval" | "airgap" | "audit"
   >("requests");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
@@ -669,6 +676,57 @@ export default function WithdrawalManagement({
         },
       ],
     },
+    {
+      id: "2025-08-0105",
+      title: "개인 지갑 이체 - 차익거래 준비금",
+      fromAddress: "bc1q...9k7s",
+      toAddress: "bc1q...2m8x",
+      amount: 8.75000000,
+      currency: "BTC",
+      groupId: "GRP003",
+      initiator: "박트레이더",
+      initiatedAt: "2025-08-15T14:20:00Z",
+      status: "archived",
+      priority: "medium",
+      description: "차익거래를 위한 개인 지갑 이체",
+      requiredApprovals: ["2", "3"],
+      approvals: [],
+      rejections: [
+        {
+          userId: "3",
+          userName: "이CISO",
+          rejectedAt: "2025-08-15T15:30:00Z",
+          reason: "개인 지갑으로의 대량 이체는 보안 정책상 승인 불가. 회사 전용 지갑 사용 필요",
+        },
+      ],
+      originalRequestId: undefined,
+      reapplicationCount: 0,
+      archivedAt: "2025-08-20T09:15:00Z",
+      archivedBy: "박트레이더",
+      auditTrail: [
+        {
+          timestamp: "2025-08-15T14:20:00Z",
+          action: "출금 신청",
+          userId: "4",
+          userName: "박트레이더",
+          details: "차익거래용 개인 지갑 이체 신청",
+        },
+        {
+          timestamp: "2025-08-15T15:30:00Z",
+          action: "신청 반려",
+          userId: "3",
+          userName: "이CISO",
+          details: "개인 지갑 이체 정책 위반으로 반려",
+        },
+        {
+          timestamp: "2025-08-20T09:15:00Z",
+          action: "처리 완료",
+          userId: "4",
+          userName: "박트레이더",
+          details: "반려 사유 확인 후 처리 완료 처리",
+        },
+      ],
+    },
   ];
 
   const getStatusInfo = (status: WithdrawalStatus) => {
@@ -707,6 +765,11 @@ export default function WithdrawalManagement({
         name: "반려",
         color: "bg-red-100 text-red-800",
         icon: XCircleIcon,
+      },
+      archived: {
+        name: "처리 완료",
+        color: "bg-gray-100 text-gray-800",
+        icon: ArchiveBoxIcon,
       },
       cancelled: {
         name: "취소",
@@ -780,10 +843,93 @@ export default function WithdrawalManagement({
   }>({ show: false, requestId: null, action: null });
   const [rejectionReason, setRejectionReason] = useState("");
 
+  // 감사 추적 검색 및 필터
+  const [auditSearchTerm, setAuditSearchTerm] = useState("");
+  const [auditStatusFilter, setAuditStatusFilter] = useState<string>("all");
+  const [auditDateFilter, setAuditDateFilter] = useState<string>("all");
+
+  // 재신청 및 아카이브 관련 상태
+  const [showReapplicationModal, setShowReapplicationModal] = useState<{
+    show: boolean;
+    requestId: string | null;
+  }>({ show: false, requestId: null });
+  const [showArchiveModal, setShowArchiveModal] = useState<{
+    show: boolean;
+    requestId: string | null;
+  }>({ show: false, requestId: null });
+
   // 승인/반려 처리 (팝업 열기)
   const handleApproval = (requestId: string, action: "approve" | "reject") => {
     setShowApprovalModal({ show: true, requestId, action });
     setRejectionReason("");
+  };
+
+  // 재신청 처리
+  const handleReapplication = (requestId: string) => {
+    setShowReapplicationModal({ show: true, requestId });
+  };
+
+  // 아카이브 처리
+  const handleArchive = (requestId: string) => {
+    setShowArchiveModal({ show: true, requestId });
+  };
+
+  // 재신청 확인
+  const confirmReapplication = () => {
+    if (!showReapplicationModal.requestId) return;
+    
+    const originalRequest = mockRequests.find(r => r.id === showReapplicationModal.requestId);
+    if (!originalRequest) return;
+
+    // 기존 정보를 복사하여 새로운 신청서 생성
+    const newRequestData = {
+      ...originalRequest,
+      id: `REQ-${Date.now()}`, // 새로운 ID 생성
+      status: "draft" as WithdrawalStatus,
+      originalRequestId: originalRequest.id,
+      reapplicationCount: (originalRequest.reapplicationCount || 0) + 1,
+      initiatedAt: new Date().toISOString(),
+      approvals: [],
+      rejections: [],
+      auditTrail: [
+        {
+          timestamp: new Date().toISOString(),
+          action: "재신청 생성",
+          userId: "current-user",
+          userName: "현재 사용자",
+          details: `원본 신청(${originalRequest.id})을 기반으로 재신청 생성`,
+        }
+      ]
+    };
+
+    // 새로운 신청서 생성 모달로 전환
+    setNewRequest({
+      title: originalRequest.title,
+      fromAddress: originalRequest.fromAddress,
+      toAddress: originalRequest.toAddress,
+      amount: originalRequest.amount,
+      network: "Bitcoin", // 기본값으로 설정
+      currency: originalRequest.currency,
+      groupId: originalRequest.groupId,
+      priority: "medium" as const,
+      description: `재신청: ${originalRequest.description}`,
+    });
+
+    setShowReapplicationModal({ show: false, requestId: null });
+    setShowCreateModal(true);
+    
+    alert("기존 신청 정보가 복사되었습니다. 필요한 내용을 수정 후 신청해주세요.");
+  };
+
+  // 아카이브 확인
+  const confirmArchive = () => {
+    if (!showArchiveModal.requestId) return;
+    
+    // 실제 구현에서는 API 호출로 상태 업데이트
+    console.log(`Archive request ${showArchiveModal.requestId}`);
+    alert("반려된 신청이 처리 완료되었습니다.");
+    
+    setShowArchiveModal({ show: false, requestId: null });
   };
 
   // 승인/반려 확인
@@ -813,6 +959,48 @@ export default function WithdrawalManagement({
   const filteredRequests = mockRequests.filter(
     (request) => filterStatus === "all" || request.status === filterStatus
   );
+
+  // 감사 추적 필터링 로직
+  const getFilteredAuditRequests = () => {
+    return mockRequests.filter((request) => {
+      // 검색어 필터
+      const searchMatch = auditSearchTerm === "" || 
+        request.id.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
+        request.title.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
+        request.initiator.toLowerCase().includes(auditSearchTerm.toLowerCase());
+
+      // 상태 필터
+      const statusMatch = auditStatusFilter === "all" || request.status === auditStatusFilter;
+
+      // 날짜 필터
+      let dateMatch = true;
+      if (auditDateFilter !== "all") {
+        const requestDate = new Date(request.initiatedAt);
+        const now = new Date();
+        const diffTime = now.getTime() - requestDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (auditDateFilter) {
+          case "today":
+            dateMatch = diffDays === 0;
+            break;
+          case "week":
+            dateMatch = diffDays <= 7;
+            break;
+          case "month":
+            dateMatch = diffDays <= 30;
+            break;
+          case "quarter":
+            dateMatch = diffDays <= 90;
+            break;
+          default:
+            dateMatch = true;
+        }
+      }
+
+      return searchMatch && statusMatch && dateMatch;
+    });
+  };
 
   if (plan !== "enterprise") {
     return (
@@ -963,7 +1151,6 @@ export default function WithdrawalManagement({
             { id: "approval", name: "결재 승인 대기", icon: CheckCircleIcon },
             { id: "airgap", name: "출금 처리", icon: LockClosedIcon },
             { id: "audit", name: "감사 추적", icon: EyeIcon },
-            { id: "settings", name: "승인 설정", icon: CogIcon },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1170,18 +1357,39 @@ export default function WithdrawalManagement({
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() =>
-                                setSelectedRequest(
-                                  selectedRequest === request.id
-                                    ? null
-                                    : request.id
-                                )
-                              }
-                              className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                            >
-                              상세보기
-                            </button>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() =>
+                                  setSelectedRequest(
+                                    selectedRequest === request.id
+                                      ? null
+                                      : request.id
+                                  )
+                                }
+                                className="text-primary-600 hover:text-primary-900 text-sm font-medium"
+                              >
+                                상세보기
+                              </button>
+                              
+                              {request.status === "rejected" && (
+                                <>
+                                  <div className="h-4 w-px bg-gray-300"></div>
+                                  <button
+                                    onClick={() => handleReapplication(request.id)}
+                                    className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                  >
+                                    재신청
+                                  </button>
+                                  <button
+                                    onClick={() => handleArchive(request.id)}
+                                    className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+                                  >
+                                    처리완료
+                                  </button>
+                                </>
+                              )}
+                              
+                            </div>
                           </td>
                         </tr>
                       );
@@ -2130,18 +2338,33 @@ export default function WithdrawalManagement({
                                 )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <button
-                                  onClick={() =>
-                                    setSelectedProcessingRequest(
-                                      selectedProcessingRequest === request.id
-                                        ? null
-                                        : request.id
-                                    )
-                                  }
-                                  className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                                >
-                                  상세보기
-                                </button>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() =>
+                                      setSelectedProcessingRequest(
+                                        selectedProcessingRequest === request.id
+                                          ? null
+                                          : request.id
+                                      )
+                                    }
+                                    className="text-primary-600 hover:text-primary-900 text-sm font-medium"
+                                  >
+                                    상세보기
+                                  </button>
+                                  
+                                  {request.status === "completed" && (
+                                    <>
+                                      <div className="h-4 w-px bg-gray-300"></div>
+                                      <button
+                                        onClick={() => handleArchive(request.id)}
+                                        className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+                                      >
+                                        처리완료
+                                      </button>
+                                    </>
+                                  )}
+                                  
+                                </div>
                               </td>
                             </tr>
                           );
@@ -2499,12 +2722,172 @@ export default function WithdrawalManagement({
       {/* 감사 추적 탭 */}
       {activeTab === "audit" && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            출금 감사 추적
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              출금 감사 추적
+            </h3>
+          </div>
+
+          {/* 검색 및 필터 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            {/* 검색바 */}
+            <div className="mb-4">
+              <div className="relative max-w-lg">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="신청 ID, 제목, 기안자로 검색..."
+                  value={auditSearchTerm}
+                  onChange={(e) => setAuditSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* 필터 섹션 */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">필터:</span>
+              
+              {/* 상태 필터 */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">상태</span>
+                <select
+                  value={auditStatusFilter}
+                  onChange={(e) => setAuditStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-[120px]"
+                >
+                  <option value="all">전체</option>
+                  <option value="submitted">출금 신청</option>
+                  <option value="pending">출금 대기</option>
+                  <option value="processing">출금 진행</option>
+                  <option value="completed">출금 완료</option>
+                  <option value="rejected">반려</option>
+                  <option value="archived">처리 완료</option>
+                </select>
+              </div>
+
+              {/* 기간 필터 */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">기간</span>
+                <select
+                  value={auditDateFilter}
+                  onChange={(e) => setAuditDateFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-[120px]"
+                >
+                  <option value="all">전체</option>
+                  <option value="today">오늘</option>
+                  <option value="week">최근 7일</option>
+                  <option value="month">최근 30일</option>
+                  <option value="quarter">최근 3개월</option>
+                </select>
+              </div>
+
+              {/* 활성 필터 표시 */}
+              {(auditStatusFilter !== "all" || auditDateFilter !== "all" || auditSearchTerm) && (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-sm text-gray-500">활성 필터:</span>
+                  {auditSearchTerm && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                      검색: {auditSearchTerm}
+                      <button
+                        onClick={() => setAuditSearchTerm("")}
+                        className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-primary-400 hover:bg-primary-200 hover:text-primary-600"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {auditStatusFilter !== "all" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      상태: {auditStatusFilter === "submitted" ? "출금 신청" : 
+                             auditStatusFilter === "pending" ? "출금 대기" :
+                             auditStatusFilter === "processing" ? "출금 진행" :
+                             auditStatusFilter === "completed" ? "출금 완료" : 
+                             auditStatusFilter === "rejected" ? "반려" : "처리 완료"}
+                      <button
+                        onClick={() => setAuditStatusFilter("all")}
+                        className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {auditDateFilter !== "all" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      기간: {auditDateFilter === "today" ? "오늘" :
+                            auditDateFilter === "week" ? "최근 7일" :
+                            auditDateFilter === "month" ? "최근 30일" : "최근 3개월"}
+                      <button
+                        onClick={() => setAuditDateFilter("all")}
+                        className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-green-400 hover:bg-green-200 hover:text-green-600"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    onClick={() => {
+                      setAuditSearchTerm("");
+                      setAuditStatusFilter("all");
+                      setAuditDateFilter("all");
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  >
+                    모든 필터 지우기
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 검색 결과 요약 */}
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div>
+              총 <span className="font-semibold text-gray-900">{getFilteredAuditRequests().length}</span>개의 출금 신청이 검색되었습니다.
+            </div>
+            {(auditSearchTerm || auditStatusFilter !== "all" || auditDateFilter !== "all") && (
+              <button
+                onClick={() => {
+                  setAuditSearchTerm("");
+                  setAuditStatusFilter("all");
+                  setAuditDateFilter("all");
+                }}
+                className="text-primary-600 hover:text-primary-800 font-medium"
+              >
+                필터 초기화
+              </button>
+            )}
+          </div>
 
           <div className="space-y-4">
-            {mockRequests.map((request) => (
+            {getFilteredAuditRequests().length === 0 ? (
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">검색 결과가 없습니다</h3>
+                <p className="text-gray-500">
+                  다른 검색어나 필터 조건을 시도해보세요.
+                </p>
+              </div>
+            ) : (
+              getFilteredAuditRequests().map((request) => (
               <div
                 key={request.id}
                 className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
@@ -2556,7 +2939,8 @@ export default function WithdrawalManagement({
                   ))}
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
@@ -2977,6 +3361,152 @@ export default function WithdrawalManagement({
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 재신청 확인 팝업 */}
+      {showReapplicationModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  재신청 확인
+                </h3>
+                <button
+                  onClick={() => setShowReapplicationModal({ show: false, requestId: null })}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
+                  <svg
+                    className="w-5 h-5 text-blue-600 mr-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">재신청 안내</p>
+                    <p>기존 신청 정보가 복사되어 새로운 신청서가 생성됩니다. 반려 사유를 참고하여 필요한 내용을 수정 후 다시 신청해주세요.</p>
+                  </div>
+                </div>
+                
+                <p className="text-gray-700 mb-4">
+                  이 출금 신청을 <span className="font-semibold text-blue-600">재신청</span>하시겠습니까?
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowReapplicationModal({ show: false, requestId: null })}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmReapplication}
+                  className="px-6 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  재신청하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 아카이브 확인 팝업 */}
+      {showArchiveModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  처리 완료 확인
+                </h3>
+                <button
+                  onClick={() => setShowArchiveModal({ show: false, requestId: null })}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                  <svg
+                    className="w-5 h-5 text-gray-600 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 8l4 4L19 2"
+                    />
+                  </svg>
+                  <div className="text-sm text-gray-800">
+                    <p className="font-medium mb-1">처리 완료 안내</p>
+                    <p>반려된 출금 신청을 처리 완료로 변경합니다. 이후 별도 필터를 통해 조회할 수 있습니다.</p>
+                  </div>
+                </div>
+                
+                <p className="text-gray-700 mb-4">
+                  이 반려된 출금 신청을 <span className="font-semibold text-gray-600">처리 완료</span>로 변경하시겠습니까?
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowArchiveModal({ show: false, requestId: null })}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  className="px-6 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  처리 완료
+                </button>
+              </div>
             </div>
           </div>
         </div>
