@@ -18,85 +18,13 @@ import {
   FireIcon,
   ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
-import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-interface WithdrawalManagementProps {
-  plan: ServicePlan;
-}
-
-type WithdrawalStatus =
-  | "draft" // 임시저장
-  | "submitted" // 출금 신청
-  | "approved" // 결재 완료
-  | "pending" // 출금 대기
-  | "processing" // 출금 진행 (Air-gap)
-  | "completed" // 출금 완료
-  | "rejected" // 반려
-  | "archived" // 처리 완료 (반려 후 아카이브)
-  | "cancelled"; // 취소
-
-type UserRole =
-  | "initiator"
-  | "approver"
-  | "required_approver"
-  | "operator"
-  | "admin";
-
-interface WithdrawalRequest {
-  id: string;
-  title: string;
-  fromAddress: string;
-  toAddress: string;
-  amount: number;
-  currency: string;
-  groupId: string;
-  initiator: string;
-  initiatedAt: string;
-  status: WithdrawalStatus;
-  priority: "low" | "medium" | "high" | "critical";
-  description: string;
-
-  // 결재 관련
-  requiredApprovals: string[];
-  approvals: Array<{
-    userId: string;
-    userName: string;
-    role: UserRole;
-    approvedAt: string;
-    signature?: string;
-  }>;
-  rejections: Array<{
-    userId: string;
-    userName: string;
-    rejectedAt: string;
-    reason: string;
-  }>;
-
-  // Air-gap 관련
-  airGapSessionId?: string;
-  securityReviewBy?: string;
-  securityReviewAt?: string;
-  signatureCompleted?: boolean;
-  txHash?: string;
-  blockConfirmations?: number;
-
-  // 재신청 관련
-  originalRequestId?: string; // 원본 신청 ID (재신청인 경우)
-  reapplicationCount?: number; // 재신청 횟수
-  archivedAt?: string; // 아카이브 처리 시간
-  archivedBy?: string; // 아카이브 처리자
-
-  // 감사 추적
-  auditTrail: Array<{
-    timestamp: string;
-    action: string;
-    userId: string;
-    userName?: string;
-    details?: string;
-    ipAddress?: string;
-  }>;
-}
+import { WithdrawalManagementProps, WithdrawalRequest, WithdrawalStatus, UserRole } from "@/types/withdrawal";
+import { getStatusInfo, getPriorityInfo, formatCurrency, formatAmount, formatDateTime, formatDate } from "@/utils/withdrawalHelpers";
+import { StatusBadge } from "./withdrawal/StatusBadge";
+import { PriorityBadge } from "./withdrawal/PriorityBadge";
+import { WithdrawalTableRow } from "./withdrawal/WithdrawalTableRow";
+import { CreateWithdrawalModal } from "./withdrawal/CreateWithdrawalModal";
 
 export default function WithdrawalManagement({
   plan,
@@ -770,103 +698,6 @@ export default function WithdrawalManagement({
     },
   ];
 
-  const getStatusInfo = (status: WithdrawalStatus) => {
-    const statusConfig = {
-      draft: {
-        name: "임시저장",
-        color: "bg-gray-100 text-gray-800",
-        icon: DocumentTextIcon,
-      },
-      submitted: {
-        name: "출금 신청",
-        color: "bg-blue-100 text-blue-800",
-        icon: ArrowUpOnSquareIcon,
-      },
-      approved: {
-        name: "결재 승인",
-        color: "bg-green-100 text-green-800",
-        icon: CheckCircleIcon,
-      },
-      pending: {
-        name: "출금 대기",
-        color: "bg-yellow-100 text-yellow-800",
-        icon: ClockIcon,
-      },
-      processing: {
-        name: "출금 진행",
-        color: "bg-purple-100 text-purple-800",
-        icon: CpuChipIcon,
-      },
-      completed: {
-        name: "출금 완료",
-        color: "bg-emerald-100 text-emerald-800",
-        icon: CheckCircleIcon,
-      },
-      rejected: {
-        name: "반려",
-        color: "bg-red-100 text-red-800",
-        icon: XCircleIcon,
-      },
-      archived: {
-        name: "처리 완료",
-        color: "bg-gray-100 text-gray-800",
-        icon: ArchiveBoxIcon,
-      },
-      cancelled: {
-        name: "취소",
-        color: "bg-gray-100 text-gray-800",
-        icon: XCircleIcon,
-      },
-    };
-    return statusConfig[status] || statusConfig.draft;
-  };
-
-  const getPriorityInfo = (priority: string) => {
-    const priorityConfig = {
-      low: { name: "낮음", color: "bg-green-100 text-green-800" },
-      medium: { name: "보통", color: "bg-yellow-100 text-yellow-800" },
-      high: { name: "높음", color: "bg-orange-100 text-orange-800" },
-      critical: { name: "긴급", color: "bg-red-100 text-red-800" },
-    };
-    return (
-      priorityConfig[priority as keyof typeof priorityConfig] ||
-      priorityConfig.medium
-    );
-  };
-
-  const formatCurrency = (amount: number, currency: string) => {
-    if (currency === "BTC") return `₿${amount.toFixed(8)}`;
-    if (currency === "ETH") return `Ξ${amount.toFixed(6)}`;
-    if (currency === "USDC") return `${amount.toLocaleString()} USDC`;
-    if (currency === "USDT") return `${amount.toLocaleString()} USDT`;
-    return `${amount.toLocaleString()} ${currency}`;
-  };
-
-  const formatAmount = (amount: number, currency: string) => {
-    if (currency === "BTC") return parseFloat(amount.toFixed(8)).toString();
-    if (currency === "ETH") return parseFloat(amount.toFixed(6)).toString();
-    if (currency === "USDC") return amount.toLocaleString();
-    if (currency === "USDT") return amount.toLocaleString();
-    return amount.toLocaleString();
-  };
-
-  const formatDateTime = (timestamp: string) => {
-    return new Intl.DateTimeFormat("ko-KR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(timestamp));
-  };
-
-  const formatDate = (timestamp: string) => {
-    return new Intl.DateTimeFormat("ko-KR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(timestamp));
-  };
 
   const handleCreateRequest = () => {
     console.log("Creating withdrawal request:", newRequest);
@@ -1425,136 +1256,17 @@ export default function WithdrawalManagement({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredRequests
                     .filter((r) => ["submitted"].includes(r.status))
-                    .map((request) => {
-                      const statusInfo = getStatusInfo(request.status);
-                      const priorityInfo = getPriorityInfo(request.priority);
-                      const StatusIcon = statusInfo.icon;
-                      const approvalProgress =
-                        (request.approvals.length /
-                          request.requiredApprovals.length) *
-                        100;
-
-                      return (
-                        <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              #{request.id}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">
-                                {request.title}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {request.description}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {formatDateTime(request.initiatedAt)}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                                alt={request.currency}
-                                className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                                onError={(e) => {
-                                  (
-                                    e.target as HTMLImageElement
-                                  ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                    <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                    <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                      ${request.currency}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                                }}
-                              />
-                              <div className="text-sm">
-                                <p className="font-semibold text-gray-900">
-                                  {formatAmount(
-                                    request.amount,
-                                    request.currency
-                                  )}
-                                </p>
-                                <p className="text-gray-500">
-                                  {request.currency}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {request.initiator}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${priorityInfo.color}`}
-                            >
-                              {priorityInfo.name}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <StatusIcon className="h-4 w-4 mr-2" />
-                              <span
-                                className={`px-2 py-1 text-xs font-medium rounded ${statusInfo.color}`}
-                              >
-                                {statusInfo.name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {(request.status === "submitted" ||
-                              request.status === "approved") && (
-                              <div className="w-full">
-                                <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                  <span>
-                                    {request.approvals.length}/
-                                    {request.requiredApprovals.length}
-                                  </span>
-                                  {request.status === "approved" && (
-                                    <span className="text-green-600 font-medium">
-                                      완료
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className={`h-2 rounded-full transition-all ${
-                                      request.status === "approved"
-                                        ? "bg-green-500"
-                                        : "bg-blue-500"
-                                    }`}
-                                    style={{
-                                      width: `${approvalProgress}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() =>
-                                  setSelectedRequest(
-                                    selectedRequest === request.id
-                                      ? null
-                                      : request.id
-                                  )
-                                }
-                                className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                              >
-                                상세보기
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    .map((request) => (
+                      <WithdrawalTableRow
+                        key={request.id}
+                        request={request}
+                        onToggleDetails={(requestId) =>
+                          setSelectedRequest(
+                            selectedRequest === requestId ? null : requestId
+                          )
+                        }
+                      />
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -2047,11 +1759,7 @@ export default function WithdrawalManagement({
                             {request.initiator}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${priorityInfo.color}`}
-                            >
-                              {priorityInfo.name}
-                            </span>
+                            <PriorityBadge priority={request.priority} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-full">
