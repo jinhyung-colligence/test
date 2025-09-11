@@ -102,8 +102,8 @@ export default function WithdrawalManagement({
   plan,
 }: WithdrawalManagementProps) {
   const [activeTab, setActiveTab] = useState<
-    "requests" | "approval" | "airgap" | "audit" | "rejected"
-  >("requests");
+    "approval" | "airgap" | "audit" | "rejected"
+  >("approval");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [selectedProcessingRequest, setSelectedProcessingRequest] = useState<
@@ -778,7 +778,7 @@ export default function WithdrawalManagement({
         icon: DocumentTextIcon,
       },
       submitted: {
-        name: "출금 신청",
+        name: "결재 승인 대기",
         color: "bg-blue-100 text-blue-800",
         icon: ArrowUpOnSquareIcon,
       },
@@ -902,6 +902,11 @@ export default function WithdrawalManagement({
   const [processingStatusFilter, setProcessingStatusFilter] = useState<string>("all");
   const [processingDateFilter, setProcessingDateFilter] = useState<string>("all");
 
+  // 반려/보류 관리 검색 및 필터
+  const [rejectedSearchTerm, setRejectedSearchTerm] = useState("");
+  const [rejectedStatusFilter, setRejectedStatusFilter] = useState<string>("all");
+  const [rejectedDateFilter, setRejectedDateFilter] = useState<string>("all");
+
   // 감사 추적 페이지네이션
   const [auditCurrentPage, setAuditCurrentPage] = useState(1);
   const [auditItemsPerPage] = useState(10);
@@ -909,6 +914,10 @@ export default function WithdrawalManagement({
   // 출금 처리 페이지네이션
   const [processingCurrentPage, setProcessingCurrentPage] = useState(1);
   const [processingItemsPerPage] = useState(10);
+
+  // 반려/보류 관리 페이지네이션
+  const [rejectedCurrentPage, setRejectedCurrentPage] = useState(1);
+  const [rejectedItemsPerPage] = useState(10);
 
   // 감사 추적 상세보기 토글 상태
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -1053,6 +1062,150 @@ export default function WithdrawalManagement({
   // 필터 기능 제거 - 모든 요청 표시
   const filteredRequests = mockRequests;
 
+  // 출금 처리 필터링 로직
+  const getFilteredProcessingRequests = () => {
+    return mockRequests.filter((request) => {
+      // 출금 처리 상태에 해당하는 요청만 필터링
+      const isProcessingRequest = ["pending", "processing", "completed"].includes(request.status);
+      if (!isProcessingRequest) return false;
+
+      // 검색어 필터
+      const searchMatch =
+        processingSearchTerm === "" ||
+        request.id.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
+        request.title.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
+        request.initiator.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
+        request.currency.toLowerCase().includes(processingSearchTerm.toLowerCase());
+
+      // 상태 필터
+      let statusMatch = false;
+      if (processingStatusFilter === "all") {
+        statusMatch = true;
+      } else if (processingStatusFilter === "security_verification") {
+        // 보안 검증 단계: processing 상태이면서 보안 검증 단계인 경우 (2025-09-0002)
+        statusMatch = request.status === "processing" && request.id === "2025-09-0002";
+      } else if (processingStatusFilter === "processing") {
+        // 출금 진행 단계: processing 상태이면서 Air-gap 서명 진행 단계인 경우 (2025-09-0008)
+        statusMatch = request.status === "processing" && request.id === "2025-09-0008";
+      } else {
+        statusMatch = request.status === processingStatusFilter;
+      }
+
+      // 날짜 필터
+      let dateMatch = true;
+      if (processingDateFilter !== "all") {
+        const requestDate = new Date(request.initiatedAt);
+        const now = new Date();
+        const diffTime = now.getTime() - requestDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (processingDateFilter) {
+          case "today":
+            dateMatch = diffDays === 0;
+            break;
+          case "week":
+            dateMatch = diffDays <= 7;
+            break;
+          case "month":
+            dateMatch = diffDays <= 30;
+            break;
+          case "quarter":
+            dateMatch = diffDays <= 90;
+            break;
+          default:
+            dateMatch = true;
+        }
+      }
+
+      return searchMatch && statusMatch && dateMatch;
+    });
+  };
+
+  // 출금 처리 페이지네이션 로직
+  const getPaginatedProcessingRequests = () => {
+    const filteredData = getFilteredProcessingRequests();
+    const totalItems = filteredData.length;
+    const totalPages = Math.ceil(totalItems / processingItemsPerPage);
+    const startIndex = (processingCurrentPage - 1) * processingItemsPerPage;
+    const endIndex = startIndex + processingItemsPerPage;
+    const paginatedItems = filteredData.slice(startIndex, endIndex);
+
+    return {
+      items: paginatedItems,
+      currentPage: processingCurrentPage,
+      totalPages,
+      totalItems,
+      itemsPerPage: processingItemsPerPage,
+    };
+  };
+
+  // 반려/보류 관리 필터링 로직
+  const getFilteredRejectedRequests = () => {
+    return mockRequests.filter((request) => {
+      // 반려/보류 상태에 해당하는 요청만 필터링
+      const isRejectedRequest = ["rejected", "archived"].includes(request.status);
+      if (!isRejectedRequest) return false;
+
+      // 검색어 필터
+      const searchMatch =
+        rejectedSearchTerm === "" ||
+        request.id.toLowerCase().includes(rejectedSearchTerm.toLowerCase()) ||
+        request.title.toLowerCase().includes(rejectedSearchTerm.toLowerCase()) ||
+        request.initiator.toLowerCase().includes(rejectedSearchTerm.toLowerCase()) ||
+        request.currency.toLowerCase().includes(rejectedSearchTerm.toLowerCase());
+
+      // 상태 필터
+      const statusMatch =
+        rejectedStatusFilter === "all" || request.status === rejectedStatusFilter;
+
+      // 날짜 필터
+      let dateMatch = true;
+      if (rejectedDateFilter !== "all") {
+        const requestDate = new Date(request.initiatedAt);
+        const now = new Date();
+        const diffTime = now.getTime() - requestDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (rejectedDateFilter) {
+          case "today":
+            dateMatch = diffDays === 0;
+            break;
+          case "week":
+            dateMatch = diffDays <= 7;
+            break;
+          case "month":
+            dateMatch = diffDays <= 30;
+            break;
+          case "quarter":
+            dateMatch = diffDays <= 90;
+            break;
+          default:
+            dateMatch = true;
+        }
+      }
+
+      return searchMatch && statusMatch && dateMatch;
+    });
+  };
+
+  // 반려/보류 관리 페이지네이션 로직
+  const getPaginatedRejectedRequests = () => {
+    const filteredData = getFilteredRejectedRequests();
+    const totalItems = filteredData.length;
+    const totalPages = Math.ceil(totalItems / rejectedItemsPerPage);
+    const startIndex = (rejectedCurrentPage - 1) * rejectedItemsPerPage;
+    const endIndex = startIndex + rejectedItemsPerPage;
+    const paginatedItems = filteredData.slice(startIndex, endIndex);
+
+    return {
+      items: paginatedItems,
+      currentPage: rejectedCurrentPage,
+      totalPages,
+      totalItems,
+      itemsPerPage: rejectedItemsPerPage,
+    };
+  };
+
   // 감사 추적 필터링 로직
   const getFilteredAuditRequests = () => {
     return mockRequests.filter((request) => {
@@ -1064,8 +1217,18 @@ export default function WithdrawalManagement({
         request.initiator.toLowerCase().includes(auditSearchTerm.toLowerCase());
 
       // 상태 필터
-      const statusMatch =
-        auditStatusFilter === "all" || request.status === auditStatusFilter;
+      let statusMatch = false;
+      if (auditStatusFilter === "all") {
+        statusMatch = true;
+      } else if (auditStatusFilter === "security_verification") {
+        // 보안 검증 필터: processing 상태이면서 2025-09-0002인 경우
+        statusMatch = request.status === "processing" && request.id === "2025-09-0002";
+      } else if (auditStatusFilter === "processing") {
+        // 출금 진행 필터: processing 상태이면서 2025-09-0008인 경우
+        statusMatch = request.status === "processing" && request.id === "2025-09-0008";
+      } else {
+        statusMatch = request.status === auditStatusFilter;
+      }
 
       // 날짜 필터
       let dateMatch = true;
@@ -1105,71 +1268,6 @@ export default function WithdrawalManagement({
       items: filtered.slice(startIndex, endIndex),
       totalItems: filtered.length,
       totalPages: Math.ceil(filtered.length / auditItemsPerPage),
-    };
-  };
-
-  // 출금 처리 필터링 로직
-  const getFilteredProcessingRequests = () => {
-    return mockRequests.filter((request) => {
-      // 상태 필터
-      const statusMatch = 
-        processingStatusFilter === "all" || 
-        (processingStatusFilter === "pending" && request.status === "pending") ||
-        (processingStatusFilter === "processing" && request.status === "processing") ||
-        (processingStatusFilter === "security_verification" && request.status === "processing") ||
-        (processingStatusFilter === "completed" && request.status === "completed");
-
-      // 검색어 필터
-      const searchMatch = 
-        processingSearchTerm === "" ||
-        request.id.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.title.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.initiator.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.amount.toString().includes(processingSearchTerm.toLowerCase()) ||
-        request.currency.toLowerCase().includes(processingSearchTerm.toLowerCase());
-
-      // 기간 필터
-      let dateMatch = true;
-      if (processingDateFilter !== "all") {
-        const requestDate = new Date(request.initiatedAt);
-        const now = new Date();
-        
-        switch (processingDateFilter) {
-          case "today":
-            dateMatch = requestDate.toDateString() === now.toDateString();
-            break;
-          case "week":
-            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            dateMatch = requestDate >= weekAgo;
-            break;
-          case "month":
-            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            dateMatch = requestDate >= monthAgo;
-            break;
-          case "quarter":
-            const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-            dateMatch = requestDate >= quarterAgo;
-            break;
-        }
-      }
-
-      // 출금 처리 관련 상태만 포함
-      const isProcessingStatus = ["pending", "processing", "completed"].includes(request.status);
-
-      return searchMatch && statusMatch && dateMatch && isProcessingStatus;
-    });
-  };
-
-  const getPaginatedProcessingRequests = () => {
-    const filtered = getFilteredProcessingRequests();
-    const startIndex = (processingCurrentPage - 1) * processingItemsPerPage;
-    const endIndex = startIndex + processingItemsPerPage;
-    return {
-      items: filtered.slice(startIndex, endIndex),
-      totalItems: filtered.length,
-      totalPages: Math.ceil(filtered.length / processingItemsPerPage),
-      currentPage: processingCurrentPage,
-      itemsPerPage: processingItemsPerPage,
     };
   };
 
@@ -1319,14 +1417,6 @@ export default function WithdrawalManagement({
         <nav className="flex space-x-8">
           {[
             {
-              id: "requests",
-              name: "출금 신청 관리",
-              icon: DocumentCheckIcon,
-              count: mockRequests.filter((r) =>
-                ["submitted"].includes(r.status)
-              ).length,
-            },
-            {
               id: "approval",
               name: "결재 승인 대기",
               icon: CheckCircleIcon,
@@ -1382,578 +1472,18 @@ export default function WithdrawalManagement({
         </nav>
       </div>
 
-      {/* 출금 신청 관리 탭 */}
-      {activeTab === "requests" && (
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              출금 신청 현황
-            </h3>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      신청 ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      출금 내용
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      자산
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      기안자
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      우선순위
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      상태
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      승인진행률
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      작업
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRequests
-                    .filter((r) => ["submitted"].includes(r.status))
-                    .map((request) => {
-                      const statusInfo = getStatusInfo(request.status);
-                      const priorityInfo = getPriorityInfo(request.priority);
-                      const StatusIcon = statusInfo.icon;
-                      const approvalProgress =
-                        (request.approvals.length /
-                          request.requiredApprovals.length) *
-                        100;
-
-                      return (
-                        <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              #{request.id}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">
-                                {request.title}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {request.description}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {formatDateTime(request.initiatedAt)}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                                alt={request.currency}
-                                className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                                onError={(e) => {
-                                  (
-                                    e.target as HTMLImageElement
-                                  ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                    <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                    <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                      ${request.currency}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                                }}
-                              />
-                              <div className="text-sm">
-                                <p className="font-semibold text-gray-900">
-                                  {formatAmount(
-                                    request.amount,
-                                    request.currency
-                                  )}
-                                </p>
-                                <p className="text-gray-500">
-                                  {request.currency}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {request.initiator}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${priorityInfo.color}`}
-                            >
-                              {priorityInfo.name}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <StatusIcon className="h-4 w-4 mr-2" />
-                              <span
-                                className={`px-2 py-1 text-xs font-medium rounded ${statusInfo.color}`}
-                              >
-                                {statusInfo.name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {(request.status === "submitted" ||
-                              request.status === "approved") && (
-                              <div className="w-full">
-                                <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                  <span>
-                                    {request.approvals.length}/
-                                    {request.requiredApprovals.length}
-                                  </span>
-                                  {request.status === "approved" && (
-                                    <span className="text-green-600 font-medium">
-                                      완료
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className={`h-2 rounded-full transition-all ${
-                                      request.status === "approved"
-                                        ? "bg-green-500"
-                                        : "bg-blue-500"
-                                    }`}
-                                    style={{
-                                      width: `${approvalProgress}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() =>
-                                  setSelectedRequest(
-                                    selectedRequest === request.id
-                                      ? null
-                                      : request.id
-                                  )
-                                }
-                                className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                              >
-                                상세보기
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* 상세 정보 패널 */}
-          {selectedRequest && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {(() => {
-                const request = mockRequests.find(
-                  (r) => r.id === selectedRequest
-                );
-                if (!request) return null;
-
-                return (
-                  <div>
-                    {/* 헤더 */}
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                  getStatusInfo(request.status).color
-                                }`}
-                              >
-                                {getStatusInfo(request.status).name}
-                              </span>
-                            </div>
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {request.title} 상세 정보
-                            </h4>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setSelectedRequest(null)}
-                          className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-                        >
-                          <svg
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* 출금 요약 */}
-                        <div className="lg:col-span-1">
-                          <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                            출금 요약
-                          </h5>
-                          <div className="space-y-4">
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {formatAmount(
-                                    request.amount,
-                                    request.currency
-                                  )}
-                                </div>
-                                <div className="text-sm text-gray-500 mb-2">
-                                  {request.currency}
-                                </div>
-                                <div className="text-lg font-semibold text-primary-600">
-                                  ₩
-                                  {(
-                                    request.amount *
-                                    (request.currency === "BTC"
-                                      ? 95000000
-                                      : request.currency === "ETH"
-                                      ? 4200000
-                                      : request.currency === "USDC"
-                                      ? 1340
-                                      : request.currency === "USDT"
-                                      ? 1340
-                                      : 70000000)
-                                  ).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-500">신청 시간</span>
-                                <span className="font-medium">
-                                  {formatDateTime(request.initiatedAt)}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-500">기안자</span>
-                                <span className="font-medium">
-                                  {request.initiator}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-500">우선순위</span>
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded ${
-                                    getPriorityInfo(request.priority).color
-                                  }`}
-                                >
-                                  {getPriorityInfo(request.priority).name}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 블록체인 정보 */}
-                        <div className="lg:col-span-2">
-                          <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                            블록체인 정보
-                          </h5>
-                          <div className="space-y-4">
-                            {request.txHash && (
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-start justify-between mb-2">
-                                  <span className="text-sm font-medium text-gray-700">
-                                    트랜잭션 해시
-                                  </span>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-sm text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.txHash}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center">
-                                    <svg
-                                      className="w-4 h-4 text-gray-600 mr-2"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M7 11l5-5m0 0l5 5m-5-5v12"
-                                      />
-                                    </svg>
-                                    <span className="text-sm font-medium text-gray-700">
-                                      보낸 주소
-                                    </span>
-                                  </div>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.fromAddress}
-                                </div>
-                              </div>
-
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center">
-                                    <svg
-                                      className="w-4 h-4 text-gray-600 mr-2"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17 13l-5 5m0 0l-5-5m5 5V6"
-                                      />
-                                    </svg>
-                                    <span className="text-sm font-medium text-gray-700">
-                                      받은 주소
-                                    </span>
-                                  </div>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.toAddress}
-                                </div>
-                              </div>
-                            </div>
-
-                            {request.txHash && (
-                              <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="flex items-start justify-between mb-2">
-                                  <span className="text-sm font-medium text-gray-700">
-                                    트랜잭션 해시
-                                  </span>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-sm text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.txHash}
-                                </div>
-                              </div>
-                            )}
-
-                            {request.status === "completed" && (
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center">
-                                  <svg
-                                    className="w-5 h-5 text-gray-600 mr-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-800">
-                                    출금이 성공적으로 완료되었습니다
-                                  </span>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-600">
-                                  블록체인에 영구적으로 기록되었습니다.
-                                </div>
-                              </div>
-                            )}
-
-                            {request.status === "processing" && (
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center">
-                                  <svg
-                                    className="w-5 h-5 text-gray-600 mr-2 animate-spin"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                    />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-800">
-                                    출금 처리 중입니다
-                                  </span>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-600">
-                                  Air-gap 환경에서 보안 검증 및 서명이 진행
-                                  중입니다.
-                                </div>
-                              </div>
-                            )}
-
-                            {request.status === "pending" && (
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center">
-                                  <svg
-                                    className="w-5 h-5 text-gray-600 mr-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-800">
-                                    출금 대기 중입니다
-                                  </span>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-600">
-                                  오출금 방지를 위한 대기 기간이 진행 중입니다.
-                                </div>
-                              </div>
-                            )}
-
-                            {request.status === "submitted" && (
-                              <div className="bg-gray-50 p-4 rounded-lg border">
-                                <div className="flex items-center">
-                                  <svg
-                                    className="w-5 h-5 text-gray-600 mr-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-800">
-                                    결재 승인 대기 중입니다
-                                  </span>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-600">
-                                  필수 결재자의 승인을 기다리고 있습니다.
-                                </div>
-                              </div>
-                            )}
-
-                            {request.status === "rejected" &&
-                              request.rejections.length > 0 && (
-                                <div className="bg-gray-50 p-4 rounded-lg border">
-                                  <div className="flex items-center mb-3">
-                                    <svg
-                                      className="w-5 h-5 text-gray-600 mr-2"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                      />
-                                    </svg>
-                                    <span className="text-sm font-medium text-gray-800">
-                                      출금 신청이 반려되었습니다
-                                    </span>
-                                  </div>
-                                  {request.rejections.map(
-                                    (rejection, index) => (
-                                      <div
-                                        key={index}
-                                        className="bg-white p-3 rounded border"
-                                      >
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-medium text-gray-700">
-                                            반려 사유
-                                          </span>
-                                          <span className="text-xs text-gray-500">
-                                            {formatDateTime(
-                                              rejection.rejectedAt
-                                            )}
-                                          </span>
-                                        </div>
-                                        <p className="text-sm text-gray-800 mb-2">
-                                          {rejection.reason}
-                                        </p>
-                                        <div className="text-xs text-gray-500">
-                                          반려자: {rejection.userName}
-                                        </div>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-
-                            <div className="bg-gray-50 p-4 rounded-lg border">
-                              <h6 className="text-sm font-medium text-gray-700 mb-2">
-                                상세 설명
-                              </h6>
-                              <p className="text-sm text-gray-600">
-                                {request.description}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* 결재 승인 탭 */}
       {activeTab === "approval" && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            결재 승인 대기 목록
-          </h3>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+                  결재 승인 대기 목록
+                </h3>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -2353,61 +1883,8 @@ export default function WithdrawalManagement({
                       onChange={(e) => setProcessingSearchTerm(e.target.value)}
                       className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
                     />
-                    <svg
-                      className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-
-                  {/* 상태 필터 */}
-                  <select
-                    value={processingStatusFilter}
-                    onChange={(e) => setProcessingStatusFilter(e.target.value)}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">모든 상태</option>
-                    <option value="pending">출금 대기</option>
-                    <option value="processing">출금 진행</option>
-                    <option value="security_verification">보안 검증</option>
-                    <option value="completed">처리완료</option>
-                  </select>
-
-                  {/* 기간 필터 */}
-                  <select
-                    value={processingDateFilter}
-                    onChange={(e) => setProcessingDateFilter(e.target.value)}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">전체 기간</option>
-                    <option value="today">오늘</option>
-                    <option value="week">최근 7일</option>
-                    <option value="month">최근 30일</option>
-                    <option value="quarter">최근 3개월</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* 데이터 표시 영역 */}
-            <div className="p-6">
-              {(() => {
-                const paginatedData = getPaginatedProcessingRequests();
-                
-                return paginatedData.totalItems === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <svg
-                          className="w-8 h-8 text-gray-400"
+                          className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -2415,23 +1892,76 @@ export default function WithdrawalManagement({
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            strokeWidth="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                           />
                         </svg>
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        검색 결과가 없습니다
-                      </h3>
-                      <p className="text-gray-500">
-                        다른 검색어나 필터 조건을 시도해보세요.
-                      </p>
+
+                      {/* 상태 필터 */}
+                      <select
+                        value={processingStatusFilter}
+                        onChange={(e) => setProcessingStatusFilter(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="all">모든 상태</option>
+                        <option value="pending">출금 대기</option>
+                        <option value="security_verification">보안 검증</option>
+                        <option value="processing">출금 진행</option>
+                        <option value="completed">처리완료</option>
+                      </select>
+
+                      {/* 기간 필터 */}
+                      <select
+                        value={processingDateFilter}
+                        onChange={(e) => setProcessingDateFilter(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="all">전체 기간</option>
+                        <option value="today">오늘</option>
+                        <option value="week">최근 7일</option>
+                        <option value="month">최근 30일</option>
+                        <option value="quarter">최근 3개월</option>
+                      </select>
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-full">
+                </div>
+
+                {/* 데이터 표시 영역 */}
+                <div className="p-6">
+                  {(() => {
+                    const paginatedData = getPaginatedProcessingRequests();
+                    
+                    return paginatedData.totalItems === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            검색 결과가 없습니다
+                          </h3>
+                          <p className="text-gray-500">
+                            다른 검색어나 필터 조건을 시도해보세요.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-full">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -2455,12 +1985,7 @@ export default function WithdrawalManagement({
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {mockRequests
-                        .filter((r) =>
-                          ["pending", "processing", "completed"].includes(
-                            r.status
-                          )
-                        )
+                      {getPaginatedProcessingRequests().items
                         .map((request) => {
                           const getProgressInfo = (request: any) => {
                             if (request.status === "pending") {
@@ -2476,7 +2001,7 @@ export default function WithdrawalManagement({
                               };
                             } else if (request.status === "processing") {
                               // 출금 진행 (이상거래 검토, 트래블룰, Air-gap 서명)
-                              if (request.id === "8")
+                              if (request.id === "2025-09-0008")
                                 return {
                                   progress: 85,
                                   step: "Air-gap 서명 진행",
@@ -2493,7 +2018,7 @@ export default function WithdrawalManagement({
                               // 출금 완료 (블록체인 전송 완료)
                               return {
                                 progress: 100,
-                                step: "블록체인 전송",
+                                step: "처리완료",
                                 eta: "완료됨",
                                 type: "completed",
                                 txHash: request.txHash,
@@ -2634,93 +2159,79 @@ export default function WithdrawalManagement({
                                   >
                                     상세보기
                                   </button>
-
-                                  {request.status === "completed" && (
-                                    <>
-                                      <div className="h-4 w-px bg-gray-300"></div>
-                                      <button
-                                        onClick={() =>
-                                          handleArchive(request.id)
-                                        }
-                                        className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
-                                      >
-                                        처리완료
-                                      </button>
-                                    </>
-                                  )}
                                 </div>
                               </td>
                             </tr>
                           );
                         })}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* 페이지네이션 */}
-                    {paginatedData.totalPages > 0 && (
-                      <div className="px-6 py-4 border-t border-gray-200">
-                        <div className="flex flex-col sm:flex-row justify-between items-center">
-                          <div className="text-sm text-gray-700 mb-4 sm:mb-0">
-                            총 {paginatedData.totalItems}개 중{" "}
-                            {Math.min(
-                              (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
-                              paginatedData.totalItems
-                            )}
-                            -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => setProcessingCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
-                              disabled={paginatedData.currentPage === 1}
-                              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              이전
-                            </button>
-                            
-                            {[...Array(paginatedData.totalPages)].map((_, index) => {
-                              const pageNumber = index + 1;
-                              const isCurrentPage = pageNumber === paginatedData.currentPage;
-                              
-                              return (
-                                <button
-                                  key={pageNumber}
-                                  onClick={() => setProcessingCurrentPage(pageNumber)}
-                                  className={`px-3 py-1 text-sm border rounded-md ${
-                                    isCurrentPage
-                                      ? "bg-primary-600 text-white border-primary-600"
-                                      : "border-gray-300 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  {pageNumber}
-                                </button>
-                              );
-                            })}
-                            
-                            <button
-                              onClick={() => setProcessingCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
-                              disabled={paginatedData.currentPage === paginatedData.totalPages}
-                              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              다음
-                            </button>
-                          </div>
+                            </tbody>
+                          </table>
                         </div>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </div>
+
+                        {/* 페이지네이션 */}
+                        {paginatedData.totalPages > 0 && (
+                          <div className="px-6 py-4 border-t border-gray-200">
+                            <div className="flex flex-col sm:flex-row justify-between items-center">
+                              <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                                총 {paginatedData.totalItems}개 중{" "}
+                                {Math.min(
+                                  (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                                  paginatedData.totalItems
+                                )}
+                                -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => setProcessingCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
+                                  disabled={paginatedData.currentPage === 1}
+                                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  이전
+                                </button>
+                                
+                                {[...Array(paginatedData.totalPages)].map((_, index) => {
+                                  const pageNumber = index + 1;
+                                  const isCurrentPage = pageNumber === paginatedData.currentPage;
+                                  
+                                  return (
+                                    <button
+                                      key={pageNumber}
+                                      onClick={() => setProcessingCurrentPage(pageNumber)}
+                                      className={`px-3 py-1 text-sm border rounded-md ${
+                                        isCurrentPage
+                                          ? "bg-primary-600 text-white border-primary-600"
+                                          : "border-gray-300 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      {pageNumber}
+                                    </button>
+                                  );
+                                })}
+                                
+                                <button
+                                  onClick={() => setProcessingCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
+                                  disabled={paginatedData.currentPage === paginatedData.totalPages}
+                                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  다음
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
 
           {/* 상세 정보 패널 */}
           {selectedProcessingRequest && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               {(() => {
-                    const request = mockRequests.find(
-                      (r) => r.id === selectedProcessingRequest
-                    );
+                const request = mockRequests.find(
+                  (r) => r.id === selectedProcessingRequest
+                );
                     if (!request) return null;
 
                     return (
@@ -3170,62 +2681,145 @@ export default function WithdrawalManagement({
               })()}
             </div>
           )}
+            </div>
         </div>
       )}
 
       {/* 반려/보류 관리 탭 */}
       {activeTab === "rejected" && (
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              반려/보류 현황
-            </h3>
-          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+                  반려/보류 현황
+                </h3>
+                {/* 검색 및 필터 */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* 검색 */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="신청 ID, 제목, 기안자, 자산 검색..."
+                      value={rejectedSearchTerm}
+                      onChange={(e) => setRejectedSearchTerm(e.target.value)}
+                      className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
+                    />
+                    <svg
+                      className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      신청 ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      출금 내용
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      자산
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      기안자
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      우선순위
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      상태
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      승인진행률
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      작업
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {mockRequests
-                    .filter(
-                      (r) => r.status === "rejected" || r.status === "archived"
-                    )
-                    .map((request) => {
-                      const latestRejection =
-                        request.rejections?.[request.rejections.length - 1];
-                      const statusInfo = getStatusInfo(request.status);
-                      const StatusIcon = statusInfo.icon;
+                  {/* 상태 필터 */}
+                  <select
+                    value={rejectedStatusFilter}
+                    onChange={(e) => setRejectedStatusFilter(e.target.value)}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">모든 상태</option>
+                    <option value="rejected">반려</option>
+                    <option value="archived">처리완료</option>
+                  </select>
 
-                      return (
-                        <tr key={request.id} className="hover:bg-gray-50">
+                  {/* 기간 필터 */}
+                  <select
+                    value={rejectedDateFilter}
+                    onChange={(e) => setRejectedDateFilter(e.target.value)}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">전체 기간</option>
+                    <option value="today">오늘</option>
+                    <option value="week">최근 7일</option>
+                    <option value="month">최근 30일</option>
+                    <option value="quarter">최근 3개월</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 데이터 표시 영역 */}
+            <div className="p-6">
+              {(() => {
+                const paginatedData = getPaginatedRejectedRequests();
+                
+                return paginatedData.totalItems === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <svg
+                          className="w-8 h-8 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        검색 결과가 없습니다
+                      </h3>
+                      <p className="text-gray-500">
+                        다른 검색어나 필터 조건을 시도해보세요.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            신청 ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            출금 내용
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            자산
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            기안자
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            우선순위
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            상태
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            승인진행률
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            작업
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getPaginatedRejectedRequests().items
+                          .map((request) => {
+                            const latestRejection =
+                              request.rejections?.[request.rejections.length - 1];
+                            const statusInfo = getStatusInfo(request.status);
+                            const StatusIcon = statusInfo.icon;
+
+                            return (
+                              <tr key={request.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm font-medium text-gray-900">
                               #{request.id}
@@ -3408,11 +3002,67 @@ export default function WithdrawalManagement({
                               )}
                             </div>
                           </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* 페이지네이션 */}
+                  {paginatedData.totalPages > 0 && (
+                    <div className="px-6 py-4 border-t border-gray-200">
+                      <div className="flex flex-col sm:flex-row justify-between items-center">
+                        <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                          총 {paginatedData.totalItems}개 중{" "}
+                          {Math.min(
+                            (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                            paginatedData.totalItems
+                          )}
+                          -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => setRejectedCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
+                            disabled={paginatedData.currentPage === 1}
+                            className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            이전
+                          </button>
+                          
+                          {[...Array(paginatedData.totalPages)].map((_, index) => {
+                            const pageNumber = index + 1;
+                            const isCurrentPage = pageNumber === paginatedData.currentPage;
+                            
+                            return (
+                              <button
+                                key={pageNumber}
+                                onClick={() => setRejectedCurrentPage(pageNumber)}
+                                className={`px-3 py-1 text-sm border rounded-md ${
+                                  isCurrentPage
+                                    ? "bg-primary-600 text-white border-primary-600"
+                                    : "border-gray-300 hover:bg-gray-50"
+                                }`}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          })}
+                          
+                          <button
+                            onClick={() => setRejectedCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
+                            disabled={paginatedData.currentPage === paginatedData.totalPages}
+                            className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            다음
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -3684,14 +3334,12 @@ export default function WithdrawalManagement({
       {/* 감사 추적 탭 */}
       {activeTab === "audit" && (
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              출금 감사 추적
-            </h3>
-          </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+                  출금 감사 추적
+                </h3>
                 {/* 검색 및 필터 */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* 검색 */}
@@ -3701,7 +3349,7 @@ export default function WithdrawalManagement({
                       placeholder="신청 ID, 제목, 기안자 검색..."
                       value={auditSearchTerm}
                       onChange={(e) => setAuditSearchTerm(e.target.value)}
-                      className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
                     />
                     <svg
                       className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
@@ -3722,11 +3370,12 @@ export default function WithdrawalManagement({
                   <select
                     value={auditStatusFilter}
                     onChange={(e) => setAuditStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="all">모든 상태</option>
-                    <option value="submitted">출금 신청</option>
+                    <option value="submitted">결재 승인 대기</option>
                     <option value="pending">출금 대기</option>
+                    <option value="security_verification">보안 검증</option>
                     <option value="processing">출금 진행</option>
                     <option value="completed">출금 완료</option>
                     <option value="rejected">반려</option>
@@ -3737,7 +3386,7 @@ export default function WithdrawalManagement({
                   <select
                     value={auditDateFilter}
                     onChange={(e) => setAuditDateFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="all">전체 기간</option>
                     <option value="today">오늘</option>
@@ -3807,7 +3456,11 @@ export default function WithdrawalManagement({
                                         getStatusInfo(request.status).color
                                       }`}
                                     >
-                                      {getStatusInfo(request.status).name}
+                                      {request.status === "processing" && request.id === "2025-09-0008"
+                                        ? "Air-gap 서명 진행"
+                                        : request.status === "processing" && request.id === "2025-09-0002"
+                                        ? "보안 검증"
+                                        : getStatusInfo(request.status).name}
                                     </span>
                                   </div>
                                   <h4 className="font-semibold text-gray-900 text-sm mb-1">
