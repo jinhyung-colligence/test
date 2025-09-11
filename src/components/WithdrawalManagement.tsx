@@ -24,7 +24,8 @@ import { getStatusInfo, getPriorityInfo, formatCurrency, formatAmount, formatDat
 import { StatusBadge } from "./withdrawal/StatusBadge";
 import { PriorityBadge } from "./withdrawal/PriorityBadge";
 import { WithdrawalTableRow } from "./withdrawal/WithdrawalTableRow";
-import { CreateWithdrawalModal } from "./withdrawal/CreateWithdrawalModal";
+import { ProcessingTableRow } from "./withdrawal/ProcessingTableRow";
+import { RejectedTableRow } from "./withdrawal/RejectedTableRow";
 
 export default function WithdrawalManagement({
   plan,
@@ -1696,125 +1697,19 @@ export default function WithdrawalManagement({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {mockRequests
                     .filter((r) => r.status === "submitted")
-                    .map((request) => {
-                      const priorityInfo = getPriorityInfo(request.priority);
-                      const approvalProgress =
-                        (request.approvals.length /
-                          request.requiredApprovals.length) *
-                        100;
-
-                      return (
-                        <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              #{request.id}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900">
-                                {request.title}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {request.description}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {formatDateTime(request.initiatedAt)}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                                alt={request.currency}
-                                className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                                onError={(e) => {
-                                  (
-                                    e.target as HTMLImageElement
-                                  ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                    <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                    <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                      ${request.currency}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                                }}
-                              />
-                              <div className="text-sm">
-                                <p className="font-semibold text-gray-900">
-                                  {formatAmount(
-                                    request.amount,
-                                    request.currency
-                                  )}
-                                </p>
-                                <p className="text-gray-500">
-                                  {request.currency}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {request.initiator}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <PriorityBadge priority={request.priority} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="w-full">
-                              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                <span>
-                                  {request.approvals.length}/
-                                  {request.requiredApprovals.length}
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="h-2 rounded-full transition-all bg-blue-500"
-                                  style={{
-                                    width: `${approvalProgress}%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() =>
-                                  setSelectedRequest(
-                                    selectedRequest === request.id
-                                      ? null
-                                      : request.id
-                                  )
-                                }
-                                className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                              >
-                                상세보기
-                              </button>
-                              <div className="h-4 w-px bg-gray-300"></div>
-                              <button
-                                onClick={() =>
-                                  handleApproval(request.id, "approve")
-                                }
-                                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
-                              >
-                                승인
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleApproval(request.id, "reject")
-                                }
-                                className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
-                              >
-                                반려
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    .map((request) => (
+                      <WithdrawalTableRow
+                        key={request.id}
+                        request={request}
+                        onToggleDetails={(requestId) =>
+                          setSelectedRequest(
+                            selectedRequest === requestId ? null : requestId
+                          )
+                        }
+                        showApprovalActions={true}
+                        onApproval={handleApproval}
+                      />
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -2169,200 +2064,19 @@ export default function WithdrawalManagement({
                             r.status
                           )
                         )
-                        .map((request) => {
-                          const getProgressInfo = (request: any) => {
-                            if (request.status === "pending") {
-                              // 출금 대기 (오출금 방지 기간)
-                              const queuePosition = request.id === "7" ? 1 : 2;
-                              return {
-                                queuePosition,
-                                step: "출금 대기",
-                                eta: `약 ${queuePosition * 12}시간`,
-                                type: "pending",
-                                description:
-                                  "오출금 방지 및 변심 취소 대응 기간",
-                              };
-                            } else if (request.status === "processing") {
-                              // 출금 진행 (이상거래 검토, 트래블룰, Air-gap 서명)
-                              if (request.id === "8")
-                                return {
-                                  progress: 85,
-                                  step: "Air-gap 서명 진행",
-                                  eta: "약 15분",
-                                  type: "processing",
-                                };
-                              return {
-                                progress: 45,
-                                step: "보안 검증",
-                                eta: "약 30분",
-                                type: "processing",
-                              };
-                            } else if (request.status === "completed") {
-                              // 출금 완료 (블록체인 전송 완료)
-                              return {
-                                progress: 100,
-                                step: "블록체인 전송",
-                                eta: "완료됨",
-                                type: "completed",
-                                txHash: request.txHash,
-                                confirmations: request.blockConfirmations,
-                              };
+                        .map((request) => (
+                          <ProcessingTableRow
+                            key={request.id}
+                            request={request}
+                            onToggleDetails={(requestId) =>
+                              setSelectedProcessingRequest(
+                                selectedProcessingRequest === requestId ? null : requestId
+                              )
                             }
-                            return {
-                              progress: 0,
-                              step: "대기",
-                              eta: "미정",
-                              type: "unknown",
-                            };
-                          };
-                          const progressInfo = getProgressInfo(request);
-                          const statusInfo = getStatusInfo(request.status);
-                          const StatusIcon = statusInfo.icon;
-
-                          return (
-                            <tr key={request.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm font-medium text-gray-900">
-                                  #{request.id}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900">
-                                    {request.title}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {request.description}
-                                  </p>
-                                  <p className="text-xs text-gray-400">
-                                    {formatDateTime(request.initiatedAt)}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <img
-                                    src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                                    alt={request.currency}
-                                    className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                                    onError={(e) => {
-                                      (
-                                        e.target as HTMLImageElement
-                                      ).src = `data:image/svg+xml;base64,${btoa(`
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                        <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                        <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                          ${request.currency}
-                                        </text>
-                                      </svg>
-                                    `)}`;
-                                    }}
-                                  />
-                                  <div className="text-sm">
-                                    <p className="font-semibold text-gray-900">
-                                      {formatAmount(
-                                        request.amount,
-                                        request.currency
-                                      )}
-                                    </p>
-                                    <p className="text-gray-500">
-                                      {request.currency}
-                                    </p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded ${
-                                    request.status === "processing"
-                                      ? "bg-purple-100 text-purple-800"
-                                      : request.status === "pending"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : request.status === "completed"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
-                                >
-                                  {progressInfo.step}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {progressInfo.type === "processing" ? (
-                                  <div className="w-full">
-                                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                      <span>처리 진행률</span>
-                                      <span>{progressInfo.progress}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                      <div
-                                        className="bg-purple-500 h-2 rounded-full transition-all"
-                                        style={{
-                                          width: `${progressInfo.progress}%`,
-                                        }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                ) : progressInfo.type === "pending" ? (
-                                  <div className="text-sm">
-                                    <p className="font-medium text-yellow-700">
-                                      대기 중 ({progressInfo.eta})
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {progressInfo.description}
-                                    </p>
-                                  </div>
-                                ) : progressInfo.type === "completed" ? (
-                                  <div className="text-sm">
-                                    <p className="font-medium text-green-700">
-                                      ✓ 전송 완료
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {progressInfo.confirmations}회 확인
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <div className="text-sm">
-                                    <p className="font-medium text-gray-500">
-                                      상태 확인 중
-                                    </p>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center space-x-2">
-                                  <button
-                                    onClick={() =>
-                                      setSelectedProcessingRequest(
-                                        selectedProcessingRequest === request.id
-                                          ? null
-                                          : request.id
-                                      )
-                                    }
-                                    className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                                  >
-                                    상세보기
-                                  </button>
-
-                                  {request.status === "completed" && (
-                                    <>
-                                      <div className="h-4 w-px bg-gray-300"></div>
-                                      <button
-                                        onClick={() =>
-                                          handleArchive(request.id)
-                                        }
-                                        className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
-                                      >
-                                        처리완료
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        </tbody>
-                      </table>
+                          />
+                        ))}
+                    </tbody>
+                  </table>
                     </div>
 
                     {/* 페이지네이션 */}
@@ -2926,199 +2640,19 @@ export default function WithdrawalManagement({
                     .filter(
                       (r) => r.status === "rejected" || r.status === "archived"
                     )
-                    .map((request) => {
-                      const latestRejection =
-                        request.rejections?.[request.rejections.length - 1];
-                      const statusInfo = getStatusInfo(request.status);
-                      const StatusIcon = statusInfo.icon;
-
-                      return (
-                        <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              #{request.id}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">
-                                {request.title}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {request.description}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {formatDateTime(request.initiatedAt)}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                                alt={request.currency}
-                                className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                                onError={(e) => {
-                                  (
-                                    e.target as HTMLImageElement
-                                  ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                    <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                    <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                      ${request.currency}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                                }}
-                              />
-                              <div className="text-sm">
-                                <p className="font-semibold text-gray-900">
-                                  {formatAmount(
-                                    request.amount,
-                                    request.currency
-                                  )}
-                                </p>
-                                <p className="text-gray-500">
-                                  {request.currency}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">
-                              {request.initiator}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${
-                                getPriorityInfo(request.priority).color
-                              }`}
-                            >
-                              {getPriorityInfo(request.priority).name}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <StatusIcon className="h-4 w-4 mr-2" />
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  request.status === "archived"
-                                    ? "bg-red-100 text-red-800"
-                                    : statusInfo.color
-                                }`}
-                              >
-                                {request.status === "archived"
-                                  ? "반려"
-                                  : statusInfo.name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {(request.status === "submitted" ||
-                              request.status === "approved" ||
-                              request.status === "rejected" ||
-                              request.status === "archived") && (
-                              <div className="w-full">
-                                <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                  <span>
-                                    {request.status === "rejected" ||
-                                    request.status === "archived"
-                                      ? `${request.rejections.length}/${request.requiredApprovals.length}`
-                                      : `${request.approvals.length}/${request.requiredApprovals.length}`}
-                                  </span>
-                                  {request.status === "approved" && (
-                                    <span className="text-green-600 font-medium">
-                                      완료
-                                    </span>
-                                  )}
-                                  {(request.status === "rejected" ||
-                                    request.status === "archived") && (
-                                    <span className="text-red-600 font-medium">
-                                      반려
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className={`h-2 rounded-full transition-all ${
-                                      request.status === "approved"
-                                        ? "bg-green-500"
-                                        : request.status === "rejected" ||
-                                          request.status === "archived"
-                                        ? "bg-red-500"
-                                        : "bg-blue-500"
-                                    }`}
-                                    style={{
-                                      width:
-                                        request.status === "rejected" ||
-                                        request.status === "archived"
-                                          ? `${
-                                              (request.rejections.length /
-                                                request.requiredApprovals
-                                                  .length) *
-                                              100
-                                            }%`
-                                          : `${
-                                              (request.approvals.length /
-                                                request.requiredApprovals
-                                                  .length) *
-                                              100
-                                            }%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() =>
-                                  setSelectedRequest(
-                                    selectedRequest === request.id
-                                      ? null
-                                      : request.id
-                                  )
-                                }
-                                className="text-primary-600 hover:text-primary-900 text-sm font-medium"
-                              >
-                                상세보기
-                              </button>
-
-                              {request.status === "rejected" && (
-                                <>
-                                  <div className="h-4 w-px bg-gray-300"></div>
-                                  <button
-                                    onClick={() =>
-                                      handleReapplication(request.id)
-                                    }
-                                    className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                                  >
-                                    재신청
-                                  </button>
-                                  <button
-                                    onClick={() => handleArchive(request.id)}
-                                    className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
-                                  >
-                                    처리완료
-                                  </button>
-                                </>
-                              )}
-
-                              {request.status === "archived" && (
-                                <>
-                                  <div className="h-4 w-px bg-gray-300"></div>
-                                  <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded cursor-not-allowed">
-                                    처리완료
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    .map((request) => (
+                      <RejectedTableRow
+                        key={request.id}
+                        request={request}
+                        onToggleDetails={(requestId) =>
+                          setSelectedRequest(
+                            selectedRequest === requestId ? null : requestId
+                          )
+                        }
+                        onReapplication={handleReapplication}
+                        onArchive={handleArchive}
+                      />
+                    ))}
                 </tbody>
               </table>
             </div>

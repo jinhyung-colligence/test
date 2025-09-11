@@ -1,26 +1,24 @@
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { StatusBadge } from "./StatusBadge";
 import { PriorityBadge } from "./PriorityBadge";
-import { formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
+import { formatAmount, formatDateTime, getStatusInfo, getPriorityInfo } from "@/utils/withdrawalHelpers";
 
-interface WithdrawalTableRowProps {
+interface RejectedTableRowProps {
   request: WithdrawalRequest;
   onToggleDetails: (requestId: string) => void;
-  showApprovalProgress?: boolean;
-  showApprovalActions?: boolean;
-  onApproval?: (requestId: string, action: "approve" | "reject") => void;
+  onReapplication?: (requestId: string) => void;
+  onArchive?: (requestId: string) => void;
 }
 
-export function WithdrawalTableRow({ 
+export function RejectedTableRow({ 
   request, 
   onToggleDetails,
-  showApprovalProgress = true,
-  showApprovalActions = false,
-  onApproval
-}: WithdrawalTableRowProps) {
-  const approvalProgress = request.requiredApprovals.length > 0 
-    ? (request.approvals.length / request.requiredApprovals.length) * 100 
-    : 0;
+  onReapplication,
+  onArchive
+}: RejectedTableRowProps) {
+  const latestRejection = request.rejections?.[request.rejections.length - 1];
+  const statusInfo = getStatusInfo(request.status);
+  const StatusIcon = statusInfo.icon;
 
   return (
     <tr className="hover:bg-gray-50">
@@ -56,7 +54,7 @@ export function WithdrawalTableRow({
                     ${request.currency}
                   </text>
                 </svg>
-              `)}`;
+              `)}`
             }}
           />
           <div className="text-sm">
@@ -69,32 +67,62 @@ export function WithdrawalTableRow({
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {request.initiator}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm text-gray-900">
+          {request.initiator}
+        </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <PriorityBadge priority={request.priority} />
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <StatusBadge status={request.status} />
+        <div className="flex items-center">
+          <StatusIcon className="h-4 w-4 mr-2" />
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              request.status === "archived"
+                ? "bg-red-100 text-red-800"
+                : statusInfo.color
+            }`}
+          >
+            {request.status === "archived" ? "반려" : statusInfo.name}
+          </span>
+        </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        {showApprovalProgress && (request.status === "submitted" || request.status === "approved") && (
+        {(request.status === "submitted" ||
+          request.status === "approved" ||
+          request.status === "rejected" ||
+          request.status === "archived") && (
           <div className="w-full">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>
-                {request.approvals.length}/{request.requiredApprovals.length}
+                {request.status === "rejected" || request.status === "archived"
+                  ? `${request.rejections.length}/${request.requiredApprovals.length}`
+                  : `${request.approvals.length}/${request.requiredApprovals.length}`}
               </span>
               {request.status === "approved" && (
                 <span className="text-green-600 font-medium">완료</span>
+              )}
+              {(request.status === "rejected" || request.status === "archived") && (
+                <span className="text-red-600 font-medium">반려</span>
               )}
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all ${
-                  request.status === "approved" ? "bg-green-500" : "bg-blue-500"
+                  request.status === "approved"
+                    ? "bg-green-500"
+                    : request.status === "rejected" || request.status === "archived"
+                    ? "bg-red-500"
+                    : "bg-blue-500"
                 }`}
-                style={{ width: `${approvalProgress}%` }}
+                style={{
+                  width:
+                    request.status === "rejected" || request.status === "archived"
+                      ? `${(request.rejections.length / request.requiredApprovals.length) * 100}%`
+                      : `${(request.approvals.length / request.requiredApprovals.length) * 100}%`,
+                }}
               />
             </div>
           </div>
@@ -108,20 +136,31 @@ export function WithdrawalTableRow({
           >
             상세보기
           </button>
-          {showApprovalActions && onApproval && (
+
+          {request.status === "rejected" && onReapplication && onArchive && (
             <>
+              <div className="h-4 w-px bg-gray-300"></div>
               <button
-                onClick={() => onApproval(request.id, "approve")}
-                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                onClick={() => onReapplication(request.id)}
+                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
               >
-                승인
+                재신청
               </button>
               <button
-                onClick={() => onApproval(request.id, "reject")}
+                onClick={() => onArchive(request.id)}
                 className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
               >
-                반려
+                처리완료
               </button>
+            </>
+          )}
+
+          {request.status === "archived" && (
+            <>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded cursor-not-allowed">
+                처리완료
+              </span>
             </>
           )}
         </div>
