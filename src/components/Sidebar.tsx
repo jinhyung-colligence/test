@@ -157,7 +157,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
     },
     {
       id: 'groups' as DashboardTab,
-      name: '그룹 지갑',
+      name: '그룹 관리',
       icon: UserGroupIcon,
       path: '/groups',
       available: plan === 'enterprise'
