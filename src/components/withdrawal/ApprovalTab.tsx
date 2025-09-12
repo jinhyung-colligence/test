@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { WithdrawalRequest } from "@/types/withdrawal";
-import { getStatusInfo, getPriorityInfo, formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
+import {
+  getStatusInfo,
+  getPriorityInfo,
+  formatAmount,
+  formatDateTime,
+} from "@/utils/withdrawalHelpers";
 import { WithdrawalTableRow } from "./WithdrawalTableRow";
 
 interface ApprovalTabProps {
@@ -9,10 +14,15 @@ interface ApprovalTabProps {
   onApproval: (requestId: string, action: "approve" | "reject") => void;
 }
 
-export default function ApprovalTab({ withdrawalRequests, onApproval }: ApprovalTabProps) {
+export default function ApprovalTab({
+  withdrawalRequests,
+  onApproval,
+}: ApprovalTabProps) {
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
 
-  const submittedRequests = withdrawalRequests.filter((r) => r.status === "submitted");
+  const submittedRequests = withdrawalRequests.filter(
+    (r) => r.status === "submitted"
+  );
 
   return (
     <div className="space-y-4">
@@ -39,6 +49,9 @@ export default function ApprovalTab({ withdrawalRequests, onApproval }: Approval
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   우선순위
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  상태
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   승인진행률
@@ -129,10 +142,7 @@ export default function ApprovalTab({ withdrawalRequests, onApproval }: Approval
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-center">
                             <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {formatAmount(
-                                request.amount,
-                                request.currency
-                              )}
+                              {formatAmount(request.amount, request.currency)}
                             </div>
                             <div className="text-sm text-gray-500 mb-2">
                               {request.currency}
@@ -232,9 +242,7 @@ export default function ApprovalTab({ withdrawalRequests, onApproval }: Approval
                                           승인 완료
                                         </span>
                                         <div className="text-xs text-gray-500">
-                                          {formatDateTime(
-                                            approval.approvedAt
-                                          )}
+                                          {formatDateTime(approval.approvedAt)}
                                         </div>
                                       </div>
                                     ) : (
@@ -260,17 +268,13 @@ export default function ApprovalTab({ withdrawalRequests, onApproval }: Approval
 
                         <div className="flex justify-end space-x-3">
                           <button
-                            onClick={() =>
-                              onApproval(request.id, "approve")
-                            }
+                            onClick={() => onApproval(request.id, "approve")}
                             className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                           >
                             승인
                           </button>
                           <button
-                            onClick={() =>
-                              onApproval(request.id, "reject")
-                            }
+                            onClick={() => onApproval(request.id, "reject")}
                             className="px-6 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
                           >
                             반려

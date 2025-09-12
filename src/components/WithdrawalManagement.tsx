@@ -30,14 +30,14 @@ import AuditTab from "./withdrawal/AuditTab";
 import RejectedTabComponent from "./withdrawal/RejectedTabComponent";
 import AirgapTab from "./withdrawal/AirgapTab";
 import ApprovalTab from "./withdrawal/ApprovalTab";
-import RequestsTab from "./withdrawal/RequestsTab";
+import { mockWithdrawalRequests, networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
 
 export default function WithdrawalManagement({
   plan,
 }: WithdrawalManagementProps) {
   const [activeTab, setActiveTab] = useState<
-    "requests" | "approval" | "airgap" | "audit" | "rejected"
-  >("requests");
+    "approval" | "airgap" | "audit" | "rejected"
+  >("approval");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const { t, language } = useLanguage();
@@ -54,61 +54,10 @@ export default function WithdrawalManagement({
     priority: "medium" as const,
   });
 
-  // 네트워크별 지원 자산 매핑
-  const networkAssets = {
-    Bitcoin: [{ value: "BTC", name: "Bitcoin", symbol: "BTC" }],
-    Ethereum: [
-      { value: "ETH", name: "Ethereum", symbol: "ETH" },
-      { value: "USDT", name: "Tether (ERC-20)", symbol: "USDT" },
-      { value: "USDC", name: "USD Coin (ERC-20)", symbol: "USDC" },
-    ],
-    Solana: [{ value: "SOL", name: "Solana", symbol: "SOL" }],
-  };
+  // Import mock data from separate file
+  const mockRequests = mockWithdrawalRequests;
 
-  // 화이트리스트 주소 데이터 (실제로는 SecuritySettings에서 가져와야 함)
-  const whitelistedAddresses = [
-    {
-      id: "1",
-      label: "비트코인 출금주소",
-      address: "1KCgwGz3rE1NDSzT3GYheLp2PKDCmpTNho",
-      coin: "BTC",
-      network: "Bitcoin",
-      type: "personal" as const,
-    },
-    {
-      id: "2",
-      label: "이더리움 출금주소",
-      address: "0xBEf0900e3de07345Ae4d7f89Bb0934B2f6e8Ed7B",
-      coin: "ETH",
-      network: "Ethereum",
-      type: "vasp" as const,
-    },
-    {
-      id: "3",
-      label: "이더리움 USDT 주소",
-      address: "0x8ba1f109551bd432803012645hac136c6ad4cfc7",
-      coin: "USDT",
-      network: "Ethereum",
-      type: "vasp" as const,
-    },
-    {
-      id: "4",
-      label: "이더리움 USDC 주소",
-      address: "0x742d35cc6ad4cfc7cc5a0e0e68b4b55a2c7e9f3a",
-      coin: "USDC",
-      network: "Ethereum",
-      type: "personal" as const,
-    },
-    {
-      id: "5",
-      label: "솔라나 출금주소",
-      address: "5aTfy8Q4zx9j6B34VkJ6mCcMmAZgkwLNxdyaWmyUqiU",
-      coin: "SOL",
-      network: "Solana",
-      type: "personal" as const,
-    },
-  ];
-
+  /* Mock data moved to /data/mockWithdrawalData.ts - removed 591+ lines
   const mockRequests: WithdrawalRequest[] = [
     {
       id: "2025-09-0001",
@@ -700,7 +649,7 @@ export default function WithdrawalManagement({
       ],
     },
   ];
-
+  */
 
   const handleCreateRequest = () => {
     console.log("Creating withdrawal request:", newRequest);
@@ -1010,14 +959,6 @@ export default function WithdrawalManagement({
         <nav className="flex space-x-8">
           {[
             {
-              id: "requests",
-              name: "출금 신청 관리",
-              icon: DocumentCheckIcon,
-              count: mockRequests.filter((r) =>
-                ["submitted"].includes(r.status)
-              ).length,
-            },
-            {
               id: "approval",
               name: "결재 승인 대기",
               icon: CheckCircleIcon,
@@ -1072,11 +1013,6 @@ export default function WithdrawalManagement({
           ))}
         </nav>
       </div>
-
-      {/* 출금 신청 관리 탭 */}
-      {activeTab === "requests" && (
-        <RequestsTab withdrawalRequests={mockRequests} />
-      )}
 
       {/* 결재 승인 탭 */}
       {activeTab === "approval" && (
