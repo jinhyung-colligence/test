@@ -1,0 +1,389 @@
+import { useState } from "react";
+import { DepositHistory } from "@/types/deposit";
+import { formatAmount, formatDateTime } from "@/utils/depositHelpers";
+import DepositStatusBadge from "./DepositStatusBadge";
+import DepositTimeline from "./DepositTimeline";
+import { FunnelIcon, EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+
+interface DepositHistoryTableProps {
+  deposits: DepositHistory[];
+  itemsPerPage?: number;
+}
+
+export default function DepositHistoryTable({
+  deposits,
+  itemsPerPage = 10
+}: DepositHistoryTableProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assetFilter, setAssetFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDeposit, setSelectedDeposit] = useState<string | null>(null);
+
+  // 필터링 로직
+  const getFilteredDeposits = () => {
+    return deposits.filter((deposit) => {
+      // 검색어 필터
+      const searchMatch = 
+        searchTerm === "" ||
+        deposit.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deposit.txHash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deposit.asset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deposit.amount.includes(searchTerm) ||
+        deposit.fromAddress.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // 상태 필터
+      const statusMatch = statusFilter === "all" || deposit.status === statusFilter;
+
+      // 자산 필터
+      const assetMatch = assetFilter === "all" || deposit.asset === assetFilter;
+
+      // 기간 필터
+      let dateMatch = true;
+      if (dateFilter !== "all") {
+        const depositDate = new Date(deposit.detectedAt);
+        const now = new Date();
+        const diffTime = now.getTime() - depositDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (dateFilter) {
+          case "today":
+            dateMatch = diffDays === 0;
+            break;
+          case "week":
+            dateMatch = diffDays <= 7;
+            break;
+          case "month":
+            dateMatch = diffDays <= 30;
+            break;
+          case "quarter":
+            dateMatch = diffDays <= 90;
+            break;
+          default:
+            dateMatch = true;
+        }
+      }
+
+      return searchMatch && statusMatch && assetMatch && dateMatch;
+    });
+  };
+
+  // 페이지네이션 로직
+  const getPaginatedDeposits = () => {
+    const filtered = getFilteredDeposits();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage),
+      currentPage: currentPage,
+      itemsPerPage: itemsPerPage,
+    };
+  };
+
+  const paginatedData = getPaginatedDeposits();
+
+  // 고유 자산 목록 생성
+  const uniqueAssets = Array.from(new Set(deposits.map(d => d.asset)));
+
+  const truncateHash = (hash: string, length: number = 12) => {
+    if (hash.length <= length) return hash;
+    return `${hash.substring(0, length/2)}...${hash.substring(hash.length - length/2)}`;
+  };
+
+  const truncateAddress = (address: string, length: number = 16) => {
+    if (address.length <= length) return address;
+    return `${address.substring(0, length/2)}...${address.substring(address.length - length/2)}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* 통합된 테이블 섹션 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+              입금 히스토리
+            </h3>
+            {/* 검색 및 필터 */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* 검색 */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="ID, TX Hash, 자산 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
+                />
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+
+              {/* 상태 필터 */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">모든 상태</option>
+                <option value="detected">감지됨</option>
+                <option value="confirming">컨펌 진행중</option>
+                <option value="confirmed">컨펌 완료</option>
+                <option value="credited">입금 완료</option>
+                <option value="failed">실패</option>
+              </select>
+
+              {/* 자산 필터 */}
+              <select
+                value={assetFilter}
+                onChange={(e) => setAssetFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">모든 자산</option>
+                {uniqueAssets.map(asset => (
+                  <option key={asset} value={asset}>{asset}</option>
+                ))}
+              </select>
+
+              {/* 기간 필터 */}
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">전체 기간</option>
+                <option value="today">오늘</option>
+                <option value="week">최근 7일</option>
+                <option value="month">최근 30일</option>
+                <option value="quarter">최근 3개월</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* 데이터 표시 영역 */}
+        <div className="p-6">
+        {paginatedData.totalItems === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FunnelIcon className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              검색 결과가 없습니다
+            </h3>
+            <p className="text-gray-500">
+              다른 검색어나 필터 조건을 시도해보세요.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      시간
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      자산
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      금액
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      TX Hash
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      발신 주소
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      상태
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      확인수
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      작업
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedData.items.map((deposit) => (
+                    <tr key={deposit.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        <div>
+                          <div className="font-medium">
+                            {formatDateTime(deposit.detectedAt).split(' ')[0]}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {formatDateTime(deposit.detectedAt).split(' ')[1]}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${deposit.asset.toLowerCase()}.png`}
+                            alt={deposit.asset}
+                            className="w-8 h-8 rounded-full"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                  <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                  <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                    ${deposit.asset}
+                                  </text>
+                                </svg>
+                              `)}`;
+                            }}
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {deposit.asset}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {deposit.network}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatAmount(deposit.amount, deposit.asset)}
+                        </div>
+                        {deposit.valueInKRW && (
+                          <div className="text-xs text-gray-500">
+                            ₩{deposit.valueInKRW.toLocaleString()}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <code className="text-xs font-mono text-gray-700">
+                          {truncateHash(deposit.txHash)}
+                        </code>
+                      </td>
+                      <td className="px-4 py-3">
+                        <code className="text-xs font-mono text-gray-700">
+                          {truncateAddress(deposit.fromAddress)}
+                        </code>
+                      </td>
+                      <td className="px-4 py-3">
+                        <DepositStatusBadge status={deposit.status} size="sm" />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {deposit.currentConfirmations}/{deposit.requiredConfirmations}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => setSelectedDeposit(deposit.id)}
+                          className="p-1 text-gray-400 hover:text-primary-600 rounded-full hover:bg-gray-100"
+                          title="상세 정보 보기"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 페이지네이션 */}
+            {paginatedData.totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-between items-center">
+                  <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                    총 {paginatedData.totalItems}개 중{" "}
+                    {Math.min(
+                      (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                      paginatedData.totalItems
+                    )}
+                    -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
+                      disabled={paginatedData.currentPage === 1}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      이전
+                    </button>
+                    
+                    {[...Array(paginatedData.totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      const isCurrentPage = pageNumber === paginatedData.currentPage;
+                      
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className={`px-3 py-1 text-sm border rounded-md ${
+                            isCurrentPage
+                              ? "bg-primary-600 text-white border-primary-600"
+                              : "border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={() => setCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
+                      disabled={paginatedData.currentPage === paginatedData.totalPages}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      다음
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        </div>
+      </div>
+
+      {/* 상세 정보 모달 */}
+      {selectedDeposit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                입금 상세 정보
+              </h3>
+              <button
+                onClick={() => setSelectedDeposit(null)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {(() => {
+                const deposit = deposits.find(d => d.id === selectedDeposit);
+                if (!deposit) return null;
+                return <DepositTimeline deposit={deposit} />;
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
