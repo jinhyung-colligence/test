@@ -476,6 +476,124 @@ export default function RejectedTabComponent({
                           </div>
                         </div>
 
+                        {/* 결재 진행 현황 */}
+                        <div className="bg-gray-50 p-4 rounded-lg border">
+                          <h6 className="text-sm font-medium text-gray-700 mb-3">
+                            결재 진행 현황
+                          </h6>
+                          <div className="space-y-3">
+                            {request.requiredApprovals.map((approver, index) => {
+                              const approval = request.approvals.find(
+                                (a) => a.userName === approver
+                              );
+                              const rejection = request.rejections.find(
+                                (r) => r.userName === approver
+                              );
+                              
+                              // 순차적 결재 로직: 이전 결재자들이 모두 승인했는지 확인
+                              const previousApprovers = request.requiredApprovals.slice(0, index);
+                              const allPreviousApproved = previousApprovers.every(prevApprover => 
+                                request.approvals.some(a => a.userName === prevApprover)
+                              );
+                              
+                              // 이전 결재자가 반려했는지 확인
+                              const anyPreviousRejected = previousApprovers.some(prevApprover =>
+                                request.rejections.some(r => r.userName === prevApprover)
+                              );
+                              
+                              // 상태 결정
+                              let status, statusText, statusTime, iconColor, textColor;
+                              
+                              if (approval) {
+                                status = "approved";
+                                statusText = "승인 완료";
+                                statusTime = formatDateTime(approval.approvedAt);
+                                iconColor = "text-green-500";
+                                textColor = "text-green-700";
+                              } else if (rejection) {
+                                status = "rejected";
+                                statusText = "반려";
+                                statusTime = formatDateTime(rejection.rejectedAt);
+                                iconColor = "text-red-500"; 
+                                textColor = "text-red-700";
+                              } else if (anyPreviousRejected) {
+                                status = "blocked";
+                                statusText = "승인 대기 (반려로 인해 미진행)";
+                                statusTime = null;
+                                iconColor = "text-gray-400";
+                                textColor = "text-gray-500";
+                              } else if (!allPreviousApproved) {
+                                status = "waiting";
+                                statusText = "승인 대기 (순서 대기)";
+                                statusTime = null;
+                                iconColor = "text-gray-400";
+                                textColor = "text-gray-500";
+                              } else {
+                                status = "ready";
+                                statusText = "승인 대기 (검토 가능)";
+                                statusTime = null;
+                                iconColor = "text-yellow-500";
+                                textColor = "text-yellow-700";
+                              }
+                              
+                              return (
+                                <div
+                                  key={approver}
+                                  className="flex items-center justify-between p-3 bg-white rounded border"
+                                >
+                                  <div className="flex items-center">
+                                    <div className="flex items-center">
+                                      {status === "approved" ? (
+                                        <svg className={`h-5 w-5 ${iconColor} mr-3`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                        </svg>
+                                      ) : status === "rejected" ? (
+                                        <svg className={`h-5 w-5 ${iconColor} mr-3`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                      ) : status === "ready" ? (
+                                        <svg className={`h-5 w-5 ${iconColor} mr-3`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                      ) : (
+                                        <svg className={`h-5 w-5 ${iconColor} mr-3`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                                        </svg>
+                                      )}
+                                      <span className="font-medium text-gray-900">
+                                        {index + 1}. {approver}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className={`text-sm font-medium ${textColor}`}>
+                                      {statusText}
+                                    </span>
+                                    {statusTime && (
+                                      <div className="text-xs text-gray-500">
+                                        {statusTime}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* 결재 진행률 요약 */}
+                          <div className="mt-4 pt-3 border-t border-gray-200">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600">
+                                승인 진행률: {request.approvals.length}/{request.requiredApprovals.length}
+                                {request.rejections.length > 0 && ` (반려 ${request.rejections.length}건)`}
+                              </span>
+                              <span className="text-red-600 font-medium">
+                                {request.status === "rejected" ? "반려됨" : "아카이브됨"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
                         {request.status === "rejected" &&
                           request.rejections.length > 0 && (
                             <div className="bg-gray-50 p-4 rounded-lg border">
@@ -494,7 +612,7 @@ export default function RejectedTabComponent({
                                   />
                                 </svg>
                                 <span className="text-sm font-medium text-gray-800">
-                                  출금 신청이 반려되었습니다
+                                  반려 사유 상세
                                 </span>
                               </div>
                               {request.rejections.map(

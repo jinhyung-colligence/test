@@ -207,7 +207,7 @@ export default function WithdrawalManagement({
       status: "submitted",
       priority: "medium",
       description: "직원 급여 지급을 위한 스테이블코인 출금",
-      requiredApprovals: ["박CFO"],
+      requiredApprovals: ["박CFO", "이CISO", "김CTO"],
       approvals: [],
       rejections: [],
       auditTrail: [
@@ -274,13 +274,19 @@ export default function WithdrawalManagement({
       status: "pending",
       priority: "medium",
       description: "Ethereum 2.0 스테이킹 보상 분배",
-      requiredApprovals: ["박CFO"],
+      requiredApprovals: ["박CFO", "이CISO", "김CTO"],
       approvals: [
         {
           userId: "2",
           userName: "박CFO",
           role: "required_approver",
           approvedAt: "2025-08-30T09:30:00Z",
+        },
+        {
+          userId: "3",
+          userName: "이CISO",
+          role: "required_approver",
+          approvedAt: "2025-08-30T10:00:00Z",
         },
       ],
       rejections: [],
@@ -319,7 +325,7 @@ export default function WithdrawalManagement({
       status: "pending",
       priority: "low",
       description: "블록체인 프로젝트 파트너십 계약금",
-      requiredApprovals: ["박CFO"],
+      requiredApprovals: ["박CFO", "이CISO"],
       approvals: [
         {
           userId: "2",
@@ -365,7 +371,7 @@ export default function WithdrawalManagement({
       status: "pending",
       priority: "medium",
       description: "Q1 마케팅 캠페인 최종 정산 출금",
-      requiredApprovals: ["박CFO"],
+      requiredApprovals: ["박CFO", "이CISO"],
       approvals: [
         {
           userId: "2",
@@ -490,13 +496,25 @@ export default function WithdrawalManagement({
       status: "completed",
       priority: "low",
       description: "아티스트 NFT 로열티 8월 정산 분배",
-      requiredApprovals: ["박CFO"],
+      requiredApprovals: ["박CFO", "이CISO", "김CTO"],
       approvals: [
         {
           userId: "2",
           userName: "박CFO",
           role: "required_approver",
           approvedAt: "2025-08-26T15:00:00Z",
+        },
+        {
+          userId: "3",
+          userName: "이CISO",
+          role: "required_approver",
+          approvedAt: "2025-08-26T15:30:00Z",
+        },
+        {
+          userId: "4",
+          userName: "김CTO",
+          role: "required_approver",
+          approvedAt: "2025-08-26T16:00:00Z",
         },
       ],
       rejections: [],
