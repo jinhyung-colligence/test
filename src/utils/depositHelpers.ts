@@ -55,11 +55,15 @@ export const getStatusInfo = (status: DepositStatus) => {
 
 export const formatDateTime = (timestamp: string) => {
   const date = new Date(timestamp);
-  return date.toLocaleDateString("ko-KR") + " " + 
-         date.toLocaleTimeString("ko-KR", {
-           hour: "2-digit",
-           minute: "2-digit"
-         });
+  return date.toLocaleDateString("ko-KR", {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }) + " " + 
+  date.toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 };
 
 export const formatAmount = (amount: string, asset: string) => {

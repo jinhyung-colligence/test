@@ -3,7 +3,7 @@ import { DepositHistory } from "@/types/deposit";
 import { formatAmount, formatDateTime } from "@/utils/depositHelpers";
 import DepositStatusBadge from "./DepositStatusBadge";
 import DepositTimeline from "./DepositTimeline";
-import { FunnelIcon, EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { FunnelIcon, EyeIcon, XMarkIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 interface DepositHistoryTableProps {
   deposits: DepositHistory[];
@@ -20,6 +20,7 @@ export default function DepositHistoryTable({
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDeposit, setSelectedDeposit] = useState<string | null>(null);
+  const [copiedHash, setCopiedHash] = useState<string>("");
 
   // 필터링 로직
   const getFilteredDeposits = () => {
@@ -98,6 +99,16 @@ export default function DepositHistoryTable({
     return `${address.substring(0, length/2)}...${address.substring(address.length - length/2)}`;
   };
 
+  const handleCopyHash = async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash);
+      setCopiedHash(hash);
+      setTimeout(() => setCopiedHash(""), 2000);
+    } catch (err) {
+      console.error("Failed to copy hash:", err);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 통합된 테이블 섹션 */}
@@ -113,7 +124,7 @@ export default function DepositHistoryTable({
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="ID, TX Hash, 자산 검색..."
+                  placeholder="ID, 트랜잭션 해시, 자산 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
@@ -195,28 +206,25 @@ export default function DepositHistoryTable({
               <table className="w-full min-w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      시간
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-36">
+                      일시
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-28">
                       자산
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-36">
                       금액
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      TX Hash
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-40">
+                      트랜잭션 해시
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      발신 주소
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-20">
                       상태
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-20">
                       확인수
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase w-24">
                       작업
                     </th>
                   </tr>
@@ -224,17 +232,12 @@ export default function DepositHistoryTable({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedData.items.map((deposit) => (
                     <tr key={deposit.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div>
-                          <div className="font-medium">
-                            {formatDateTime(deposit.detectedAt).split(' ')[0]}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatDateTime(deposit.detectedAt).split(' ')[1]}
-                          </div>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div className="whitespace-nowrap">
+                          {formatDateTime(deposit.detectedAt)}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <img
                             src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${deposit.asset.toLowerCase()}.png`}
@@ -261,7 +264,7 @@ export default function DepositHistoryTable({
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">
                           {formatAmount(deposit.amount, deposit.asset)}
                         </div>
@@ -271,29 +274,36 @@ export default function DepositHistoryTable({
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <code className="text-xs font-mono text-gray-700">
-                          {truncateHash(deposit.txHash)}
-                        </code>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-1">
+                          <code className="text-xs font-mono text-gray-700">
+                            {truncateHash(deposit.txHash)}
+                          </code>
+                          <button
+                            onClick={() => handleCopyHash(deposit.txHash)}
+                            className="ml-1 p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                            title="트랜잭션 해시 복사"
+                          >
+                            {copiedHash === deposit.txHash ? (
+                              <CheckIcon className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <ClipboardDocumentIcon className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <code className="text-xs font-mono text-gray-700">
-                          {truncateAddress(deposit.fromAddress)}
-                        </code>
-                      </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <DepositStatusBadge status={deposit.status} size="sm" />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900">
                         {deposit.currentConfirmations}/{deposit.requiredConfirmations}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
                         <button
                           onClick={() => setSelectedDeposit(deposit.id)}
-                          className="p-1 text-gray-400 hover:text-primary-600 rounded-full hover:bg-gray-100"
-                          title="상세 정보 보기"
+                          className="px-3 py-1.5 text-sm text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded-lg transition-colors"
                         >
-                          <EyeIcon className="h-4 w-4" />
+                          상세보기
                         </button>
                       </td>
                     </tr>

@@ -212,7 +212,7 @@ export default function DepositTimeline({ deposit }: DepositTimelineProps) {
         <h5 className="text-sm font-semibold text-gray-900 mb-3">트랜잭션 정보</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div>
-            <span className="text-gray-500">TX Hash:</span>
+            <span className="text-gray-500">트랜잭션 해시:</span>
             <div className="font-mono text-gray-700 break-all mt-1">
               {deposit.txHash}
             </div>
