@@ -107,7 +107,7 @@ export function ApprovalStatus({
       default:
         return (
           <svg className={iconProps} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8M12 8v8" />
           </svg>
         );
     }
@@ -134,7 +134,7 @@ export function ApprovalStatus({
   return (
     <div className="bg-gray-50 p-4 rounded-lg border">
       <h6 className="text-sm font-medium text-gray-700 mb-3">
-        결재 진행 현황
+        필수 결재자 승인 현황
       </h6>
       
       {showDetailedStatus && (

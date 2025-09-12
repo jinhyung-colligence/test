@@ -9,6 +9,7 @@ import {
 } from "@/utils/withdrawalHelpers";
 import { WithdrawalTableRow } from "./WithdrawalTableRow";
 import { ApprovalStatus } from "./ApprovalStatus";
+import { BlockchainInfo } from "./BlockchainInfo";
 
 interface ApprovalTabProps {
   withdrawalRequests: WithdrawalRequest[];
@@ -401,27 +402,11 @@ export default function ApprovalTab({
                         결재 정보
                       </h5>
                       <div className="space-y-4">
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                          <div className="flex items-start justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              출금 주소
-                            </span>
-                            <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                              복사
-                            </button>
-                          </div>
-                          <div className="font-mono text-sm text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                            {request.toAddress}
-                          </div>
-                        </div>
-
                         <ApprovalStatus 
                           request={request} 
                           showDetailedStatus={true}
                           showProgressSummary={true}
                         />
-
-
 
                         <div className="flex justify-end space-x-3">
                           <button
@@ -440,6 +425,9 @@ export default function ApprovalTab({
                       </div>
                     </div>
                   </div>
+
+                  {/* 블록체인 정보 */}
+                  <BlockchainInfo request={request} />
                 </div>
               </div>
             );

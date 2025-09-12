@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { formatAmount, formatDate, formatDateTime, getStatusInfo } from "@/utils/withdrawalHelpers";
+import { BlockchainInfo } from "./BlockchainInfo";
 
 interface AuditTabProps {
   withdrawalRequests: WithdrawalRequest[];
@@ -125,7 +126,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                 <option value="all">모든 상태</option>
                 <option value="submitted">출금 신청</option>
                 <option value="pending">출금 대기</option>
-                <option value="processing">출금 진행</option>
+                <option value="processing">출금 처리</option>
                 <option value="completed">출금 완료</option>
                 <option value="rejected">반려</option>
                 <option value="archived">처리 완료</option>
@@ -305,101 +306,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                         </div>
 
                         {/* 블록체인 상세 정보 */}
-                        {(request.status === "completed" ||
-                          request.status === "processing" ||
-                          request.txHash) && (
-                          <div className="">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3">
-                              블록체인 정보
-                            </h5>
-
-                            {/* 트랜잭션 해시 */}
-                            {request.txHash && (
-                              <div className="mb-4">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs text-gray-500">
-                                    트랜잭션 해시
-                                  </span>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.txHash}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* 주소 정보 */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs text-gray-500">
-                                    보낸 주소
-                                  </span>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.fromAddress}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs text-gray-500">
-                                    받은 주소
-                                  </span>
-                                  <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                    복사
-                                  </button>
-                                </div>
-                                <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                                  {request.toAddress}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 블록체인 확인 정보 */}
-                            {request.status === "completed" &&
-                              request.blockConfirmations && (
-                                <div className="pt-3 border-t border-gray-200">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-500">
-                                      블록체인 확인
-                                    </span>
-                                    <span className="font-medium text-green-600">
-                                      {request.blockConfirmations}회
-                                      확인 완료
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-
-                            {request.status === "processing" && (
-                              <div className="pt-3 border-t border-gray-200">
-                                <div className="flex items-center text-sm">
-                                  <svg
-                                    className="w-4 h-4 text-yellow-500 mr-2 animate-spin"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                    />
-                                  </svg>
-                                  <span className="text-gray-600">
-                                    블록체인 전송 진행 중
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <BlockchainInfo request={request} />
                       </div>
                     )}
                   </div>

@@ -33,7 +33,7 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
       icon: ClockIcon,
     },
     processing: {
-      name: "출금 진행",
+      name: "출금 처리",
       color: "bg-purple-100 text-purple-800",
       icon: CpuChipIcon,
     },

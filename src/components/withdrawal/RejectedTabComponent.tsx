@@ -4,6 +4,7 @@ import { getStatusInfo, getPriorityInfo, formatAmount, formatDateTime } from "@/
 import { RejectedTableRow } from "./RejectedTableRow";
 import { ApprovalStatus } from "./ApprovalStatus";
 import { ApprovalTimeline } from "./ApprovalTimeline";
+import { BlockchainInfo } from "./BlockchainInfo";
 
 interface RejectedTabComponentProps {
   withdrawalRequests: WithdrawalRequest[];
@@ -369,6 +370,20 @@ export default function RejectedTabComponent({
                             </div>
                           </div>
                         </div>
+                        
+                        {/* 상세 설명 */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <h6 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            출금 상세 설명
+                          </h6>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            {request.description}
+                          </p>
+                        </div>
+                        
                         <div className="space-y-3">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-500">신청 시간</span>
@@ -396,92 +411,16 @@ export default function RejectedTabComponent({
                       </div>
                     </div>
 
-                    {/* 블록체인 정보 */}
+                    {/* 결재 정보 */}
                     <div className="lg:col-span-2">
                       <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                        블록체인 정보
+                        결재 승인 정보
                       </h5>
                       <div className="space-y-4">
-                        {request.txHash && (
-                          <div className="bg-gray-50 p-4 rounded-lg border">
-                            <div className="flex items-start justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">
-                                트랜잭션 해시
-                              </span>
-                              <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                복사
-                              </button>
-                            </div>
-                            <div className="font-mono text-sm text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                              {request.txHash}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 p-4 rounded-lg border">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center">
-                                <svg
-                                  className="w-4 h-4 text-gray-600 mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 11l5-5m0 0l5 5m-5-5v12"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-700">
-                                  보낸 주소
-                                </span>
-                              </div>
-                              <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                복사
-                              </button>
-                            </div>
-                            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                              {request.fromAddress}
-                            </div>
-                          </div>
-
-                          <div className="bg-gray-50 p-4 rounded-lg border">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center">
-                                <svg
-                                  className="w-4 h-4 text-gray-600 mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 13l-5 5m0 0l-5-5m5 5V6"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-700">
-                                  받은 주소
-                                </span>
-                              </div>
-                              <button className="text-primary-600 hover:text-primary-800 text-xs font-medium">
-                                복사
-                              </button>
-                            </div>
-                            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                              {request.toAddress}
-                            </div>
-                          </div>
-                        </div>
-
                         <ApprovalStatus 
                           request={request} 
                           showDetailedStatus={true}
-                          showProgressSummary={true}
+                          showProgressSummary={false}
                         />
 
                         {request.status === "rejected" &&
@@ -532,23 +471,12 @@ export default function RejectedTabComponent({
                               )}
                             </div>
                           )}
-
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                          <h6 className="text-sm font-medium text-gray-700 mb-2">
-                            상세 설명
-                          </h6>
-                          <p className="text-sm text-gray-600">
-                            {request.description}
-                          </p>
-                        </div>
-
-                        <ApprovalTimeline 
-                          request={request} 
-                          showAuditTrail={true}
-                        />
                       </div>
                     </div>
                   </div>
+
+                  {/* 블록체인 정보 */}
+                  <BlockchainInfo request={request} />
                 </div>
               </div>
             );
