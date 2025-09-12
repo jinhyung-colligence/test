@@ -30,7 +30,7 @@ export function ApprovalTimeline({
       timestamp: request.initiatedAt,
       type: "submitted",
       actor: request.initiator,
-      action: "출금 신청",
+      action: "결재 승인 대기",
       details: request.description
     });
     

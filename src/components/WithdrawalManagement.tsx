@@ -914,7 +914,7 @@ export default function WithdrawalManagement({
               },
               {
                 step: 5,
-                title: "Air-gap 서명",
+                title: "ABC 서명",
                 subtitle: "물리적 격리",
                 description: "MPC 분산키 디지털 서명",
               },

@@ -124,9 +124,9 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                 className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="all">모든 상태</option>
-                <option value="submitted">출금 신청</option>
+                <option value="submitted">결재 승인 대기</option>
                 <option value="pending">출금 대기</option>
-                <option value="processing">출금 처리</option>
+                <option value="processing">보안 검증</option>
                 <option value="completed">출금 완료</option>
                 <option value="rejected">반려</option>
                 <option value="archived">처리 완료</option>
@@ -259,6 +259,8 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                               (entry, index) => {
                                 const isApprovalAction =
                                   entry.action.endsWith("승인");
+                                const isFutureAction = 
+                                  entry.action.endsWith("전");
 
                                 return (
                                   <div
@@ -267,7 +269,9 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                   >
                                     <div
                                       className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 ${
-                                        isApprovalAction
+                                        isFutureAction
+                                          ? "bg-gray-400"
+                                          : isApprovalAction
                                           ? "bg-green-400"
                                           : "bg-blue-400"
                                       }`}
@@ -283,7 +287,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                           )}
                                         </p>
                                       </div>
-                                      {!isApprovalAction && (
+                                      {!isApprovalAction && entry.action !== "보안 검증 진행중" && entry.action !== "보안 검증 완료" && entry.action !== "블록체인 전송 완료" && entry.action !== "출금 대기 진행중" && (
                                         <>
                                           {entry.details && (
                                             <p className="text-sm text-gray-600 mb-1">
@@ -301,6 +305,99 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                   </div>
                                 );
                               }
+                            )}
+                            
+                            {/* 결재 승인 대기 상태일 때 대기중인 결재자들과 다음 단계 표시 */}
+                            {request.status === "submitted" && (
+                              <>
+                                {/* 대기중인 결재자들 */}
+                                {request.requiredApprovals
+                                  .filter(approver => !request.approvals.some(approval => approval.userName === approver))
+                                  .map((pendingApprover, index) => (
+                                    <div key={`pending-${index}`} className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                      <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-orange-400"></div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <p className="text-sm font-medium text-gray-900">
+                                            {pendingApprover} 결재 대기중
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                
+                                {/* 향후 단계들 */}
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        출금 대기 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        보안 검증 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        블록체인 전송 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            
+                            {/* 출금 대기 상태일 때 다음 단계 표시 */}
+                            {request.status === "pending" && (
+                              <>
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        보안 검증 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        블록체인 전송 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            
+                            {/* 보안 검증 상태일 때 블록체인 전송 전 표시 */}
+                            {request.status === "processing" && (
+                              <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      블록체인 전송 전
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>

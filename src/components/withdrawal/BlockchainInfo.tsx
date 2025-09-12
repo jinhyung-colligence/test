@@ -41,7 +41,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
         블록체인 정보
       </h5>
       <div className="bg-gray-50 p-4 rounded-lg border">
-        <div className={`grid grid-cols-1 gap-4 ${request.txHash ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 네트워크 */}
           <div className="space-y-2">
             <div className="flex items-center">
@@ -66,37 +66,37 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
           </div>
 
           {/* 트랜잭션 해시 */}
-          {request.txHash && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <svg
-                    className="w-4 h-4 text-gray-600 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">트랜잭션 해시</span>
-                </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <svg
+                  className="w-4 h-4 text-gray-600 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">트랜잭션 해시</span>
+              </div>
+              {request.txHash && (
                 <button
                   onClick={() => copyToClipboard(request.txHash!, 'txHash')}
                   className="text-primary-600 hover:text-primary-800 text-xs font-medium transition-colors"
                 >
                   {copiedField === 'txHash' ? '복사됨' : '복사'}
                 </button>
-              </div>
-              <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-                {request.txHash}
-              </div>
+              )}
             </div>
-          )}
+            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
+              {request.txHash || '트랜잭션 실행 전'}
+            </div>
+          </div>
 
           {/* 보낸 주소 */}
           <div className="space-y-2">
@@ -117,15 +117,17 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 </svg>
                 <span className="text-sm font-medium text-gray-700">보낸 주소</span>
               </div>
-              <button
-                onClick={() => copyToClipboard(request.fromAddress, 'fromAddress')}
-                className="text-primary-600 hover:text-primary-800 text-xs font-medium transition-colors"
-              >
-                {copiedField === 'fromAddress' ? '복사됨' : '복사'}
-              </button>
+              {request.txHash && (
+                <button
+                  onClick={() => copyToClipboard(request.fromAddress, 'fromAddress')}
+                  className="text-primary-600 hover:text-primary-800 text-xs font-medium transition-colors"
+                >
+                  {copiedField === 'fromAddress' ? '복사됨' : '복사'}
+                </button>
+              )}
             </div>
             <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-              {request.fromAddress}
+              {request.txHash ? request.fromAddress : '트랜잭션 실행 전'}
             </div>
           </div>
 

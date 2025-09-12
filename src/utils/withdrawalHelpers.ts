@@ -18,9 +18,9 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
       icon: DocumentTextIcon,
     },
     submitted: {
-      name: "출금 신청",
+      name: "결재 승인 대기",
       color: "bg-blue-100 text-blue-800",
-      icon: ArrowUpOnSquareIcon,
+      icon: ClockIcon,
     },
     approved: {
       name: "결재 승인",
@@ -33,7 +33,7 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
       icon: ClockIcon,
     },
     processing: {
-      name: "출금 처리",
+      name: "보안 검증",
       color: "bg-purple-100 text-purple-800",
       icon: CpuChipIcon,
     },

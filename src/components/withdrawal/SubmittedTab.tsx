@@ -114,7 +114,7 @@ export function SubmittedTab({
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
               >
                 <option value="all">모든 상태</option>
-                <option value="submitted">출금 신청</option>
+                <option value="submitted">결재 승인 대기</option>
               </select>
             </div>
             <div>

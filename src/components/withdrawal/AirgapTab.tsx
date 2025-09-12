@@ -134,7 +134,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
               >
                 <option value="all">모든 상태</option>
                 <option value="pending">출금 대기</option>
-                <option value="processing">출금 처리</option>
+                <option value="processing">보안 검증</option>
                 <option value="security_verification">보안 검증</option>
                 <option value="completed">처리완료</option>
               </select>
