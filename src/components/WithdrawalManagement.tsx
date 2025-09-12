@@ -19,8 +19,20 @@ import {
   ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { WithdrawalManagementProps, WithdrawalRequest, WithdrawalStatus, UserRole } from "@/types/withdrawal";
-import { getStatusInfo, getPriorityInfo, formatCurrency, formatAmount, formatDateTime, formatDate } from "@/utils/withdrawalHelpers";
+import {
+  WithdrawalManagementProps,
+  WithdrawalRequest,
+  WithdrawalStatus,
+  UserRole,
+} from "@/types/withdrawal";
+import {
+  getStatusInfo,
+  getPriorityInfo,
+  formatCurrency,
+  formatAmount,
+  formatDateTime,
+  formatDate,
+} from "@/utils/withdrawalHelpers";
 import { StatusBadge } from "./withdrawal/StatusBadge";
 import { PriorityBadge } from "./withdrawal/PriorityBadge";
 import { WithdrawalTableRow } from "./withdrawal/WithdrawalTableRow";
@@ -30,7 +42,11 @@ import AuditTab from "./withdrawal/AuditTab";
 import RejectedTabComponent from "./withdrawal/RejectedTabComponent";
 import AirgapTab from "./withdrawal/AirgapTab";
 import ApprovalTab from "./withdrawal/ApprovalTab";
-import { mockWithdrawalRequests, networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
+import {
+  mockWithdrawalRequests,
+  networkAssets,
+  whitelistedAddresses,
+} from "@/data/mockWithdrawalData";
 
 export default function WithdrawalManagement({
   plan,
@@ -681,7 +697,6 @@ export default function WithdrawalManagement({
 
   // 감사 추적 상세보기 토글 상태
 
-
   // 재신청 및 아카이브 관련 상태
   const [showReapplicationModal, setShowReapplicationModal] = useState<{
     show: boolean;
@@ -810,8 +825,6 @@ export default function WithdrawalManagement({
 
   // 필터 기능 제거 - 모든 요청 표시
   const filteredRequests = mockRequests;
-
-
 
   if (plan !== "enterprise") {
     return (
@@ -1037,9 +1050,7 @@ export default function WithdrawalManagement({
       )}
 
       {/* 감사 추적 탭 */}
-      {activeTab === "audit" && (
-        <AuditTab withdrawalRequests={mockRequests} />
-      )}
+      {activeTab === "audit" && <AuditTab withdrawalRequests={mockRequests} />}
 
       {/* 출금 신청 모달 */}
       {showCreateModal && (
@@ -1438,8 +1449,8 @@ export default function WithdrawalManagement({
                                 승인 후 처리 과정
                               </p>
                               <p>
-                                승인 완료 시 자동으로 Air-gap 환경에서 보안 검증
-                                및 서명 처리가 진행됩니다.
+                                승인 완료 시 자동으로 출금 처리(출금대기,
+                                보안검증, 전송완료)가 진행됩니다.
                               </p>
                             </div>
                           </div>

@@ -110,6 +110,7 @@ export function WithdrawalTableRow({
           </button>
           {showApprovalActions && onApproval && (
             <>
+              <div className="h-4 w-px bg-gray-300"></div>
               <button
                 onClick={() => onApproval(request.id, "approve")}
                 className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"

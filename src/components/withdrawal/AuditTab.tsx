@@ -79,14 +79,12 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">
-          출금 감사 추적
-        </h3>
-      </div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+              출금 감사 추적
+            </h3>
             {/* 검색 및 필터 */}
             <div className="flex flex-col sm:flex-row gap-4">
               {/* 검색 */}
@@ -96,7 +94,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                   placeholder="신청 ID, 제목, 기안자 검색..."
                   value={auditSearchTerm}
                   onChange={(e) => setAuditSearchTerm(e.target.value)}
-                  className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
                 />
                 <svg
                   className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
@@ -117,7 +115,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
               <select
                 value={auditStatusFilter}
                 onChange={(e) => setAuditStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="all">모든 상태</option>
                 <option value="submitted">출금 신청</option>
@@ -132,29 +130,25 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
               <select
                 value={auditDateFilter}
                 onChange={(e) => setAuditDateFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="all">전체 기간</option>
                 <option value="today">오늘</option>
                 <option value="week">최근 7일</option>
                 <option value="month">최근 30일</option>
-                <option value="quarter">최근 90일</option>
+                <option value="quarter">최근 3개월</option>
               </select>
             </div>
           </div>
 
-          {/* 결과 요약 */}
-          <div className="mb-4 text-sm text-gray-600">
-            총 {paginatedData.totalItems}건의 결과{" "}
-            {paginatedData.totalPages > 0
-              ? `(${auditCurrentPage} / ${paginatedData.totalPages} 페이지)`
-              : ""}
-          </div>
+        </div>
 
-          <div className="space-y-4">
-            {paginatedData.items.length === 0 ? (
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+        {/* 데이터 표시 영역 */}
+        <div className="p-6">
+          {paginatedData.items.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <svg
                     className="w-8 h-8 text-gray-400"
                     fill="none"
@@ -176,7 +170,10 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                   다른 검색어나 필터 조건을 시도해보세요.
                 </p>
               </div>
-            ) : (
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">{
               paginatedData.items.map((request) => {
                 const isExpanded = expandedItems.has(request.id);
 
@@ -402,88 +399,61 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                   </div>
                 );
               })
-            )}
-          </div>
-
-          {/* 페이지네이션 */}
-          {paginatedData.totalItems > 0 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                {(auditCurrentPage - 1) * auditItemsPerPage + 1}-
-                {Math.min(
-                  auditCurrentPage * auditItemsPerPage,
-                  paginatedData.totalItems
-                )}
-                개 항목 중 {paginatedData.totalItems}개
+              }
               </div>
 
+              {/* 페이지네이션 */}
               {paginatedData.totalPages > 0 && (
-                <div className="flex items-center space-x-2">
-                  {/* 이전 페이지 */}
-                  <button
-                    onClick={() =>
-                      setAuditCurrentPage(
-                        Math.max(1, auditCurrentPage - 1)
-                      )
-                    }
-                    disabled={auditCurrentPage === 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    이전
-                  </button>
-
-                  {/* 페이지 번호 */}
-                  {Array.from(
-                    { length: Math.min(5, paginatedData.totalPages) },
-                    (_, i) => {
-                      const pageNum =
-                        Math.max(
-                          1,
-                          Math.min(
-                            paginatedData.totalPages - 4,
-                            auditCurrentPage - 2
-                          )
-                        ) + i;
-
-                      if (pageNum > paginatedData.totalPages)
-                        return null;
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setAuditCurrentPage(pageNum)}
-                          className={`px-3 py-2 text-sm font-medium rounded-md ${
-                            auditCurrentPage === pageNum
-                              ? "bg-primary-600 text-white"
-                              : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    }
-                  )}
-
-                  {/* 다음 페이지 */}
-                  <button
-                    onClick={() =>
-                      setAuditCurrentPage(
-                        Math.min(
-                          paginatedData.totalPages,
-                          auditCurrentPage + 1
-                        )
-                      )
-                    }
-                    disabled={
-                      auditCurrentPage === paginatedData.totalPages
-                    }
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    다음
-                  </button>
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row justify-between items-center">
+                    <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                      총 {paginatedData.totalItems}개 중{" "}
+                      {Math.min(
+                        (auditCurrentPage - 1) * auditItemsPerPage + 1,
+                        paginatedData.totalItems
+                      )}
+                      -{Math.min(auditCurrentPage * auditItemsPerPage, paginatedData.totalItems)}개 표시
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setAuditCurrentPage(Math.max(1, auditCurrentPage - 1))}
+                        disabled={auditCurrentPage === 1}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        이전
+                      </button>
+                      
+                      {[...Array(paginatedData.totalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        const isCurrentPage = pageNumber === auditCurrentPage;
+                        
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setAuditCurrentPage(pageNumber)}
+                            className={`px-3 py-1 text-sm border rounded-md ${
+                              isCurrentPage
+                                ? "bg-primary-600 text-white border-primary-600"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                      
+                      <button
+                        onClick={() => setAuditCurrentPage(Math.min(paginatedData.totalPages, auditCurrentPage + 1))}
+                        disabled={auditCurrentPage === paginatedData.totalPages}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        다음
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </div>
