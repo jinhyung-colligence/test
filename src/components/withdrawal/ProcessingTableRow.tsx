@@ -7,15 +7,23 @@ interface ProcessingTableRowProps {
   onToggleDetails: (requestId: string) => void;
 }
 
-export function ProcessingTableRow({ request, onToggleDetails }: ProcessingTableRowProps) {
+export function ProcessingTableRow({
+  request,
+  onToggleDetails,
+}: ProcessingTableRowProps) {
   // Progress 계산 로직 (원본에서 가져온 것)
   const getProgressInfo = (request: any) => {
     if (request.status === "pending") {
-      const queuePosition = request.id === "7" ? 1 : 2;
+      // 각각 다른 현실적인 대기 시간 표시 (24시간 이내)
+      const etaMap: { [key: string]: string } = {
+        "2025-09-0005": "17분",
+        "2025-09-0006": "12시간 35분",
+        "2025-09-0007": "24시간",
+      };
       return {
         progress: 0,
-        step: `대기열 ${queuePosition}번째`,
-        eta: queuePosition === 1 ? "약 5분" : "약 15분",
+        step: "출금 대기",
+        eta: etaMap[request.id] || "24시간",
         type: "pending",
       };
     } else if (request.status === "processing") {
@@ -36,7 +44,7 @@ export function ProcessingTableRow({ request, onToggleDetails }: ProcessingTable
     } else if (request.status === "completed") {
       return {
         progress: 100,
-        step: "블록체인 전송",
+        step: "전송 완료",
         eta: "완료됨",
         type: "completed",
       };
@@ -54,9 +62,7 @@ export function ProcessingTableRow({ request, onToggleDetails }: ProcessingTable
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-medium text-gray-900">
-          #{request.id}
-        </span>
+        <span className="text-sm font-medium text-gray-900">#{request.id}</span>
       </td>
       <td className="px-6 py-4">
         <div className="flex-1">
@@ -73,7 +79,9 @@ export function ProcessingTableRow({ request, onToggleDetails }: ProcessingTable
             alt={request.currency}
             className="w-6 h-6 rounded-full"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+              (
+                e.target as HTMLImageElement
+              ).src = `data:image/svg+xml;base64,${btoa(`
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
                   <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
                   <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
@@ -85,7 +93,8 @@ export function ProcessingTableRow({ request, onToggleDetails }: ProcessingTable
           />
           <div>
             <p className="font-medium text-gray-900">
-              {formatAmount(request.amount, request.currency)} {request.currency}
+              {formatAmount(request.amount, request.currency)}{" "}
+              {request.currency}
             </p>
           </div>
         </div>

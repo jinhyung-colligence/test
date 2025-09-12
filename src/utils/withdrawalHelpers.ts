@@ -37,8 +37,8 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
       icon: CpuChipIcon,
     },
     completed: {
-      name: "출금 완료",
-      color: "bg-emerald-100 text-emerald-800",
+      name: "전송 완료",
+      color: "bg-green-100 text-green-800",
       icon: CheckCircleIcon,
     },
     rejected: {
