@@ -42,6 +42,7 @@ import AuditTab from "./withdrawal/AuditTab";
 import RejectedTabComponent from "./withdrawal/RejectedTabComponent";
 import AirgapTab from "./withdrawal/AirgapTab";
 import ApprovalTab from "./withdrawal/ApprovalTab";
+import { ManagementMenuButton } from "./withdrawal/ManagementMenuButton";
 import {
   mockWithdrawalRequests,
   networkAssets,
@@ -869,13 +870,16 @@ export default function WithdrawalManagement({
             보안과 효율성을 모두 갖춘 기업용 출금 시스템
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          출금 신청
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            출금 신청
+          </button>
+          <ManagementMenuButton />
+        </div>
       </div>
 
       {/* 출금 프로세스 플로우 */}

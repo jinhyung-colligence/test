@@ -6,7 +6,7 @@ export type WithdrawalStatus =
   | "processing" // 출금 진행 (Air-gap)
   | "completed" // 출금 완료
   | "rejected" // 반려
-  | "archived" // 처리 완료 (반려 후 아카이브)
+  | "archived" // 처리 완료 (반료 후 아카이브)
   | "cancelled"; // 취소
 
 export type UserRole =
@@ -16,13 +16,21 @@ export type UserRole =
   | "operator"
   | "admin";
 
+export type Currency =
+  | "KRW"
+  | "USD"
+  | "BTC"
+  | "ETH"
+  | "USDC"
+  | "USDT";
+
 export interface WithdrawalRequest {
   id: string;
   title: string;
   fromAddress: string;
   toAddress: string;
   amount: number;
-  currency: string;
+  currency: Currency;
   groupId: string;
   initiator: string;
   initiatedAt: string;

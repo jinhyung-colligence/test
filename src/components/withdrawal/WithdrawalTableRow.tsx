@@ -1,6 +1,7 @@
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { StatusBadge } from "./StatusBadge";
 import { PriorityBadge } from "./PriorityBadge";
+import { ApprovalStatus } from "./ApprovalStatus";
 import { formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
 
 interface WithdrawalTableRowProps {
