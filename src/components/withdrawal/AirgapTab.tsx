@@ -3,6 +3,7 @@ import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { getStatusInfo, getPriorityInfo, formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
 import { ProcessingTableRow } from "./ProcessingTableRow";
+import { WithdrawalStopModal } from "./WithdrawalStopModal";
 
 interface AirgapTabProps {
   withdrawalRequests: WithdrawalRequest[];
@@ -15,6 +16,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
   const [processingCurrentPage, setProcessingCurrentPage] = useState(1);
   const [processingItemsPerPage] = useState(10);
   const [selectedProcessingRequest, setSelectedProcessingRequest] = useState<string | null>(null);
+  const [stopModalRequest, setStopModalRequest] = useState<WithdrawalRequest | null>(null);
 
   // 출금 처리 필터링 로직
   const getFilteredProcessingRequests = () => {
@@ -81,6 +83,13 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
   };
 
   const paginatedData = getPaginatedProcessingRequests();
+
+  const handleStopWithdrawal = (requestId: string, reason: string) => {
+    // 실제로는 API 호출하여 출금 중지 처리
+    console.log('출금 중지:', requestId, '사유:', reason);
+    // 상태 업데이트 로직 (실제로는 상위 컴포넌트에서 처리)
+    alert(`출금이 중지되었습니다.\n사유: ${reason}`);
+  };
 
   return (
     <div className="space-y-4">
@@ -358,6 +367,20 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                             </div>
                           </div>
                         </div>
+                        
+                        {/* 상세 설명 */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <h6 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            출금 상세 설명
+                          </h6>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            {request.description}
+                          </p>
+                        </div>
+                        
                         <div className="space-y-3">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-500">
@@ -397,35 +420,6 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                         결재 승인 정보
                       </h5>
                       <div className="space-y-4">
-                        {/* 승인 진행률 */}
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-gray-700">
-                              승인 진행률
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              {request.approvals.length}/
-                              {request.requiredApprovals.length}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                            <div
-                              className="h-2 rounded-full bg-green-500"
-                              style={{
-                                width: `${
-                                  (request.approvals.length /
-                                    request.requiredApprovals.length) *
-                                  100
-                                }%`,
-                              }}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            필요 승인수:{" "}
-                            {request.requiredApprovals.length}개
-                          </div>
-                        </div>
-
                         {/* 필수 결재자 승인 현황 */}
                         <div className="bg-gray-50 p-4 rounded-lg border">
                           <h6 className="text-sm font-medium text-gray-700 mb-3">
@@ -493,6 +487,53 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                               {request.requiredApprovals.length -
                                 request.approvals.length}
                               명의 승인이 추가로 필요합니다.
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 출금 대기 상태 표시 - pending 상태일 때만 표시 */}
+                        {request.status === "pending" && (
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <svg
+                                  className="w-5 h-5 text-gray-600 mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                <span className="text-sm font-medium text-gray-800">
+                                  출금 대기 중입니다
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setStopModalRequest(request)}
+                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                              >
+                                출금 중지
+                              </button>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-600">
+                              오출금 방지를 위한 대기 기간이 진행 중입니다.
+                              <div className="mt-1 font-medium text-gray-700">
+                                {(() => {
+                                  // ID별 남은 시간 매핑
+                                  const etaMap: { [key: string]: string } = {
+                                    "2025-09-0005": "17분",
+                                    "2025-09-0006": "12시간 35분", 
+                                    "2025-09-0007": "24시간",
+                                  };
+                                  const remainingTime = etaMap[request.id] || "24시간";
+                                  return `남은 시간: ${remainingTime}`;
+                                })()}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -634,31 +675,6 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                         </div>
                       )}
 
-                      {request.status === "pending" && (
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                          <div className="flex items-center">
-                            <svg
-                              className="w-5 h-5 text-gray-600 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            <span className="text-sm font-medium text-gray-800">
-                              출금 대기 중입니다
-                            </span>
-                          </div>
-                          <div className="mt-2 text-xs text-gray-600">
-                            오출금 방지를 위한 대기 기간이 진행 중입니다.
-                          </div>
-                        </div>
-                      )}
 
                       {request.status === "rejected" &&
                         request.rejections.length > 0 && (
@@ -709,14 +725,6 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                           </div>
                         )}
 
-                      <div className="bg-gray-50 p-4 rounded-lg border">
-                        <h6 className="text-sm font-medium text-gray-700 mb-2">
-                          상세 설명
-                        </h6>
-                        <p className="text-sm text-gray-600">
-                          {request.description}
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -724,6 +732,16 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
             );
           })()}
         </div>
+      )}
+
+      {/* 출금 중지 모달 */}
+      {stopModalRequest && (
+        <WithdrawalStopModal
+          request={stopModalRequest}
+          isOpen={!!stopModalRequest}
+          onClose={() => setStopModalRequest(null)}
+          onConfirm={handleStopWithdrawal}
+        />
       )}
     </div>
   );

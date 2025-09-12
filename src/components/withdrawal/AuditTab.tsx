@@ -14,6 +14,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
   const [auditItemsPerPage] = useState(10);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
+
   const toggleItemExpanded = (requestId: string) => {
     const newExpanded = new Set(expandedItems);
     if (newExpanded.has(requestId)) {
@@ -26,41 +27,45 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
 
   const getFilteredAuditRequests = () => {
     return withdrawalRequests.filter((request) => {
+      // 검색어 필터
       const matchesSearch =
         auditSearchTerm === "" ||
         request.id.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
         request.title.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
         request.initiator.toLowerCase().includes(auditSearchTerm.toLowerCase());
 
-      const matchesStatus =
-        auditStatusFilter === "all" || request.status === auditStatusFilter;
+      // 상태 필터 - 명시적으로 처리
+      const matchesStatus = auditStatusFilter === "all" || request.status === auditStatusFilter;
 
-      const matchesDate = () => {
-        if (auditDateFilter !== "all") {
-          const requestDate = new Date(request.initiatedAt);
-          const now = new Date();
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // 날짜 필터
+      let matchesDate = true;
+      if (auditDateFilter !== "all") {
+        const requestDate = new Date(request.initiatedAt);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-          switch (auditDateFilter) {
-            case "today":
-              return requestDate >= today;
-            case "week":
-              const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-              return requestDate >= weekAgo;
-            case "month":
-              const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-              return requestDate >= monthAgo;
-            case "quarter":
-              const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-              return requestDate >= quarterAgo;
-            default:
-              return true;
-          }
+        switch (auditDateFilter) {
+          case "today":
+            matchesDate = requestDate >= today;
+            break;
+          case "week":
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            matchesDate = requestDate >= weekAgo;
+            break;
+          case "month":
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            matchesDate = requestDate >= monthAgo;
+            break;
+          case "quarter":
+            const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+            matchesDate = requestDate >= quarterAgo;
+            break;
+          default:
+            matchesDate = true;
         }
-        return true;
-      };
+      }
 
-      return matchesSearch && matchesStatus && matchesDate();
+      return matchesSearch && matchesStatus && matchesDate;
     });
   };
 
@@ -124,6 +129,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                 <option value="completed">출금 완료</option>
                 <option value="rejected">반려</option>
                 <option value="archived">처리 완료</option>
+                <option value="stopped">출금 중지</option>
               </select>
 
               {/* 기간 필터 */}

@@ -7,6 +7,7 @@ import {
   CpuChipIcon,
   XCircleIcon,
   ArchiveBoxIcon,
+  StopIcon,
 } from "@heroicons/react/24/outline";
 
 export const getStatusInfo = (status: WithdrawalStatus) => {
@@ -55,6 +56,11 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
       name: "취소",
       color: "bg-gray-100 text-gray-800",
       icon: XCircleIcon,
+    },
+    stopped: {
+      name: "출금 중지",
+      color: "bg-red-100 text-red-800",
+      icon: StopIcon,
     },
   };
   return statusConfig[status] || statusConfig.draft;

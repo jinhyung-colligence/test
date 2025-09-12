@@ -214,6 +214,12 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         role: "required_approver",
         approvedAt: "2025-08-30T10:00:00Z",
       },
+      {
+        userId: "4",
+        userName: "김CTO",
+        role: "required_approver",
+        approvedAt: "2025-08-30T10:30:00Z",
+      },
     ],
     rejections: [],
     auditTrail: [
@@ -258,6 +264,12 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         userName: "박CFO",
         role: "required_approver",
         approvedAt: "2025-08-29T11:45:00Z",
+      },
+      {
+        userId: "3",
+        userName: "이CISO",
+        role: "required_approver",
+        approvedAt: "2025-08-29T12:15:00Z",
       },
     ],
     rejections: [],
@@ -304,6 +316,12 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         userName: "박CFO",
         role: "required_approver",
         approvedAt: "2025-03-14T11:00:00Z",
+      },
+      {
+        userId: "3",
+        userName: "이CISO",
+        role: "required_approver",
+        approvedAt: "2025-03-14T11:30:00Z",
       },
     ],
     rejections: [],
@@ -986,6 +1004,66 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
+  {
+    id: "2024-12-0021",
+    title: "마케팅 캠페인 예산 - 긴급 중지",
+    fromAddress: "bc1q...8m9n",
+    toAddress: "bc1q...3k4l", 
+    amount: 2.1,
+    currency: "BTC",
+    groupId: "3",
+    initiator: "최마케팅이사",
+    initiatedAt: "2024-12-11T14:00:00Z",
+    status: "stopped",
+    priority: "medium",
+    description: "마케팅 캠페인 예산 집행을 위한 출금이었으나 캠페인 전략 변경으로 긴급 중지",
+    requiredApprovals: ["박CFO", "이CISO", "김CTO"],
+    approvals: [
+      {
+        userId: "2",
+        userName: "박CFO", 
+        role: "required_approver",
+        approvedAt: "2024-12-11T14:30:00Z",
+      },
+      {
+        userId: "3",
+        userName: "이CISO",
+        role: "required_approver", 
+        approvedAt: "2024-12-11T15:15:00Z",
+      },
+    ],
+    rejections: [],
+    auditTrail: [
+      {
+        timestamp: "2024-12-11T14:00:00Z",
+        action: "출금 신청",
+        userId: "8",
+        userName: "최마케팅이사",
+        details: "마케팅 캠페인 예산 집행을 위한 출금 요청",
+      },
+      {
+        timestamp: "2024-12-11T14:30:00Z",
+        action: "박CFO 승인",
+        userId: "2",
+        userName: "박CFO",
+        details: "마케팅 예산 승인",
+      },
+      {
+        timestamp: "2024-12-11T15:15:00Z", 
+        action: "이CISO 승인",
+        userId: "3",
+        userName: "이CISO",
+        details: "보안 검토 완료 및 승인",
+      },
+      {
+        timestamp: "2024-12-11T16:45:00Z",
+        action: "출금 중지",
+        userId: "8",
+        userName: "최마케팅이사", 
+        details: "캠페인 전략 변경으로 인한 긴급 출금 중지 요청",
+      },
+    ],
+  }
 ];
 
 // 네트워크별 지원 자산 매핑

@@ -5,9 +5,10 @@ export type WithdrawalStatus =
   | "pending" // 출금 대기
   | "processing" // 출금 진행 (Air-gap)
   | "completed" // 출금 완료
-  | "rejected" // 반려
+  | "rejected" // 반료
   | "archived" // 처리 완료 (반료 후 아카이브)
-  | "cancelled"; // 취소
+  | "cancelled" // 취소
+  | "stopped"; // 출금 중지
 
 export type UserRole =
   | "initiator"
