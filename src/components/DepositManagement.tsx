@@ -126,12 +126,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     { symbol: "BTC", name: "Bitcoin", network: "Bitcoin" },
     { symbol: "ETH", name: "Ethereum", network: "Ethereum" },
     { symbol: "SOL", name: "Solana", network: "Solana" },
-    { symbol: "USDC", name: "USD Coin", network: "Ethereum (ERC-20)" },
     { symbol: "USDT", name: "Tether", network: "Ethereum (ERC-20)" },
-    { symbol: "MATIC", name: "Polygon", network: "Polygon" },
-    { symbol: "ADA", name: "Cardano", network: "Cardano" },
-    { symbol: "DOT", name: "Polkadot", network: "Polkadot" },
-    { symbol: "XRP", name: "Ripple", network: "XRP Ledger" },
+    { symbol: "USDC", name: "USD Coin", network: "Ethereum (ERC-20)" },
     {
       symbol: "CUSTOM_ERC20",
       name: "Custom ERC-20 Token",
@@ -323,9 +319,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredAvailableAssets = availableAssets.filter(
-    (available) => !assets.some((asset) => asset.symbol === available.symbol)
-  );
+  // 중복 자산 추가도 허용 (동일 자산의 다른 주소 생성 등의 용도)
+  const filteredAvailableAssets = availableAssets;
 
   return (
     <div className="space-y-8">
@@ -521,6 +516,308 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
       <div>
         <DepositHistoryTable deposits={depositHistory} />
       </div>
+
+      {/* Add Asset Modal */}
+      {showAddAsset && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                자산 추가
+              </h3>
+              <button
+                onClick={() => setShowAddAsset(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  자산 선택
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {filteredAvailableAssets.map((asset) => (
+                    <button
+                      key={asset.symbol}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAsset(asset.symbol);
+                        setShowCustomERC20(asset.symbol === "CUSTOM_ERC20");
+                        if (asset.symbol !== "CUSTOM_ERC20") {
+                          setCustomERC20({
+                            symbol: "",
+                            name: "",
+                            contractAddress: "",
+                            image: "",
+                            priceApiUrl: "",
+                          });
+                          setImagePreview("");
+                        }
+                      }}
+                      className={`p-3 border-2 rounded-lg transition-all duration-200 hover:shadow-md ${
+                        selectedAsset === asset.symbol
+                          ? 'border-primary-500 bg-primary-50 text-primary-700'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-1.5">
+                        {asset.symbol === "CUSTOM_ERC20" ? (
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <img
+                            src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${asset.symbol.toLowerCase()}.png`}
+                            alt={asset.symbol}
+                            className="w-8 h-8 rounded-full"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                  <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                  <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                    ${asset.symbol}
+                                  </text>
+                                </svg>
+                              `)}`;
+                            }}
+                          />
+                        )}
+                        <div className="text-center">
+                          <div className="text-xs font-semibold">
+                            {asset.symbol}
+                            {(asset.symbol === "USDT" || asset.symbol === "USDC") && (
+                              <span className="ml-1 text-xs text-blue-600 font-normal">ERC20</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate max-w-full leading-tight">
+                            {asset.symbol === "CUSTOM_ERC20" ? "Custom" : asset.name}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom ERC-20 입력 필드들 */}
+              {showCustomERC20 && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="text-sm font-medium text-gray-900">Custom ERC-20 토큰 정보</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        토큰 심볼 *
+                      </label>
+                      <input
+                        type="text"
+                        value={customERC20.symbol}
+                        onChange={(e) => setCustomERC20({...customERC20, symbol: e.target.value.toUpperCase()})}
+                        placeholder="예: USDT"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        토큰 이름 *
+                      </label>
+                      <input
+                        type="text"
+                        value={customERC20.name}
+                        onChange={(e) => setCustomERC20({...customERC20, name: e.target.value})}
+                        placeholder="예: Tether USD"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      컨트랙트 주소 *
+                    </label>
+                    <input
+                      type="text"
+                      value={customERC20.contractAddress}
+                      onChange={(e) => setCustomERC20({...customERC20, contractAddress: e.target.value})}
+                      placeholder="0x..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      로고 (선택사항)
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // 파일 크기 제한 (2MB)
+                            if (file.size > 2 * 1024 * 1024) {
+                              alert('파일 크기는 2MB를 초과할 수 없습니다.');
+                              return;
+                            }
+                            
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const result = event.target?.result as string;
+                              setCustomERC20({...customERC20, image: result});
+                              setImagePreview(result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                        id="logo-upload"
+                      />
+                      <label
+                        htmlFor="logo-upload"
+                        className="flex items-center px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span className="text-sm text-gray-700">파일 선택</span>
+                      </label>
+                      {imagePreview && (
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={imagePreview}
+                            alt="Logo Preview"
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomERC20({...customERC20, image: ""});
+                              setImagePreview("");
+                              // 파일 입력 초기화
+                              const input = document.getElementById('logo-upload') as HTMLInputElement;
+                              if (input) input.value = '';
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            제거
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      JPG, PNG, GIF 파일 지원 (최대 2MB)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      가격 API URL (선택사항)
+                    </label>
+                    <input
+                      type="url"
+                      value={customERC20.priceApiUrl}
+                      onChange={(e) => setCustomERC20({...customERC20, priceApiUrl: e.target.value})}
+                      placeholder="https://api.example.com/price"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      실시간 가격 정보를 가져올 API 엔드포인트
+                    </p>
+                  </div>
+
+                  <div className="text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
+                    <strong>주의:</strong> 컨트랙트 주소가 정확한지 확인해주세요. 잘못된 주소로 인한 손실에 대해 책임지지 않습니다.
+                  </div>
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowAddAsset(false);
+                    setSelectedAsset("");
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedAsset === "CUSTOM_ERC20") {
+                      // Custom ERC-20 토큰 검증 및 추가
+                      if (customERC20.symbol && customERC20.name && customERC20.contractAddress) {
+                        const newAsset: Asset = {
+                          id: Date.now().toString(),
+                          symbol: customERC20.symbol,
+                          name: customERC20.name,
+                          network: "Ethereum (ERC-20)",
+                          icon: customERC20.image || `data:image/svg+xml;base64,${btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                              <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                              <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                ${customERC20.symbol}
+                              </text>
+                            </svg>
+                          `)}`,
+                          depositAddress: generateDepositAddress("ETH"), // ERC-20은 ETH 주소 형식
+                          qrCode: "",
+                          isActive: true,
+                          contractAddress: customERC20.contractAddress,
+                          priceApiUrl: customERC20.priceApiUrl
+                        };
+                        setAssets([...assets, newAsset]);
+                        setShowAddAsset(false);
+                        setSelectedAsset("");
+                        setShowCustomERC20(false);
+                        setCustomERC20({
+                          symbol: "",
+                          name: "",
+                          contractAddress: "",
+                          image: "",
+                          priceApiUrl: "",
+                        });
+                        setImagePreview("");
+                      }
+                    } else if (selectedAsset) {
+                      // 일반 자산 추가
+                      const assetInfo = availableAssets.find(a => a.symbol === selectedAsset);
+                      if (assetInfo) {
+                        const newAsset: Asset = {
+                          id: Date.now().toString(),
+                          symbol: assetInfo.symbol,
+                          name: assetInfo.name,
+                          network: assetInfo.network,
+                          icon: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${assetInfo.symbol.toLowerCase()}.png`,
+                          depositAddress: generateDepositAddress(assetInfo.symbol),
+                          qrCode: "",
+                          isActive: true
+                        };
+                        setAssets([...assets, newAsset]);
+                        setShowAddAsset(false);
+                        setSelectedAsset("");
+                      }
+                    }
+                  }}
+                  disabled={
+                    selectedAsset === "CUSTOM_ERC20" 
+                      ? !customERC20.symbol || !customERC20.name || !customERC20.contractAddress
+                      : !selectedAsset
+                  }
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Modal */}
       {selectedQR && (
