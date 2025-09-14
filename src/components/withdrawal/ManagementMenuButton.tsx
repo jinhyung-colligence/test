@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  CogIcon, 
-  BellIcon, 
-  DocumentTextIcon, 
+import {
+  CogIcon,
+  BellIcon,
+  DocumentTextIcon,
   ShieldCheckIcon,
-  ChevronDownIcon 
+  ChevronDownIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
-import { PolicyManagement } from './PolicyManagement';
 import { NotificationCenter } from './NotificationCenter';
 import { ApprovalPolicyDisplay } from './ApprovalPolicyDisplay';
 
-type ModalType = 'none' | 'policy' | 'notification' | 'policyDisplay' | 'rules';
+type ModalType = 'none' | 'notification' | 'policyDisplay';
 
 export function ManagementMenuButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,11 +25,15 @@ export function ManagementMenuButton() {
       onClick: () => setActiveModal('policyDisplay')
     },
     {
-      key: 'policy',
+      key: 'policyManagement',
       label: '정책 관리',
-      description: '결재 정책 설정 및 관리',
+      description: '보안 설정에서 결재 정책 관리',
       icon: ShieldCheckIcon,
-      onClick: () => setActiveModal('policy')
+      onClick: () => {
+        window.open('/security?tab=policies', '_blank');
+        setIsOpen(false);
+      },
+      isExternal: true
     },
     {
       key: 'notification',
@@ -42,7 +46,9 @@ export function ManagementMenuButton() {
 
   const handleItemClick = (item: typeof menuItems[0]) => {
     item.onClick();
-    setIsOpen(false);
+    if (!item.isExternal) {
+      setIsOpen(false);
+    }
   };
 
   const closeModal = () => {
@@ -80,7 +86,12 @@ export function ManagementMenuButton() {
                   >
                     <Icon className="h-5 w-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{item.label}</div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-900">{item.label}</span>
+                        {item.isExternal && (
+                          <ArrowTopRightOnSquareIcon className="h-3 w-3 text-gray-400 ml-1" />
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500 mt-1">{item.description}</div>
                     </div>
                   </button>
@@ -106,10 +117,6 @@ export function ManagementMenuButton() {
       )}
 
       {/* Modals */}
-      {activeModal === 'policy' && (
-        <PolicyManagement onPolicyChange={() => {}} />
-      )}
-
       {activeModal === 'notification' && (
         <NotificationCenter onClose={closeModal} />
       )}
