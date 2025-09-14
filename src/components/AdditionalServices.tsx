@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  CurrencyDollarIcon, 
-  ArrowsRightLeftIcon, 
+import {
+  CurrencyDollarIcon,
+  ArrowsRightLeftIcon,
   ChartBarIcon,
   BanknotesIcon,
   PlusIcon,
@@ -37,6 +37,7 @@ interface LendingPosition {
   status: 'active' | 'completed'
 }
 
+
 export default function AdditionalServices({ plan }: AdditionalServicesProps) {
   const [activeTab, setActiveTab] = useState<'staking' | 'lending' | 'swap' | 'krw'>('staking')
 
@@ -52,11 +53,11 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
     },
     {
       id: '2',
-      asset: 'ADA',
-      amount: '10000',
-      validator: 'Cardano Pool',
-      apy: 5.5,
-      rewards: '550',
+      asset: 'SOL',
+      amount: '500',
+      validator: 'Solana Validator',
+      apy: 6.8,
+      rewards: '34.0',
       status: 'active'
     }
   ]
@@ -81,6 +82,7 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
       status: 'active'
     }
   ]
+
 
   const formatCurrency = (value: number | string) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value
@@ -160,8 +162,25 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
             <tbody className="bg-white divide-y divide-gray-200">
               {stakingPositions.map((position) => (
                 <tr key={position.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
-                    {position.asset}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <img
+                        src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${position.asset.toLowerCase()}.png`}
+                        alt={position.asset}
+                        className="w-8 h-8 rounded-full mr-3"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                              <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                              <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                ${position.asset}
+                              </text>
+                            </svg>
+                          `)}`;
+                        }}
+                      />
+                      <span className="font-semibold text-gray-900">{position.asset}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {position.amount}
@@ -261,8 +280,25 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
             <tbody className="bg-white divide-y divide-gray-200">
               {lendingPositions.map((position) => (
                 <tr key={position.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
-                    {position.asset}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <img
+                        src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${position.asset.toLowerCase()}.png`}
+                        alt={position.asset}
+                        className="w-8 h-8 rounded-full mr-3"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                              <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                              <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                ${position.asset}
+                              </text>
+                            </svg>
+                          `)}`;
+                        }}
+                      />
+                      <span className="font-semibold text-gray-900">{position.asset}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {position.amount}
@@ -361,60 +397,168 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
     </div>
   )
 
+
   const renderKRW = () => (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">원화 교환 서비스</h2>
-        <p className="text-gray-600">제휴 계좌 연동을 통한 원화 입출금</p>
+        <p className="text-gray-600">암호화폐와 원화 간의 실시간 교환 서비스</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 암호화폐 → 원화 */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">원화 입금</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">암호화폐 → 원화</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">입금 금액 (KRW)</label>
-              <input 
-                type="number" 
-                placeholder="1,000,000"
+              <label className="block text-sm font-medium text-gray-700 mb-2">판매할 암호화폐</label>
+              <div className="flex space-x-2">
+                <select className="flex-1 px-3 py-2 border border-gray-200 rounded-lg">
+                  <option>BTC - Bitcoin</option>
+                  <option>ETH - Ethereum</option>
+                  <option>SOL - Solana</option>
+                  <option>USDT - Tether</option>
+                  <option>USDC - USD Coin</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">판매 수량</label>
+              <input
+                type="number"
+                placeholder="0.1"
+                step="0.00000001"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">연결 계좌</label>
-              <select className="w-full px-3 py-2 border border-gray-200 rounded-lg">
-                <option>신한은행 ****-**-1234</option>
-                <option>우리은행 ****-**-5678</option>
-              </select>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">예상 받을 금액:</span>
+                <span className="font-semibold text-lg">₩9,500,000</span>
+              </div>
+              <div className="flex justify-between text-sm mt-2">
+                <span className="text-gray-600">교환 수수료 (0.5%):</span>
+                <span className="text-red-600">-₩47,500</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1 pt-2 border-t border-gray-200">
+                <span className="text-gray-600">실제 받을 금액:</span>
+                <span className="font-bold text-green-600">₩9,452,500</span>
+              </div>
             </div>
-            <button className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-              입금 신청
+            <button className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">
+              암호화폐 판매
             </button>
           </div>
         </div>
 
+        {/* 원화 → 암호화폐 */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">원화 출금</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">원화 → 암호화폐</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">출금 금액 (KRW)</label>
-              <input 
-                type="number" 
-                placeholder="500,000"
+              <label className="block text-sm font-medium text-gray-700 mb-2">구매할 암호화폐</label>
+              <div className="flex space-x-2">
+                <select className="flex-1 px-3 py-2 border border-gray-200 rounded-lg">
+                  <option>BTC - Bitcoin</option>
+                  <option>ETH - Ethereum</option>
+                  <option>SOL - Solana</option>
+                  <option>USDT - Tether</option>
+                  <option>USDC - USD Coin</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">구매 금액 (KRW)</label>
+              <input
+                type="number"
+                placeholder="1,000,000"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">출금 계좌</label>
-              <select className="w-full px-3 py-2 border border-gray-200 rounded-lg">
-                <option>신한은행 ****-**-1234</option>
-                <option>우리은행 ****-**-5678</option>
-              </select>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">예상 받을 수량:</span>
+                <span className="font-semibold text-lg">0.01052 BTC</span>
+              </div>
+              <div className="flex justify-between text-sm mt-2">
+                <span className="text-gray-600">교환 수수료 (0.5%):</span>
+                <span className="text-red-600">-₩5,000</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1 pt-2 border-t border-gray-200">
+                <span className="text-gray-600">실제 받을 수량:</span>
+                <span className="font-bold text-green-600">0.01047 BTC</span>
+              </div>
             </div>
-            <button className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">
-              출금 신청
+            <button className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              암호화폐 구매
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* 실시간 환율 정보 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">실시간 환율 정보</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">자산</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">매수가 (KRW)</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">매도가 (KRW)</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">스프레드</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {[
+                { symbol: 'BTC', name: 'Bitcoin', buyPrice: 95000000, sellPrice: 94500000 },
+                { symbol: 'ETH', name: 'Ethereum', buyPrice: 3200000, sellPrice: 3180000 },
+                { symbol: 'SOL', name: 'Solana', buyPrice: 150000, sellPrice: 149000 },
+                { symbol: 'USDT', name: 'Tether', buyPrice: 1320, sellPrice: 1310 },
+                { symbol: 'USDC', name: 'USD Coin', buyPrice: 1320, sellPrice: 1310 }
+              ].map((rate) => {
+                const spread = ((rate.buyPrice - rate.sellPrice) / rate.sellPrice * 100).toFixed(2);
+                return (
+                  <tr key={rate.symbol} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${rate.symbol.toLowerCase()}.png`}
+                          alt={rate.symbol}
+                          className="w-8 h-8 rounded-full mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                  ${rate.symbol}
+                                </text>
+                              </svg>
+                            `)}`;
+                          }}
+                        />
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900">{rate.symbol}</div>
+                          <div className="text-sm text-gray-500">{rate.name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-sm font-medium text-blue-600">₩{rate.buyPrice.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-sm font-medium text-red-600">₩{rate.sellPrice.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-sm text-gray-900">{spread}%</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -425,7 +569,7 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
             <CheckCircleIcon className="h-8 w-8 text-green-600" />
             <div>
               <p className="font-semibold text-gray-900">인증 완료</p>
-              <p className="text-sm text-gray-600">신원 확인 및 자금세탁 방지 절차가 완료되었습니다.</p>
+              <p className="text-sm text-gray-600">신원 확인 및 자금세탁 방지 절차가 완료되어 원화 교환이 가능합니다.</p>
             </div>
           </div>
         </div>
@@ -475,6 +619,7 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
         {activeTab === 'swap' && renderSwap()}
         {activeTab === 'krw' && renderKRW()}
       </div>
+
     </div>
   )
 }
