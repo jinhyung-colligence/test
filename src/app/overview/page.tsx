@@ -1,26 +1,15 @@
 'use client'
 
-import Header from '@/components/Header'
-import Sidebar from '@/components/Sidebar'
+import PageLayout from '@/components/PageLayout'
 import AssetOverview from '@/components/AssetOverview'
 import { useServicePlan } from '@/contexts/ServicePlanContext'
 
 export default function OverviewPage() {
-  const { selectedPlan, setSelectedPlan } = useServicePlan()
+  const { selectedPlan } = useServicePlan()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="ml-64 pt-28 p-8">
-        <Sidebar 
-          plan={selectedPlan} 
-          activeTab="overview" 
-          onTabChange={() => {}}
-          onPlanChange={setSelectedPlan}
-        />
-        <AssetOverview plan={selectedPlan} />
-      </div>
-    </div>
+    <PageLayout activeTab="overview">
+      <AssetOverview plan={selectedPlan} />
+    </PageLayout>
   )
 }

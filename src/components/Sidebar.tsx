@@ -1,10 +1,10 @@
 'use client'
 
-import { 
-  HomeIcon, 
-  ClockIcon, 
-  UsersIcon, 
-  CogIcon, 
+import {
+  HomeIcon,
+  ClockIcon,
+  UsersIcon,
+  CogIcon,
   ShieldCheckIcon,
   BuildingOfficeIcon,
   UserIcon,
@@ -12,13 +12,16 @@ import {
   ChevronDownIcon,
   UserGroupIcon,
   ArrowUpOnSquareIcon,
-  ArrowDownOnSquareIcon
+  ArrowDownOnSquareIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ServicePlan } from '@/app/page'
 import { DashboardTab } from './Dashboard'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface SidebarProps {
   plan: ServicePlan
@@ -31,6 +34,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   const { t } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
+  const { isCollapsed, toggleSidebar } = useSidebar()
   const [showPlanDropdown, setShowPlanDropdown] = useState(false)
   
   // Get active tab from current pathname
@@ -193,23 +197,43 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   ]
 
   return (
-    <div className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col z-40">
-      <div className="p-6 relative plan-dropdown-container">
+    <div className={`fixed left-0 top-16 bottom-0 bg-white shadow-sm border-r border-gray-200 flex flex-col z-40 transition-all duration-300 ${
+      isCollapsed ? 'w-16' : 'w-64'
+    }`}>
+      {/* Toggle Button */}
+      <div className="absolute -right-3 top-6 z-50">
         <button
-          onClick={() => setShowPlanDropdown(!showPlanDropdown)}
-          className={`w-full flex items-center justify-between p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
+          onClick={toggleSidebar}
+          className="bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          {isCollapsed ? (
+            <ChevronRightIcon className="h-4 w-4 text-gray-600" />
+          ) : (
+            <ChevronLeftIcon className="h-4 w-4 text-gray-600" />
+          )}
+        </button>
+      </div>
+
+      <div className={`p-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
+        <button
+          onClick={() => !isCollapsed && setShowPlanDropdown(!showPlanDropdown)}
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
         >
           <div className="flex items-center">
-            <PlanIcon className="h-8 w-8 mr-3" />
-            <div>
-              <p className="font-semibold text-sm">{planInfo.name}</p>
-            </div>
+            <PlanIcon className={`h-8 w-8 ${isCollapsed ? '' : 'mr-3'}`} />
+            {!isCollapsed && (
+              <div>
+                <p className="font-semibold text-sm">{planInfo.name}</p>
+              </div>
+            )}
           </div>
-          <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
+          {!isCollapsed && (
+            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
+          )}
         </button>
 
         {/* Plan Dropdown */}
-        {showPlanDropdown && (
+        {showPlanDropdown && !isCollapsed && (
           <div className="absolute top-full left-6 right-6 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
             {allPlans.map((planOption) => {
               const OptionIcon = planOption.icon
@@ -235,36 +259,39 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         )}
       </div>
 
-      <nav className="px-4 flex-1 flex flex-col">
+      <nav className={`flex-1 flex flex-col ${isCollapsed ? 'px-2' : 'px-4'}`}>
         <ul className="space-y-1">
           {menuItems.map((item) => {
             if (!item.available) return null
-            
+
             const Icon = item.icon
             const isActive = currentTab === item.id
-            
+
             return (
               <li key={item.id}>
                 <button
                   onClick={() => router.push(item.path)}
-                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-left rounded-lg transition-colors ${
                     isActive
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
+                  title={isCollapsed ? item.name : undefined}
                 >
-                  <Icon className={`h-5 w-5 mr-3 ${isActive ? 'text-primary-600' : 'text-gray-400'}`} />
-                  <span className="font-medium">{item.name}</span>
+                  <Icon className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'} ${isActive ? 'text-primary-600' : 'text-gray-400'}`} />
+                  {!isCollapsed && <span className="font-medium">{item.name}</span>}
                 </button>
               </li>
             )
           })}
         </ul>
-        
-        <div className="mt-auto pt-4 px-4 py-3 text-xs text-gray-500 border-t border-gray-200">
-          <p>{t('footer.mpc_security')}</p>
-          <p className="text-green-600 font-medium">{t('footer.connected')}</p>
-        </div>
+
+        {!isCollapsed && (
+          <div className="mt-auto pt-4 px-4 py-3 text-xs text-gray-500 border-t border-gray-200">
+            <p>{t('footer.mpc_security')}</p>
+            <p className="text-green-600 font-medium">{t('footer.connected')}</p>
+          </div>
+        )}
       </nav>
     </div>
   )

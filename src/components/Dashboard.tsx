@@ -11,6 +11,7 @@ import SecuritySettings from './SecuritySettings'
 import GroupWalletManagement from './GroupWalletManagement'
 import DepositManagement from './DepositManagement'
 import WithdrawalManagement from './WithdrawalManagement'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface DashboardProps {
   plan: ServicePlan
@@ -21,6 +22,7 @@ export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'd
 
 export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
+  const { isCollapsed } = useSidebar()
 
   const renderContent = () => {
     switch (activeTab) {
@@ -47,14 +49,14 @@ export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar 
-        plan={plan} 
-        activeTab={activeTab} 
+      <Sidebar
+        plan={plan}
+        activeTab={activeTab}
         onTabChange={setActiveTab}
         onPlanChange={onPlanChange}
       />
-      
-      <div className="ml-64 pt-24">
+
+      <div className={`pt-24 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
         <div className="p-8">
           {renderContent()}
         </div>

@@ -9,9 +9,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30분 전
     retryCount: 0,
-    withdrawalId: "WD-2024-001",
-    subject: "출금 승인 요청 - 1,000,000 KRW",
-    body: "출금 신청이 승인 대기 중입니다."
+    requestId: "WD-2024-001"
   },
   {
     id: "log-002",
@@ -21,9 +19,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2시간 전
     retryCount: 1,
-    withdrawalId: "WD-2024-002",
-    subject: "출금 승인 지연 알림 - 5,000,000 KRW",
-    body: "승인이 2시간 지연되었습니다."
+    requestId: "WD-2024-002"
   },
   {
     id: "log-003",
@@ -33,9 +29,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4시간 전
     retryCount: 0,
-    withdrawalId: "WD-2024-003",
-    subject: "출금 승인 완료 - 2,500,000 KRW",
-    body: "모든 승인이 완료되었습니다."
+    requestId: "WD-2024-003"
   },
   {
     id: "log-004",
@@ -45,9 +39,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6시간 전
     retryCount: 0,
-    withdrawalId: "WD-2024-004",
-    subject: "출금 신청 반려 - 10,000,000 KRW",
-    body: "출금 신청이 반려되었습니다."
+    requestId: "WD-2024-004"
   },
   {
     id: "log-005",
@@ -57,10 +49,8 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "failed",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8시간 전
     retryCount: 2,
-    withdrawalId: "WD-2024-005",
-    subject: "긴급 출금 승인 요청 - 50,000,000 KRW",
-    body: "긴급 승인이 필요합니다.",
-    error: "SMTP 서버 연결 실패"
+    requestId: "WD-2024-005",
+    failureReason: "SMTP 서버 연결 실패"
   },
   {
     id: "log-006",
@@ -70,9 +60,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12시간 전
     retryCount: 0,
-    withdrawalId: "WD-2024-006",
-    subject: "출금 승인 요청 - 3,200,000 KRW",
-    body: "새로운 출금 승인 요청입니다."
+    requestId: "WD-2024-006"
   },
   {
     id: "log-007",
@@ -82,9 +70,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "retry",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 14).toISOString(), // 14시간 전
     retryCount: 1,
-    withdrawalId: "WD-2024-007",
-    subject: "출금 승인 지연 알림 - 8,000,000 KRW",
-    body: "승인 지연으로 재발송합니다."
+    requestId: "WD-2024-007"
   },
   {
     id: "log-008",
@@ -94,9 +80,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(), // 18시간 전
     retryCount: 0,
-    withdrawalId: "WD-2024-008",
-    subject: "출금 처리 완료 - 1,500,000 KRW",
-    body: "출금이 성공적으로 처리되었습니다."
+    requestId: "WD-2024-008"
   },
   {
     id: "log-009",
@@ -106,9 +90,7 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "sent",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(), // 20시간 전
     retryCount: 0,
-    withdrawalId: "WD-2024-009",
-    subject: "긴급 출금 승인 요청 - 100,000,000 KRW",
-    body: "대규모 긴급 출금 승인이 필요합니다."
+    requestId: "WD-2024-009"
   },
   {
     id: "log-010",
@@ -118,10 +100,8 @@ export const MOCK_NOTIFICATION_LOGS: NotificationLog[] = [
     status: "failed",
     sentAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 24시간 전
     retryCount: 3,
-    withdrawalId: "WD-2024-010",
-    subject: "출금 승인 요청 - 750,000 KRW",
-    body: "출금 승인 요청 메일입니다.",
-    error: "수신자 메일 주소 오류"
+    requestId: "WD-2024-010",
+    failureReason: "수신자 메일 주소 오류"
   }
 ];
 
@@ -129,11 +109,11 @@ export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   {
     id: "approval_pending",
     name: "승인 대기 알림",
-    trigger: "출금 신청 시 승인자에게 발송",
+    trigger: "approval_pending",
     enabled: true,
     channels: ["email"],
     subject: "출금 승인 요청 - {{amount}} {{currency}}",
-    body: `안녕하세요, {{approverName}}님
+    message: `안녕하세요, {{approverName}}님
 
 새로운 출금 승인 요청이 있습니다.
 
@@ -152,11 +132,11 @@ export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   {
     id: "approval_overdue",
     name: "승인 지연 알림",
-    trigger: "승인 지연 시 담당자에게 발송",
+    trigger: "approval_overdue",
     enabled: true,
     channels: ["email"],
     subject: "출금 승인 지연 알림 - {{amount}} {{currency}}",
-    body: `안녕하세요, {{approverName}}님
+    message: `안녕하세요, {{approverName}}님
 
 출금 승인이 {{overdueHours}}시간 지연되었습니다.
 
@@ -174,11 +154,11 @@ export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   {
     id: "approval_completed",
     name: "승인 완료 알림",
-    trigger: "모든 승인 완료 시 신청자에게 발송",
+    trigger: "approval_completed",
     enabled: true,
     channels: ["email"],
     subject: "출금 승인 완료 - {{amount}} {{currency}}",
-    body: `안녕하세요, {{initiator}}님
+    message: `안녕하세요, {{initiator}}님
 
 출금 신청이 모든 승인자로부터 승인되었습니다.
 
@@ -195,11 +175,11 @@ export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   {
     id: "approval_rejected",
     name: "승인 반려 알림",
-    trigger: "승인 반려 시 신청자에게 발송",
+    trigger: "approval_rejected",
     enabled: true,
     channels: ["email"],
     subject: "출금 신청 반려 - {{amount}} {{currency}}",
-    body: `안녕하세요, {{initiator}}님
+    message: `안녕하세요, {{initiator}}님
 
 출금 신청이 반려되었습니다.
 
@@ -217,11 +197,11 @@ export const MOCK_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
   {
     id: "emergency_approval",
     name: "긴급 승인 알림",
-    trigger: "긴급 출금 시 승인자에게 발송",
+    trigger: "emergency",
     enabled: true,
     channels: ["email"],
     subject: "🚨 긴급 출금 승인 요청 - {{amount}} {{currency}}",
-    body: `안녕하세요, {{approverName}}님
+    message: `안녕하세요, {{approverName}}님
 
 긴급 출금 승인 요청입니다.
 

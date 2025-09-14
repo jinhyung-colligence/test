@@ -1,26 +1,15 @@
 'use client'
 
-import Header from '@/components/Header'
-import Sidebar from '@/components/Sidebar'
+import PageLayout from '@/components/PageLayout'
 import AdditionalServices from '@/components/AdditionalServices'
 import { useServicePlan } from '@/contexts/ServicePlanContext'
 
 export default function ServicesPage() {
-  const { selectedPlan, setSelectedPlan } = useServicePlan()
+  const { selectedPlan } = useServicePlan()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="ml-64 pt-28 p-8">
-        <Sidebar 
-          plan={selectedPlan} 
-          activeTab="services" 
-          onTabChange={() => {}}
-          onPlanChange={setSelectedPlan}
-        />
-        <AdditionalServices plan={selectedPlan} />
-      </div>
-    </div>
+    <PageLayout activeTab="services">
+      <AdditionalServices plan={selectedPlan} />
+    </PageLayout>
   )
 }
