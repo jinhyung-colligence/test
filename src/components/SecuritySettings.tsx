@@ -14,6 +14,10 @@ import {
   TrashIcon,
   WalletIcon,
   XMarkIcon,
+  BuildingLibraryIcon,
+  LinkIcon,
+  BanknotesIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 
@@ -32,6 +36,22 @@ interface WhitelistedAddress {
   txCount: number;
 }
 
+interface ConnectedAccount {
+  id: string;
+  bankName: string;
+  bankCode: string;
+  accountNumber: string;
+  accountHolder: string;
+  accountType: string;
+  status: 'connected' | 'pending' | 'expired' | 'error';
+  connectedAt: string;
+  lastUsed?: string;
+  dailyLimit: number;
+  monthlyLimit: number;
+  isVerified: boolean;
+  balance?: number;
+}
+
 export default function SecuritySettings({ plan }: SecuritySettingsProps) {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [ipWhitelistEnabled, setIpWhitelistEnabled] = useState(
@@ -46,6 +66,49 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
     address: "",
     coin: "BTC",
     type: "" as "personal" | "vasp" | "",
+  });
+
+  // 계좌 연동 관련 상태
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([
+    {
+      id: "1",
+      bankName: "신한은행",
+      bankCode: "088",
+      accountNumber: "110-123-456789",
+      accountHolder: "홍길동",
+      accountType: "입출금통장",
+      status: "connected",
+      connectedAt: "2025-01-15T09:00:00Z",
+      lastUsed: "2025-01-20T14:30:00Z",
+      dailyLimit: 10000000,
+      monthlyLimit: 100000000,
+      isVerified: true,
+      balance: 5230000
+    },
+    {
+      id: "2",
+      bankName: "우리은행",
+      bankCode: "020",
+      accountNumber: "1002-123-567890",
+      accountHolder: "홍길동",
+      accountType: "입출금통장",
+      status: "connected",
+      connectedAt: "2025-01-10T11:20:00Z",
+      dailyLimit: 5000000,
+      monthlyLimit: 50000000,
+      isVerified: true,
+      balance: 2750000
+    }
+  ]);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [newAccount, setNewAccount] = useState({
+    bankName: "",
+    bankCode: "",
+    accountNumber: "",
+    accountHolder: "",
+    accountType: "",
+    dailyLimit: 5000000,
+    monthlyLimit: 100000000
   });
 
   const [whitelistedAddresses, setWhitelistedAddresses] = useState<
@@ -179,6 +242,39 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
     );
   };
 
+  const handleAddAccount = () => {
+    if (newAccount.bankCode && newAccount.accountNumber && newAccount.accountHolder) {
+      const account: ConnectedAccount = {
+        id: Date.now().toString(),
+        bankName: newAccount.bankName,
+        bankCode: newAccount.bankCode,
+        accountNumber: newAccount.accountNumber,
+        accountHolder: newAccount.accountHolder,
+        accountType: newAccount.accountType,
+        status: 'pending',
+        connectedAt: new Date().toISOString().split('T')[0],
+        dailyLimit: newAccount.dailyLimit,
+        monthlyLimit: newAccount.monthlyLimit,
+        isVerified: false
+      };
+
+      setConnectedAccounts([...connectedAccounts, account]);
+      setNewAccount({
+        bankName: '',
+        bankCode: '',
+        accountNumber: '',
+        accountHolder: '',
+        accountType: '',
+        dailyLimit: 5000000,
+        monthlyLimit: 100000000
+      });
+      setShowAccountModal(false);
+
+      // 실제로는 오픈뱅킹 API를 통한 1원 인증 프로세스가 시작됩니다
+      alert('계좌 연결 요청이 완료되었습니다. 1원 인증을 통해 계좌를 확인해 주세요.');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ko-KR");
   };
@@ -310,6 +406,163 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
           })}
         </div>
       </div>
+
+      {/* 연결된 은행 계좌 섹션 */}
+      {plan !== 'free' && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <BuildingLibraryIcon className="h-6 w-6 mr-2 text-primary-600" />
+                연결된 은행 계좌
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                원화 교환 서비스를 위한 은행 계좌 연동 관리
+              </p>
+            </div>
+            <button
+              onClick={() => setShowAccountModal(true)}
+              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              계좌 연결
+            </button>
+          </div>
+
+          {connectedAccounts.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <BuildingLibraryIcon className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                연결된 계좌가 없습니다
+              </h3>
+              <p className="text-gray-600 mb-4">
+                첫 번째 은행 계좌를 연결하여 원화 교환 서비스를 시작하세요
+              </p>
+              <button
+                onClick={() => setShowAccountModal(true)}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                계좌 연결하기
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      은행/계좌
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      상태
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      잔액
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      거래한도 (일일/월간)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      마지막 사용
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      관리
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {connectedAccounts.map((account) => (
+                    <tr key={account.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <BuildingLibraryIcon className="h-6 w-6 text-blue-600" />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {account.bankName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {account.accountNumber.replace(/(\d{3})-(\d{2})-(\d{6})/, '$1-**-***$3')}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {account.accountHolder} • {account.accountType}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {account.status === 'connected' && (
+                            <>
+                              <div className="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
+                              <span className="text-sm text-green-600 font-medium">연결됨</span>
+                            </>
+                          )}
+                          {account.status === 'pending' && (
+                            <>
+                              <div className="h-2 w-2 bg-yellow-500 rounded-full mr-2"></div>
+                              <span className="text-sm text-yellow-600 font-medium">인증 대기</span>
+                            </>
+                          )}
+                          {account.status === 'error' && (
+                            <>
+                              <div className="h-2 w-2 bg-red-500 rounded-full mr-2"></div>
+                              <span className="text-sm text-red-600 font-medium">오류</span>
+                            </>
+                          )}
+                          {account.isVerified && (
+                            <CheckCircleIcon className="h-4 w-4 text-green-500 ml-2" title="본인인증 완료" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {account.balance ? `₩${account.balance.toLocaleString()}` : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ₩{(account.dailyLimit / 10000).toLocaleString()}만
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          월간: ₩{(account.monthlyLimit / 10000).toLocaleString()}만
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {account.lastUsed ? formatDate(account.lastUsed) : '사용 안함'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          className="text-primary-600 hover:text-primary-900 mr-2"
+                          title="계좌 설정"
+                        >
+                          <CogIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('이 계좌 연결을 해제하시겠습니까?')) {
+                              setConnectedAccounts(prev => prev.filter(acc => acc.id !== account.id));
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="연결 해제"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 출금 주소 화이트리스트 섹션 */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -993,6 +1246,203 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
                 확인하고 진행
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 계좌 추가 모달 */}
+      {showAccountModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">
+                은행 계좌 연결
+              </h3>
+              <button
+                onClick={() => setShowAccountModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddAccount();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  은행 선택 *
+                </label>
+                <select
+                  required
+                  value={newAccount.bankCode}
+                  onChange={(e) => {
+                    const selectedBank = [
+                      { code: "004", name: "KB국민은행" },
+                      { code: "011", name: "NH농협은행" },
+                      { code: "020", name: "우리은행" },
+                      { code: "081", name: "하나은행" },
+                      { code: "088", name: "신한은행" },
+                      { code: "003", name: "IBK기업은행" },
+                      { code: "023", name: "SC제일은행" },
+                      { code: "027", name: "한국씨티은행" },
+                      { code: "032", name: "부산은행" },
+                      { code: "034", name: "광주은행" },
+                      { code: "089", name: "케이뱅크" },
+                      { code: "090", name: "카카오뱅크" },
+                      { code: "092", name: "토스뱅크" }
+                    ].find(bank => bank.code === e.target.value);
+
+                    setNewAccount({
+                      ...newAccount,
+                      bankCode: e.target.value,
+                      bankName: selectedBank?.name || ''
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">은행을 선택하세요</option>
+                  <option value="004">KB국민은행</option>
+                  <option value="011">NH농협은행</option>
+                  <option value="020">우리은행</option>
+                  <option value="081">하나은행</option>
+                  <option value="088">신한은행</option>
+                  <option value="003">IBK기업은행</option>
+                  <option value="023">SC제일은행</option>
+                  <option value="027">한국씨티은행</option>
+                  <option value="032">부산은행</option>
+                  <option value="034">광주은행</option>
+                  <option value="089">케이뱅크</option>
+                  <option value="090">카카오뱅크</option>
+                  <option value="092">토스뱅크</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  계좌번호 *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newAccount.accountNumber}
+                  onChange={(e) => {
+                    // 숫자와 하이픈만 허용
+                    const value = e.target.value.replace(/[^0-9-]/g, '');
+                    setNewAccount({ ...newAccount, accountNumber: value });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono"
+                  placeholder="계좌번호를 입력하세요 (숫자만)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  예금주명 *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newAccount.accountHolder}
+                  onChange={(e) =>
+                    setNewAccount({ ...newAccount, accountHolder: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="예금주명을 입력하세요"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  계좌 유형 *
+                </label>
+                <select
+                  required
+                  value={newAccount.accountType}
+                  onChange={(e) =>
+                    setNewAccount({ ...newAccount, accountType: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">계좌 유형을 선택하세요</option>
+                  <option value="checking">입출금통장</option>
+                  <option value="savings">예금계좌</option>
+                  <option value="business">기업계좌</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    일일 한도 (원)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newAccount.dailyLimit}
+                    onChange={(e) =>
+                      setNewAccount({
+                        ...newAccount,
+                        dailyLimit: parseInt(e.target.value) || 0
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="5000000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    월간 한도 (원)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newAccount.monthlyLimit}
+                    onChange={(e) =>
+                      setNewAccount({
+                        ...newAccount,
+                        monthlyLimit: parseInt(e.target.value) || 0
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="100000000"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="text-blue-800 font-medium">계좌 연결 안내</p>
+                    <p className="text-blue-700 mt-1">
+                      계좌 연결 시 오픈뱅킹 API를 통해 1원 인증을 진행합니다.
+                      연결 후 KYC 및 AML 검증이 완료되면 원화 교환 서비스를 이용하실 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAccountModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  연결하기
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
