@@ -277,7 +277,12 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => router.push(item.path)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (!isActive) {
+                      onTabChange(item.id)
+                    }
+                  }}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-left rounded-lg transition-colors ${
                     isActive
                       ? 'bg-primary-50 text-primary-700'

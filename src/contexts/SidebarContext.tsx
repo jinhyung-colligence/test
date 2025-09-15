@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 interface SidebarContextType {
   isCollapsed: boolean
@@ -13,6 +13,11 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const toggleSidebar = () => {
     setIsCollapsed(prev => !prev)
@@ -24,6 +29,21 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   const expandSidebar = () => {
     setIsCollapsed(false)
+  }
+
+  if (!isClient) {
+    return (
+      <SidebarContext.Provider
+        value={{
+          isCollapsed: false,
+          toggleSidebar: () => {},
+          collapseSidebar: () => {},
+          expandSidebar: () => {}
+        }}
+      >
+        {children}
+      </SidebarContext.Provider>
+    )
   }
 
   return (
