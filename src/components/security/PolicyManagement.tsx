@@ -175,23 +175,18 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Currency Selector */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <CogIcon className="h-6 w-6 mr-2 text-primary-600" />
-            결재 정책 관리
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">거래 금액에 따른 결재 정책을 관리합니다</p>
-        </div>
-      </div>
-
-      {/* Amount-based Policies */}
-      <div className="space-y-6">
-        {/* Currency Selector */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CogIcon className="h-6 w-6 mr-2 text-primary-600" />
+              결재 정책 관리
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">거래 금액에 따른 결재 정책을 관리합니다</p>
+          </div>
           <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-gray-700">통화 선택:</span>
+            <span className="text-sm font-medium text-gray-700">통화:</span>
             <div className="flex flex-wrap gap-2">
               {currencies.map(currency => (
                 <button
@@ -209,6 +204,10 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Policy Management Content */}
+      <div className="space-y-6">
 
         {/* Add Policy Button */}
         <div className="flex justify-end">
