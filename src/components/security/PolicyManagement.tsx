@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Currency } from "@/types/withdrawal";
 import {
   APPROVAL_POLICIES,
@@ -11,14 +12,49 @@ import { CogIcon } from "@heroicons/react/24/outline";
 
 interface PolicyManagementProps {
   onPolicyChange?: (policies: ApprovalPolicy[]) => void;
+  initialSubtab?: 'amount' | 'type';
+  initialCurrency?: Currency;
 }
 
-export default function PolicyManagement({ onPolicyChange }: PolicyManagementProps) {
-  const [activeTab, setActiveTab] = useState<'amount' | 'type'>('amount');
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('KRW');
+export default function PolicyManagement({ onPolicyChange, initialSubtab, initialCurrency }: PolicyManagementProps) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'amount' | 'type'>(initialSubtab || 'amount');
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(initialCurrency || 'KRW');
   const [isEditing, setIsEditing] = useState(false);
 
   const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
+
+  // initialSubtab이 변경되면 activeTab 업데이트
+  useEffect(() => {
+    if (initialSubtab) {
+      setActiveTab(initialSubtab);
+    }
+  }, [initialSubtab]);
+
+  // initialCurrency가 변경되면 selectedCurrency 업데이트
+  useEffect(() => {
+    if (initialCurrency) {
+      setSelectedCurrency(initialCurrency);
+    }
+  }, [initialCurrency]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: 'amount' | 'type') => {
+    setActiveTab(newTab);
+    if (newTab === 'amount') {
+      // 금액별 정책의 경우 현재 선택된 통화로 이동
+      router.push(`/security/policies/amount/${selectedCurrency}`);
+    } else {
+      // 거래 유형별 정책의 경우 직접 이동
+      router.push(`/security/policies/type`);
+    }
+  };
+
+  // 통화 변경 함수 (URL도 함께 변경)
+  const handleCurrencyChange = (newCurrency: Currency) => {
+    setSelectedCurrency(newCurrency);
+    router.push(`/security/policies/amount/${newCurrency}`);
+  };
 
   const filteredPolicies = APPROVAL_POLICIES.filter(
     policy => policy.currency === selectedCurrency
@@ -72,7 +108,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('amount')}
+              onClick={() => handleTabChange('amount')}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'amount'
                   ? 'border-primary-500 text-primary-600'
@@ -82,7 +118,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
               금액별 정책
             </button>
             <button
-              onClick={() => setActiveTab('type')}
+              onClick={() => handleTabChange('type')}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'type'
                   ? 'border-primary-500 text-primary-600'
@@ -106,7 +142,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                 {currencies.map(currency => (
                   <button
                     key={currency}
-                    onClick={() => setSelectedCurrency(currency)}
+                    onClick={() => handleCurrencyChange(currency)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       selectedCurrency === currency
                         ? 'bg-primary-100 text-primary-700'

@@ -20,9 +20,11 @@ interface SecuritySettingsProps {
   plan: ServicePlan;
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
+  policySubtab?: "amount" | "type";
+  policyCurrency?: "KRW" | "USD" | "BTC" | "ETH" | "USDC" | "USDT";
 }
 
-export default function SecuritySettings({ plan, initialTab, notificationSubtab }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab, policyCurrency }: SecuritySettingsProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 탭 관리 상태
@@ -41,6 +43,9 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab 
     if (newTab === "notifications") {
       // 알림 설정의 경우 서브탭을 포함한 URL로 이동
       router.push(`/security/notifications/logs`);
+    } else if (newTab === "policies") {
+      // 정책 설정의 경우 금액별 정책의 KRW로 기본 이동
+      router.push(`/security/policies/amount/KRW`);
     } else {
       router.push(`/security/${newTab}`);
     }
@@ -85,7 +90,7 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab 
       {activeTab === "security" && <SecurityTab plan={plan} />}
       {activeTab === "addresses" && <AddressManagement />}
       {activeTab === "accounts" && <AccountManagement plan={plan} />}
-      {activeTab === "policies" && <PolicyManagement />}
+      {activeTab === "policies" && <PolicyManagement initialSubtab={policySubtab} initialCurrency={policyCurrency} />}
       {activeTab === "notifications" && <NotificationCenter initialSubtab={notificationSubtab} />}
     </div>
   );
