@@ -16,6 +16,10 @@ import {
 import { ServicePlan } from '@/app/page'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { PriorityBadge } from './withdrawal/PriorityBadge'
+import { StatusBadge } from './withdrawal/StatusBadge'
+import { mockWithdrawalRequests } from '@/data/mockWithdrawalData'
+import { formatAmount, formatDateTime } from '@/utils/withdrawalHelpers'
 
 interface AssetOverviewProps {
   plan: ServicePlan
@@ -36,19 +40,8 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
     { symbol: 'USDT', name: 'Tether', balance: '25000', value: 25000000, change: -0.02, currentPrice: 1000 }
   ]
 
-  // Mock withdrawal approval data - only submitted status (pending approval)
-  const mockWithdrawalApprovals = [
-    {
-      id: '2025-09-0003',
-      user: '박인사팀장',
-      asset: 'USDT',
-      amount: '50000',
-      value: 50000000, // 50,000 USDT * 1,000 KRW
-      requestDate: '2025-09-02T16:00:00Z',
-      urgency: 'normal', // priority: 'medium' -> 보통
-      destination: '0x...9c8d'
-    }
-  ]
+  // Filter actual withdrawal requests with submitted status (pending approval)
+  const mockWithdrawalApprovals = mockWithdrawalRequests.filter(request => request.status === 'submitted')
 
   // 시간대별 차트 데이터
   const getChartData = (period: 'hour' | 'day' | 'month') => {
@@ -80,7 +73,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
           { name: t('overview.months.mar'), value: 180000000 },
           { name: t('overview.months.apr'), value: 250000000 },
           { name: t('overview.months.may'), value: 275000000 },
-          { name: t('overview.months.jun'), value: 275000000 }
+          { name: t('overview.months.jun'), value: 275000000 },
+          { name: t('overview.months.jul'), value: 290000000 },
+          { name: t('overview.months.aug'), value: 285000000 },
+          { name: t('overview.months.sep'), value: 295000000 }
         ]
     }
   }
@@ -162,8 +158,14 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
     }
   }
 
-  const highUrgencyApprovals = mockWithdrawalApprovals.filter(approval => approval.urgency === 'high')
-  const totalPendingValue = mockWithdrawalApprovals.reduce((sum, approval) => sum + approval.value, 0)
+  const highUrgencyApprovals = mockWithdrawalApprovals.filter(request => request.priority === 'high' || request.priority === 'critical')
+  const totalPendingValue = mockWithdrawalApprovals.reduce((sum, request) => {
+    // Convert amount to KRW for total calculation
+    const krwValue = request.currency === 'BTC' ? request.amount * 85000000 :
+                    request.currency === 'USDT' || request.currency === 'USDC' ? request.amount * 1000 :
+                    request.amount * 1000; // Default conversion
+    return sum + krwValue;
+  }, 0)
 
   return (
     <div className="space-y-8">
@@ -190,7 +192,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -229,17 +231,6 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">{t('overview.mpc_status')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{t('overview.status_normal')}</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-full">
-              <div className="h-6 w-6 bg-green-600 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Withdrawal Approvals Section - Only show if there are pending approvals and plan is enterprise */}
@@ -265,40 +256,83 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">신청 ID</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">신청자</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">자산</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">신청시간</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청 ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">출금 내용</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">자산</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">기안자</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">우선순위</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">승인진행률</th>
                 </tr>
               </thead>
               <tbody>
-                {mockWithdrawalApprovals.slice(0, 3).map((approval) => (
-                  <tr key={approval.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
+                {mockWithdrawalApprovals.slice(0, 3).map((request) => (
+                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      #{request.id}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {request.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {request.description}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {formatDateTime(request.initiatedAt)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
+                          alt={request.currency}
+                          className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                  ${request.currency}
+                                </text>
+                              </svg>
+                            `)}`;
+                          }}
+                        />
+                        <div className="text-sm">
+                          <p className="font-semibold text-gray-900">
+                            {formatAmount(request.amount, request.currency)}
+                          </p>
+                          <p className="text-gray-500">
+                            {request.currency}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{request.initiator}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <PriorityBadge priority={request.priority as any} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status={request.status} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">#{approval.id}</span>
-                        {approval.urgency === 'critical' && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded">
-                            긴급
-                          </span>
-                        )}
-                        {approval.urgency === 'high' && (
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded">
-                            높음
-                          </span>
-                        )}
+                        <span className="text-sm text-gray-900">
+                          {request.approvals.length}/{request.requiredApprovals.length}
+                        </span>
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{
+                              width: `${(request.approvals.length / request.requiredApprovals.length) * 100}%`
+                            }}
+                          ></div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{approval.user}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{approval.asset}</td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{approval.amount} {approval.asset}</div>
-                        <div className="text-xs text-gray-500">{formatCurrency(approval.value)}</div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{formatTimeAgo(approval.requestDate)}</td>
                   </tr>
                 ))}
               </tbody>

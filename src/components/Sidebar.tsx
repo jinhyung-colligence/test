@@ -293,12 +293,6 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
           })}
         </ul>
 
-        {!isCollapsed && (
-          <div className="mt-auto pt-4 px-4 py-3 text-xs text-gray-500 border-t border-gray-200">
-            <p>{t('footer.mpc_security')}</p>
-            <p className="text-green-600 font-medium">{t('footer.connected')}</p>
-          </div>
-        )}
       </nav>
     </div>
   )

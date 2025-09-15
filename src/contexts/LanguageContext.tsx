@@ -68,6 +68,9 @@ const translations = {
     'overview.months.apr': '4월',
     'overview.months.may': '5월',
     'overview.months.jun': '6월',
+    'overview.months.jul': '7월',
+    'overview.months.aug': '8월',
+    'overview.months.sep': '9월',
     
     // Service Plan Selector
     'selector.title': '커스터디 서비스 플랜 선택',
@@ -245,6 +248,9 @@ const translations = {
     'overview.months.apr': 'Apr',
     'overview.months.may': 'May',
     'overview.months.jun': 'Jun',
+    'overview.months.jul': 'Jul',
+    'overview.months.aug': 'Aug',
+    'overview.months.sep': 'Sep',
     
     // Service Plan Selector
     'selector.title': 'Choose Your Custody Service Plan',
