@@ -1,15 +1,15 @@
 'use client'
 
-import PageLayout from '@/components/PageLayout'
-import WithdrawalManagement from '@/components/WithdrawalManagement'
-import { useServicePlan } from '@/contexts/ServicePlanContext'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function WithdrawalPage() {
-  const { selectedPlan } = useServicePlan()
+  const router = useRouter()
 
-  return (
-    <PageLayout activeTab="withdrawal">
-      <WithdrawalManagement plan={selectedPlan} />
-    </PageLayout>
-  )
+  useEffect(() => {
+    // 기본 탭으로 리다이렉트
+    router.replace('/withdrawal/approval')
+  }, [router])
+
+  return null
 }

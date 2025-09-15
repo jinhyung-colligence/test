@@ -84,4 +84,5 @@ export type ServicePlan = "free" | "basic" | "pro" | "premium" | "enterprise" | 
 
 export interface WithdrawalManagementProps {
   plan: ServicePlan;
+  initialTab?: "approval" | "airgap" | "audit" | "rejected";
 }

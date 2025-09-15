@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   ArrowUpOnSquareIcon,
   PlusIcon,
@@ -50,11 +51,27 @@ import {
 
 export default function WithdrawalManagement({
   plan,
+  initialTab,
 }: WithdrawalManagementProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<
     "approval" | "airgap" | "audit" | "rejected"
-  >("approval");
+  >(initialTab || "approval");
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // initialTab이 변경되면 activeTab 업데이트
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: "approval" | "airgap" | "audit" | "rejected") => {
+    setActiveTab(newTab);
+    router.push(`/withdrawal/${newTab}`);
+  };
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const { t, language } = useLanguage();
 
@@ -1022,7 +1039,7 @@ export default function WithdrawalManagement({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              onClick={() => handleTabChange(tab.id as typeof activeTab)}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? "border-primary-500 text-primary-600"
