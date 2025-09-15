@@ -21,6 +21,9 @@ const UltimateErrorSuppression = dynamic(
 export const metadata: Metadata = {
   title: 'Custody Dashboard - 커스터디 서비스',
   description: '기업용/개인용 디지털 자산 커스터디 플랫폼',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -30,6 +33,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
       <body>
         <Script id="error-suppression" strategy="beforeInteractive">
           {`
