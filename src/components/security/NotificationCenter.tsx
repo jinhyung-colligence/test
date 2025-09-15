@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { NotificationSystem, NotificationLog, NotificationTemplate, DEFAULT_CONFIG } from "@/utils/notificationSystem";
 import { APPROVAL_POLICIES, TRANSACTION_TYPE_POLICIES } from "@/utils/approverAssignment";
 import { MOCK_NOTIFICATION_LOGS, MOCK_NOTIFICATION_TEMPLATES } from "@/data/notificationMockData";
 
 interface NotificationCenterProps {
+  initialSubtab?: 'logs' | 'templates' | 'settings';
 }
 
-export function NotificationCenter({}: NotificationCenterProps) {
-  const [activeTab, setActiveTab] = useState<'logs' | 'templates' | 'settings'>('logs');
+export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'logs' | 'templates' | 'settings'>(initialSubtab || 'logs');
   const [notificationSystem] = useState(() => new NotificationSystem(DEFAULT_CONFIG));
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
@@ -26,6 +29,19 @@ export function NotificationCenter({}: NotificationCenterProps) {
   // 필터 상태
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [templateFilter, setTemplateFilter] = useState<string>('all');
+
+  // initialSubtab이 변경되면 activeTab 업데이트
+  useEffect(() => {
+    if (initialSubtab) {
+      setActiveTab(initialSubtab);
+    }
+  }, [initialSubtab]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: 'logs' | 'templates' | 'settings') => {
+    setActiveTab(newTab);
+    router.push(`/security/notifications/${newTab}`);
+  };
 
   useEffect(() => {
     // Mock 데이터 사용 (실제 시스템 데이터 대신)
@@ -228,7 +244,7 @@ export function NotificationCenter({}: NotificationCenterProps) {
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => handleTabChange(tab.key as any)}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.key
                   ? 'border-primary-500 text-primary-600'

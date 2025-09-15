@@ -19,9 +19,10 @@ import { NotificationCenter } from "./security/NotificationCenter";
 interface SecuritySettingsProps {
   plan: ServicePlan;
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
+  notificationSubtab?: "logs" | "templates" | "settings";
 }
 
-export default function SecuritySettings({ plan, initialTab }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab, notificationSubtab }: SecuritySettingsProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 탭 관리 상태
@@ -37,7 +38,12 @@ export default function SecuritySettings({ plan, initialTab }: SecuritySettingsP
   // 탭 변경 함수 (URL도 함께 변경)
   const handleTabChange = (newTab: "security" | "addresses" | "accounts" | "policies" | "notifications") => {
     setActiveTab(newTab);
-    router.push(`/security/${newTab}`);
+    if (newTab === "notifications") {
+      // 알림 설정의 경우 서브탭을 포함한 URL로 이동
+      router.push(`/security/notifications/logs`);
+    } else {
+      router.push(`/security/${newTab}`);
+    }
   };
 
   return (
@@ -80,7 +86,7 @@ export default function SecuritySettings({ plan, initialTab }: SecuritySettingsP
       {activeTab === "addresses" && <AddressManagement />}
       {activeTab === "accounts" && <AccountManagement plan={plan} />}
       {activeTab === "policies" && <PolicyManagement />}
-      {activeTab === "notifications" && <NotificationCenter />}
+      {activeTab === "notifications" && <NotificationCenter initialSubtab={notificationSubtab} />}
     </div>
   );
 }
