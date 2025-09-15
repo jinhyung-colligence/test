@@ -30,6 +30,59 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editedConfig, setEditedConfig] = useState(DEFAULT_CONFIG);
   const [editedEmails, setEditedEmails] = useState(DEFAULT_CONFIG.approverEmail);
+  const [newApproverName, setNewApproverName] = useState('');
+  const [newApproverEmail, setNewApproverEmail] = useState('');
+  const [showUserSelector, setShowUserSelector] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  // 사용자 관리에서 가져온 사용자 목록 (실제로는 API에서 가져와야 함)
+  const availableUsers = [
+    {
+      id: '1',
+      name: '김관리자',
+      email: 'admin@company.com',
+      phone: '+82 010-1234-5678',
+      role: 'admin',
+      department: 'IT팀'
+    },
+    {
+      id: '2',
+      name: '이매니저',
+      email: 'manager@company.com',
+      phone: '+82 010-2345-6789',
+      role: 'manager',
+      department: '재무팀'
+    },
+    {
+      id: '3',
+      name: '박CFO',
+      email: 'cfo@company.com',
+      phone: '+82 010-3456-7890',
+      role: 'approver',
+      department: '경영진'
+    },
+    {
+      id: '4',
+      name: '최CISO',
+      email: 'ciso@company.com',
+      phone: '+82 010-4567-8901',
+      role: 'approver',
+      department: '보안팀'
+    },
+    {
+      id: '5',
+      name: '정CTO',
+      email: 'cto@company.com',
+      phone: '+82 010-5678-9012',
+      role: 'approver',
+      department: '기술팀'
+    }
+  ];
+
+  // 이미 추가된 승인자는 제외
+  const availableUsersForSelection = availableUsers.filter(
+    user => !Object.keys(editedEmails).includes(user.name)
+  );
 
   // 페이징 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,6 +279,56 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
       ...prev,
       [name]: email
     }));
+  };
+
+  // 사용자 선택 핸들러
+  const handleSelectUser = (user: any) => {
+    setSelectedUser(user);
+    setNewApproverName(user.name);
+    setNewApproverEmail(user.email);
+    setShowUserSelector(false);
+  };
+
+  // 승인자 추가
+  const handleAddApprover = () => {
+    if (newApproverName.trim() && newApproverEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newApproverEmail)) {
+        alert('올바른 이메일 주소를 입력해주세요.');
+        return;
+      }
+      if (editedEmails[newApproverName]) {
+        alert('이미 존재하는 승인자 이름입니다.');
+        return;
+      }
+
+      setEditedEmails(prev => ({
+        ...prev,
+        [newApproverName]: newApproverEmail
+      }));
+      setNewApproverName('');
+      setNewApproverEmail('');
+      setSelectedUser(null);
+    }
+  };
+
+  // 사용자 선택 초기화
+  const handleResetUserSelection = () => {
+    setNewApproverName('');
+    setNewApproverEmail('');
+    setSelectedUser(null);
+    setShowUserSelector(false);
+  };
+
+  // 승인자 삭제
+  const handleDeleteApprover = (name: string) => {
+    if (confirm(`${name} 승인자를 삭제하시겠습니까?`)) {
+      setEditedEmails(prev => {
+        const newEmails = { ...prev };
+        delete newEmails[name];
+        return newEmails;
+      });
+    }
   };
 
   const handleConfigChange = (field: keyof typeof DEFAULT_CONFIG, value: number) => {
@@ -762,8 +865,12 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
           {/* 설정 탭 */}
           {activeTab === 'settings' && (
             <div className="space-y-6">
+              {/* 헤더 */}
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">이메일 알림 설정</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">이메일 알림 설정</h3>
+                  <p className="text-sm text-gray-600 mt-1">승인자 이메일 주소와 발송 정책을 관리합니다</p>
+                </div>
                 <div className="flex items-center space-x-3">
                   {isEditingSettings ? (
                     <>
@@ -783,7 +890,7 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
                   ) : (
                     <button
                       onClick={() => setIsEditingSettings(true)}
-                      className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                      className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                     >
                       설정 편집
                     </button>
@@ -791,146 +898,316 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
                 </div>
               </div>
 
-              {isEditingSettings && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
+              {/* 승인자 이메일 관리 */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-900">승인자 이메일 주소</h4>
+                      <p className="text-sm text-gray-600 mt-1">알림을 받을 승인자들의 이메일 주소를 관리합니다</p>
                     </div>
-                    <div className="ml-3">
-                      <h4 className="text-sm font-medium text-blue-800">설정 편집 모드</h4>
-                      <div className="mt-1 text-sm text-blue-700">
-                        이메일 주소와 알림 정책을 수정할 수 있습니다. 변경사항은 저장 버튼을 누르기 전까지 적용되지 않습니다.
+                    {isEditingSettings && (
+                      <div className="relative">
+                        {!showUserSelector ? (
+                          <button
+                            onClick={() => setShowUserSelector(true)}
+                            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            <span>승인자 추가</span>
+                          </button>
+                        ) : (
+                          <div className="bg-white border border-gray-300 rounded-lg shadow-lg p-4 absolute right-0 top-0 z-10 w-80">
+                            <div className="flex items-center justify-between mb-3">
+                              <h5 className="font-medium text-gray-900">승인자 선택</h5>
+                              <button
+                                onClick={() => setShowUserSelector(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {availableUsersForSelection.length === 0 ? (
+                              <div className="text-center py-4">
+                                <p className="text-sm text-gray-500">추가 가능한 사용자가 없습니다</p>
+                                <p className="text-xs text-gray-400 mt-1">모든 사용자가 이미 승인자로 등록되었습니다</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {availableUsersForSelection.map((user) => (
+                                  <div
+                                    key={user.id}
+                                    onClick={() => handleSelectUser(user)}
+                                    className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-gray-200"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-medium">
+                                        {user.name.charAt(0)}
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="flex items-center space-x-2">
+                                          <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                                          <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">
+                                            {user.role}
+                                          </span>
+                                        </div>
+                                        <p className="text-xs text-gray-600">{user.email}</p>
+                                        <p className="text-xs text-gray-500">{user.department}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                          </div>
+                        )}
+
+                        {/* 선택된 사용자 정보 표시 및 수정 폼 */}
+                        {selectedUser && (
+                          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            {/* 선택된 사용자 정보 */}
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className="w-10 h-10 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
+                                {selectedUser.name.charAt(0)}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <p className="text-sm font-semibold text-gray-900">{selectedUser.name}</p>
+                                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                    {selectedUser.role}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-700">{selectedUser.email}</p>
+                                <p className="text-xs text-gray-500">{selectedUser.department}</p>
+                              </div>
+                            </div>
+
+
+                            {/* 액션 버튼 */}
+                            <div className="flex items-center justify-end space-x-3">
+                              <button
+                                onClick={handleResetUserSelection}
+                                className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>취소</span>
+                              </button>
+                              <button
+                                onClick={handleAddApprover}
+                                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>승인자로 추가</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* 이메일 설정 */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-900 mb-4">승인자 이메일 주소</h4>
-                  <div className="space-y-3">
-                    {Object.entries(isEditingSettings ? editedEmails : DEFAULT_CONFIG.approverEmail).map(([name, email]) => (
-                      <div key={name} className="p-2 bg-white rounded border">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700 w-20">{name}</span>
-                          {isEditingSettings ? (
-                            <input
-                              type="email"
-                              value={email}
-                              onChange={(e) => handleEmailChange(name, e.target.value)}
-                              className="flex-1 ml-3 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              placeholder="이메일 주소를 입력하세요"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-600">{email}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
-                {/* 알림 정책 */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-900 mb-4">이메일 발송 정책</h4>
-                  <div className="space-y-3 text-sm">
-                    <div className="p-2 bg-white rounded border">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-700">지연 알림 기준</span>
-                        {isEditingSettings ? (
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="number"
-                              value={editedConfig.overdueThresholdHours}
-                              onChange={(e) => handleConfigChange('overdueThresholdHours', parseInt(e.target.value) || 0)}
-                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              min="1"
-                              max="72"
-                            />
-                            <span className="text-gray-600">시간 후</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-600">{DEFAULT_CONFIG.overdueThresholdHours}시간 후</span>
-                        )}
+                <div className="p-6">
+                  {Object.keys(isEditingSettings ? editedEmails : DEFAULT_CONFIG.approverEmail).length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 mb-2">
+                        <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
                       </div>
+                      <p className="text-gray-500 text-sm">등록된 승인자 이메일이 없습니다</p>
+                      <p className="text-gray-400 text-xs mt-1">승인자를 추가하여 알림을 받을 수 있습니다</p>
                     </div>
-                    <div className="p-2 bg-white rounded border">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-700">재발송 시도</span>
-                        {isEditingSettings ? (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">최대</span>
-                            <input
-                              type="number"
-                              value={editedConfig.retryAttempts}
-                              onChange={(e) => handleConfigChange('retryAttempts', parseInt(e.target.value) || 0)}
-                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              min="0"
-                              max="10"
-                            />
-                            <span className="text-gray-600">회</span>
+                  ) : (
+                    <div className="space-y-3">
+                      {Object.entries(isEditingSettings ? editedEmails : DEFAULT_CONFIG.approverEmail).map(([name, email]) => (
+                        <div key={name} className="flex items-center p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
+                                {name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-gray-900">{name}</span>
+                                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    활성
+                                  </span>
+                                </div>
+                                {isEditingSettings ? (
+                                  <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => handleEmailChange(name, e.target.value)}
+                                    className="mt-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-full max-w-sm"
+                                  />
+                                ) : (
+                                  <p className="text-sm text-gray-600 mt-1">{email}</p>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <span className="text-gray-600">최대 {DEFAULT_CONFIG.retryAttempts}회</span>
-                        )}
-                      </div>
+                          {isEditingSettings && (
+                            <button
+                              onClick={() => handleDeleteApprover(name)}
+                              className="ml-4 p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                              title="승인자 삭제"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <div className="p-2 bg-white rounded border">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-700">재발송 간격</span>
-                        {isEditingSettings ? (
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="number"
-                              value={editedConfig.retryDelayMinutes}
-                              onChange={(e) => handleConfigChange('retryDelayMinutes', parseInt(e.target.value) || 0)}
-                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              min="1"
-                              max="60"
-                            />
-                            <span className="text-gray-600">분</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-600">{DEFAULT_CONFIG.retryDelayMinutes}분</span>
-                        )}
+                  )}
+                </div>
+              </div>
+
+              {/* 발송 정책 설정 */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h4 className="text-lg font-medium text-gray-900">이메일 발송 정책</h4>
+                  <p className="text-sm text-gray-600 mt-1">알림 발송 시점과 재발송 정책을 설정합니다</p>
+                </div>
+
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* 지연 알림 기준 */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center mr-3">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h5 className="font-medium text-gray-900">지연 알림</h5>
                       </div>
+                      <p className="text-xs text-gray-600 mb-3">승인이 지연될 때 알림을 보내는 기준 시간</p>
+                      {isEditingSettings ? (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            value={editedConfig.overdueThresholdHours}
+                            onChange={(e) => handleConfigChange('overdueThresholdHours', parseInt(e.target.value) || 0)}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            min="1"
+                            max="72"
+                          />
+                          <span className="text-sm text-gray-600">시간 후</span>
+                        </div>
+                      ) : (
+                        <div className="text-lg font-semibold text-gray-900">{DEFAULT_CONFIG.overdueThresholdHours}시간 후</div>
+                      )}
+                    </div>
+
+                    {/* 재발송 시도 */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center mr-3">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </div>
+                        <h5 className="font-medium text-gray-900">재발송 시도</h5>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-3">발송 실패 시 최대 재시도 횟수</p>
+                      {isEditingSettings ? (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">최대</span>
+                          <input
+                            type="number"
+                            value={editedConfig.retryAttempts}
+                            onChange={(e) => handleConfigChange('retryAttempts', parseInt(e.target.value) || 0)}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            min="0"
+                            max="10"
+                          />
+                          <span className="text-sm text-gray-600">회</span>
+                        </div>
+                      ) : (
+                        <div className="text-lg font-semibold text-gray-900">최대 {DEFAULT_CONFIG.retryAttempts}회</div>
+                      )}
+                    </div>
+
+                    {/* 재발송 간격 */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center mr-3">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h5 className="font-medium text-gray-900">재발송 간격</h5>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-3">재발송 시도 사이의 대기 시간</p>
+                      {isEditingSettings ? (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            value={editedConfig.retryDelayMinutes}
+                            onChange={(e) => handleConfigChange('retryDelayMinutes', parseInt(e.target.value) || 0)}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            min="1"
+                            max="60"
+                          />
+                          <span className="text-sm text-gray-600">분</span>
+                        </div>
+                      ) : (
+                        <div className="text-lg font-semibold text-gray-900">{DEFAULT_CONFIG.retryDelayMinutes}분</div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* 이메일 발송 통계 */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-4">이메일 발송 통계</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {logs.filter(l => l.status === 'sent').length}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h4 className="text-lg font-medium text-gray-900">발송 통계</h4>
+                  <p className="text-sm text-gray-600 mt-1">최근 이메일 발송 현황을 확인합니다</p>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {logs.filter(l => l.status === 'sent').length}
+                      </div>
+                      <div className="text-sm text-gray-700 font-medium">발송 완료</div>
+                      <div className="text-xs text-gray-600 mt-1">성공률 높음</div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">발송 완료</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">
-                      {logs.filter(l => l.status === 'failed').length}
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {logs.filter(l => l.status === 'failed').length}
+                      </div>
+                      <div className="text-sm text-gray-700 font-medium">발송 실패</div>
+                      <div className="text-xs text-gray-600 mt-1">점검 필요</div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">발송 실패</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {logs.filter(l => l.retryCount > 0).length}
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {logs.filter(l => l.retryCount > 0).length}
+                      </div>
+                      <div className="text-sm text-gray-700 font-medium">재발송</div>
+                      <div className="text-xs text-gray-600 mt-1">재시도됨</div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">재발송</div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-primary-600">
-                      {templates.filter(t => t.enabled).length}
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {templates.filter(t => t.enabled).length}
+                      </div>
+                      <div className="text-sm text-gray-700 font-medium">활성 템플릿</div>
+                      <div className="text-xs text-gray-600 mt-1">사용 중</div>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">활성 템플릿</div>
                   </div>
                 </div>
               </div>

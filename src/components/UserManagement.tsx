@@ -47,7 +47,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
     phone: '',
     role: 'viewer' as UserRole,
     department: '',
-    permissions: [] as string[]
+    permissions: ['permission.view_assets', 'permission.view_transactions', 'permission.view_group_assets', 'permission.create_expense', 'permission.view_audit'] as string[]
   })
   const { t, language } = useLanguage()
 
@@ -416,8 +416,19 @@ export default function UserManagement({ plan }: UserManagementProps) {
           <h1 className="text-3xl font-bold text-gray-900">{t('users.title')}</h1>
           <p className="text-gray-600 mt-1">{t('users.subtitle')}</p>
         </div>
-        <button 
-          onClick={() => setShowAddModal(true)}
+        <button
+          onClick={() => {
+            // 모달 열 때 초기값 리셋
+            setNewUser({
+              name: '',
+              email: '',
+              phone: '',
+              role: 'viewer' as UserRole,
+              department: '',
+              permissions: ['permission.view_assets', 'permission.view_transactions', 'permission.view_group_assets', 'permission.create_expense', 'permission.view_audit']
+            });
+            setShowAddModal(true);
+          }}
           className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
           <PlusIcon className="h-5 w-5 mr-2" />

@@ -639,18 +639,6 @@ export default function AdditionalServices({ plan, initialTab }: AdditionalServi
         </div>
       </div>
 
-      {plan !== 'free' && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">KYC/AML 상태</h3>
-          <div className="flex items-center space-x-4">
-            <CheckCircleIcon className="h-8 w-8 text-green-600" />
-            <div>
-              <p className="font-semibold text-gray-900">인증 완료</p>
-              <p className="text-sm text-gray-600">신원 확인 및 자금세탁 방지 절차가 완료되어 원화 교환이 가능합니다.</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 
