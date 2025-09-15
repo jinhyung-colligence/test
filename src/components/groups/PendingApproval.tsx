@@ -36,6 +36,11 @@ const getCryptoIcon = (currency: string) => {
 export default function PendingApproval(props: PendingApprovalProps) {
   const { onApproveExpense, onRejectExpense, onReapproveExpense } = props;
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRequest | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<"all" | "7days" | "30days" | "90days">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "rejected">("all");
 
   const handleApproveExpense = (expenseId: string) => {
     console.log("Approving expense:", expenseId);
@@ -59,17 +64,120 @@ export default function PendingApproval(props: PendingApprovalProps) {
     alert("재승인 처리되어 승인 대기 상태로 변경되었습니다.");
   };
 
-  const pendingAndRejectedExpenses = mockExpenses.filter(
-    expense => expense.status === 'pending' || expense.status === 'rejected'
-  );
+  // 필터링 및 페이지네이션 로직
+  const getFilteredExpenses = () => {
+    let filtered = mockExpenses.filter(
+      expense => expense.status === 'pending' || expense.status === 'rejected'
+    );
+
+    // 상태 필터
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(expense => expense.status === statusFilter);
+    }
+
+    // 검색 필터
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(expense =>
+        expense.title.toLowerCase().includes(searchLower) ||
+        expense.description.toLowerCase().includes(searchLower) ||
+        expense.requestedBy.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // 날짜 필터
+    if (dateRange !== 'all') {
+      const now = new Date();
+      const daysMap = { '7days': 7, '30days': 30, '90days': 90 };
+      const days = daysMap[dateRange];
+      const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+
+      filtered = filtered.filter(expense => {
+        const expenseDate = new Date(expense.requestedAt);
+        return expenseDate >= cutoffDate;
+      });
+    }
+
+    return filtered;
+  };
+
+  const getPaginatedExpenses = () => {
+    const filtered = getFilteredExpenses();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      totalItems: filtered.length,
+      totalPages: Math.ceil(filtered.length / itemsPerPage)
+    };
+  };
+
+  const paginatedData = getPaginatedExpenses();
 
   return (
     <div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            승인 대기 중인 지출
-          </h3>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">
+              승인 대기 중인 지출
+            </h3>
+
+            {/* 검색 및 필터 */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* 검색 */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="제목, 설명, 요청자 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-sm"
+                />
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+
+              {/* 상태 필터 */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "rejected")}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">모든 상태</option>
+                <option value="pending">승인 대기</option>
+                <option value="rejected">반려됨</option>
+              </select>
+
+              {/* 기간 필터 */}
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value as "all" | "7days" | "30days" | "90days")}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">전체 기간</option>
+                <option value="7days">최근 7일</option>
+                <option value="30days">최근 30일</option>
+                <option value="90days">최근 90일</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 결과 요약 */}
+          <div className="mb-4 text-sm text-gray-600">
+            총 {paginatedData.totalItems}건의 결과 {paginatedData.totalPages > 0 ? `(${currentPage} / ${paginatedData.totalPages} 페이지)` : ''}
+          </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -98,7 +206,7 @@ export default function PendingApproval(props: PendingApprovalProps) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {pendingAndRejectedExpenses.map((expense) => {
+                  {paginatedData.items.map((expense) => {
                     const group = mockGroups.find((g) => g.id === expense.groupId);
                     return (
                       <tr key={expense.id} className="hover:bg-gray-50">
@@ -195,14 +303,72 @@ export default function PendingApproval(props: PendingApprovalProps) {
                 </tbody>
               </table>
 
-              {pendingAndRejectedExpenses.length === 0 && (
+              {paginatedData.items.length === 0 && (
                 <div className="text-center py-12">
                   <ClockIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-lg font-medium text-gray-900">승인 대기 중인 지출이 없습니다</p>
-                  <p className="text-sm text-gray-500 mt-1">새로운 지출 요청이나 반려된 항목이 여기에 표시됩니다</p>
+                  <p className="text-lg font-medium text-gray-900">검색 결과가 없습니다</p>
+                  <p className="text-sm text-gray-500 mt-1">다른 검색어나 필터 조건을 시도해보세요.</p>
                 </div>
               )}
             </div>
+
+            {/* 페이지네이션 */}
+            {paginatedData.totalItems > 0 && (
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  {(currentPage - 1) * itemsPerPage + 1}
+                  -
+                  {Math.min(currentPage * itemsPerPage, paginatedData.totalItems)}
+                  개 항목 중 {paginatedData.totalItems}개
+                </div>
+
+                {paginatedData.totalPages > 0 && (
+                  <div className="flex items-center space-x-2">
+                    {/* 이전 페이지 */}
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      이전
+                    </button>
+
+                    {/* 페이지 번호 */}
+                    {Array.from({ length: Math.min(5, paginatedData.totalPages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(
+                        paginatedData.totalPages - 4,
+                        currentPage - 2
+                      )) + i;
+
+                      if (pageNum > paginatedData.totalPages) return null;
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-2 text-sm font-medium rounded-md ${
+                            currentPage === pageNum
+                              ? "bg-primary-600 text-white"
+                              : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    {/* 다음 페이지 */}
+                    <button
+                      onClick={() => setCurrentPage(Math.min(paginatedData.totalPages, currentPage + 1))}
+                      disabled={currentPage === paginatedData.totalPages}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      다음
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

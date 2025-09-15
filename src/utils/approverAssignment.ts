@@ -24,7 +24,7 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
   {
     minAmount: 1000000,
     maxAmount: 10000000,
-    currency: "KRW", 
+    currency: "KRW",
     requiredApprovers: ["박CFO", "이CISO", "김CTO"],
     description: "중액 거래 (100만원 이상 1천만원 미만)"
   },
@@ -72,24 +72,52 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
   },
   {
     minAmount: 0,
-    maxAmount: 1,
+    maxAmount: 0.1,
     currency: "BTC",
     requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "BTC 소액 거래 (1 BTC 미만)"
+    description: "BTC 소액 거래 (0.1 BTC 미만)"
+  },
+  {
+    minAmount: 0.1,
+    maxAmount: 0.2,
+    currency: "BTC",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
+    description: "BTC 중액 거래 (0.1 BTC 이상 0.2 BTC 미만)"
+  },
+  {
+    minAmount: 0.2,
+    maxAmount: Infinity,
+    currency: "BTC",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
+    description: "BTC 고액 거래 (0.2 BTC 이상)"
+  },
+  {
+    minAmount: 0,
+    maxAmount: 1,
+    currency: "ETH",
+    requiredApprovers: ["박CFO", "이CISO"],
+    description: "ETH 소액 거래 (1 ETH 미만)"
   },
   {
     minAmount: 1,
+    maxAmount: 5,
+    currency: "ETH",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
+    description: "ETH 중액 거래 (1 ETH 이상 5 ETH 미만)"
+  },
+  {
+    minAmount: 5,
     maxAmount: 10,
-    currency: "BTC",
+    currency: "ETH",
     requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
-    description: "BTC 중액 거래 (1 BTC 이상 10 BTC 미만)"
+    description: "ETH 고액 거래 (5 ETH 이상 10 ETH 미만)"
   },
   {
     minAmount: 10,
     maxAmount: Infinity,
-    currency: "BTC",
+    currency: "ETH",
     requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "BTC 고액 거래 (10 BTC 이상)"
+    description: "ETH 초고액 거래 (10 ETH 이상)"
   },
   {
     minAmount: 0,
@@ -161,15 +189,15 @@ export function convertToKRW(amount: number, currency: Currency): number {
 export function getRequiredApprovers(amount: number, currency: Currency): string[] {
   // 해당 통화의 정책 중에서 금액 범위에 맞는 것 찾기
   const currencyPolicies = APPROVAL_POLICIES.filter(policy => policy.currency === currency);
-  
-  const matchedPolicy = currencyPolicies.find(policy => 
+
+  const matchedPolicy = currencyPolicies.find(policy =>
     amount >= policy.minAmount && amount < policy.maxAmount
   );
-  
+
   if (matchedPolicy) {
     return matchedPolicy.requiredApprovers;
   }
-  
+
   // 매칭되는 정책이 없으면 기본값 (최소 2명)
   return ["박CFO", "이CISO"];
 }
@@ -179,8 +207,8 @@ export function getRequiredApprovers(amount: number, currency: Currency): string
  */
 export function getApprovalPolicyInfo(amount: number, currency: Currency): ApprovalPolicy | null {
   const currencyPolicies = APPROVAL_POLICIES.filter(policy => policy.currency === currency);
-  
-  return currencyPolicies.find(policy => 
+
+  return currencyPolicies.find(policy =>
     amount >= policy.minAmount && amount < policy.maxAmount
   ) || null;
 }
@@ -216,12 +244,12 @@ export const TRANSACTION_TYPE_POLICIES: TransactionTypePolicy[] = [
  * 거래 유형을 고려한 최종 결재자 목록 반환
  */
 export function getFinalApprovers(
-  amount: number, 
-  currency: Currency, 
+  amount: number,
+  currency: Currency,
   transactionType?: string
 ): string[] {
   let approvers = getRequiredApprovers(amount, currency);
-  
+
   // 거래 유형별 추가 결재자 확인
   if (transactionType) {
     const typePolicy = TRANSACTION_TYPE_POLICIES.find(policy => policy.type === transactionType);
@@ -233,7 +261,7 @@ export function getFinalApprovers(
       approvers = [...approvers, ...additionalApprovers];
     }
   }
-  
+
   return approvers;
 }
 
@@ -243,13 +271,13 @@ export function getFinalApprovers(
 export function getPolicyDescription(amount: number, currency: Currency, transactionType?: string): string {
   const policy = getApprovalPolicyInfo(amount, currency);
   const baseDescription = policy?.description || "기본 결재 정책";
-  
+
   if (transactionType) {
     const typePolicy = TRANSACTION_TYPE_POLICIES.find(p => p.type === transactionType);
     if (typePolicy) {
       return `${baseDescription} + ${typePolicy.description}`;
     }
   }
-  
+
   return baseDescription;
 }

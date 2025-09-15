@@ -28,6 +28,8 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
   const [showAddTypePolicyModal, setShowAddTypePolicyModal] = useState(false);
   const [editingApprovers, setEditingApprovers] = useState<{[key: string]: string[]}>({});
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
+  const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
 
   const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
 
@@ -80,9 +82,9 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   };
 
   const getRiskLevel = (approverCount: number) => {
-    if (approverCount <= 2) return { level: '낮음', color: 'gray-light' };
-    if (approverCount <= 3) return { level: '보통', color: 'gray-medium' };
-    if (approverCount <= 4) return { level: '높음', color: 'gray-dark' };
+    if (approverCount === 2) return { level: '낮음', color: 'gray-light' };
+    if (approverCount === 3) return { level: '보통', color: 'gray-medium' };
+    if (approverCount === 4) return { level: '높음', color: 'gray-dark' };
     return { level: '매우 높음', color: 'gray-darker' };
   };
 
@@ -122,6 +124,8 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   const handleSaveNewPolicy = () => {
     // 새 정책 저장 로직
     setShowAddPolicyModal(false);
+    setSelectedRiskLevel(''); // 모달 닫을 때 위험도 초기화
+    setModalApprovers(['']); // 결재자 목록 초기화
   };
 
   const handleSaveNewTypePolicy = () => {
@@ -163,6 +167,46 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
 
   // 활성 사용자 목록 가져오기
   const availableUsers = getActiveUsers();
+
+  // 위험도에 따른 추천 결재자 반환
+  const getRecommendedApprovers = (riskLevel: string): string[] => {
+    switch (riskLevel) {
+      case 'low':
+        return ['박CFO', '이CISO'];
+      case 'medium':
+        return ['박CFO', '이CISO', '김CTO'];
+      case 'high':
+        return ['박CFO', '이CISO', '김CTO', '정법무이사'];
+      case 'very_high':
+        return ['박CFO', '이CISO', '김CTO', '정법무이사', '최CEO'];
+      default:
+        return [];
+    }
+  };
+
+  // 위험도 변경 핸들러
+  const handleRiskLevelChange = (riskLevel: string) => {
+    setSelectedRiskLevel(riskLevel);
+  };
+
+  // 모달 결재자 관리 함수들
+  const handleModalApproverChange = (index: number, value: string) => {
+    const updated = [...modalApprovers];
+    updated[index] = value;
+    setModalApprovers(updated);
+  };
+
+  const handleAddModalApprover = () => {
+    setModalApprovers([...modalApprovers, '']);
+  };
+
+  const handleRemoveModalApprover = (index: number) => {
+    if (modalApprovers.length > 1) {
+      const updated = modalApprovers.filter((_, i) => i !== index);
+      setModalApprovers(updated);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -620,17 +664,77 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">위험도</label>
+                <select
+                  value={selectedRiskLevel}
+                  onChange={(e) => handleRiskLevelChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">위험도 선택</option>
+                  <option value="low">낮음 (2명 승인)</option>
+                  <option value="medium">보통 (3명 승인)</option>
+                  <option value="high">높음 (4명 승인)</option>
+                  <option value="very_high">매우 높음 (5명 이상 승인)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">위험도에 따라 권장 결재자 수가 달라집니다</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">필요 결재자</label>
+
+                {/* 위험도 기반 추천 결재자 표시 */}
+                {selectedRiskLevel && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <svg className="w-4 h-4 text-blue-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-medium text-blue-800">위험도 기반 추천 결재자</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {getRecommendedApprovers(selectedRiskLevel).map((approver, index) => (
+                        <span key={index} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                          {index + 1}. {approver}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2">위험도 '{getRiskLevel(getRecommendedApprovers(selectedRiskLevel).length).level}'에 따른 추천 결재자입니다</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">첫 번째 결재자 선택</option>
-                    {availableUsers.map(user => (
-                      <option key={user.id} value={user.name}>
-                        {formatUserDisplay(user, 'namePosition')}
-                      </option>
-                    ))}
-                  </select>
-                  <button className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
+                  {modalApprovers.map((approver, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-500 w-6">{index + 1}.</span>
+                      <select
+                        value={approver}
+                        onChange={(e) => handleModalApproverChange(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">결재자 선택</option>
+                        {availableUsers.map(user => (
+                          <option key={user.id} value={user.name}>
+                            {formatUserDisplay(user, 'namePosition')}
+                          </option>
+                        ))}
+                      </select>
+                      {modalApprovers.length > 1 && (
+                        <button
+                          onClick={() => handleRemoveModalApprover(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="결재자 제거"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleAddModalApprover}
+                    className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                  >
                     + 결재자 추가
                   </button>
                 </div>
@@ -639,7 +743,11 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
 
             <div className="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => setShowAddPolicyModal(false)}
+                onClick={() => {
+                  setShowAddPolicyModal(false);
+                  setSelectedRiskLevel(''); // 취소 시에도 위험도 초기화
+                  setModalApprovers(['']); // 결재자 목록 초기화
+                }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 취소
