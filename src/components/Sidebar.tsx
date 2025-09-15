@@ -39,6 +39,21 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   
   // Get active tab from current pathname
   const getCurrentTab = (): DashboardTab => {
+    // Handle dynamic routes with [tab] parameter
+    if (pathname.startsWith('/withdrawal')) {
+      return 'withdrawal'
+    }
+    if (pathname.startsWith('/groups')) {
+      return 'groups'
+    }
+    if (pathname.startsWith('/services')) {
+      return 'services'
+    }
+    if (pathname.startsWith('/security')) {
+      return 'security'
+    }
+
+    // Handle static routes
     switch (pathname) {
       case '/overview':
         return 'overview'
@@ -46,16 +61,8 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         return 'transactions'
       case '/users':
         return 'users'
-      case '/groups':
-        return 'groups'
       case '/deposit':
         return 'deposit'
-      case '/withdrawal':
-        return 'withdrawal'
-      case '/services':
-        return 'services'
-      case '/security':
-        return 'security'
       case '/':
         return 'overview'
       default:
