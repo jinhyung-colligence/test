@@ -21,7 +21,8 @@
       "Bash(npm run typecheck:*)",
       "WebFetch(domain:test-ashen-beta-36.vercel.app)",
       "Bash(curl:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(Remove-Item -Recurse -Force src/app/security/policies/type)"
     ],
     "deny": [],
     "ask": []
