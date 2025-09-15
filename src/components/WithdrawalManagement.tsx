@@ -42,7 +42,6 @@ import AuditTab from "./withdrawal/AuditTab";
 import RejectedTabComponent from "./withdrawal/RejectedTabComponent";
 import AirgapTab from "./withdrawal/AirgapTab";
 import ApprovalTab from "./withdrawal/ApprovalTab";
-import { ManagementMenuButton } from "./withdrawal/ManagementMenuButton";
 import {
   mockWithdrawalRequests,
   networkAssets,
@@ -878,7 +877,6 @@ export default function WithdrawalManagement({
             <PlusIcon className="h-5 w-5 mr-2" />
             출금 신청
           </button>
-          <ManagementMenuButton />
         </div>
       </div>
 

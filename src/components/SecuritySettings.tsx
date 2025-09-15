@@ -6,12 +6,14 @@ import {
   WalletIcon,
   BuildingLibraryIcon,
   CogIcon,
+  BellIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import SecurityTab from "./security/SecurityTab";
 import AddressManagement from "./security/AddressManagement";
 import AccountManagement from "./security/AccountManagement";
 import PolicyManagement from "./security/PolicyManagement";
+import { NotificationCenter } from "./security/NotificationCenter";
 
 interface SecuritySettingsProps {
   plan: ServicePlan;
@@ -19,13 +21,13 @@ interface SecuritySettingsProps {
 
 export default function SecuritySettings({ plan }: SecuritySettingsProps) {
   // 탭 관리 상태
-  const [activeTab, setActiveTab] = useState<"security" | "addresses" | "accounts" | "policies">("security");
+  const [activeTab, setActiveTab] = useState<"security" | "addresses" | "accounts" | "policies" | "notifications">("security");
 
   // URL 쿼리 파라미터에서 탭 설정
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
-    if (tabParam && ['security', 'addresses', 'accounts', 'policies'].includes(tabParam)) {
+    if (tabParam && ['security', 'addresses', 'accounts', 'policies', 'notifications'].includes(tabParam)) {
       setActiveTab(tabParam as typeof activeTab);
     }
   }, []);
@@ -47,6 +49,7 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
             { id: "addresses", name: "주소 관리", icon: WalletIcon },
             { id: "accounts", name: "계좌 연동", icon: BuildingLibraryIcon },
             { id: "policies", name: "정책 관리", icon: CogIcon },
+            { id: "notifications", name: "알림 설정", icon: BellIcon },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -69,6 +72,7 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
       {activeTab === "addresses" && <AddressManagement />}
       {activeTab === "accounts" && <AccountManagement plan={plan} />}
       {activeTab === "policies" && <PolicyManagement />}
+      {activeTab === "notifications" && <NotificationCenter />}
     </div>
   );
 }

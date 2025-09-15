@@ -4,16 +4,20 @@ import { APPROVAL_POLICIES, TRANSACTION_TYPE_POLICIES } from "@/utils/approverAs
 import { MOCK_NOTIFICATION_LOGS, MOCK_NOTIFICATION_TEMPLATES } from "@/data/notificationMockData";
 
 interface NotificationCenterProps {
-  onClose?: () => void;
 }
 
-export function NotificationCenter({ onClose }: NotificationCenterProps) {
+export function NotificationCenter({}: NotificationCenterProps) {
   const [activeTab, setActiveTab] = useState<'logs' | 'templates' | 'settings'>('logs');
   const [notificationSystem] = useState(() => new NotificationSystem(DEFAULT_CONFIG));
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // 설정 편집 상태
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [editedConfig, setEditedConfig] = useState(DEFAULT_CONFIG);
+  const [editedEmails, setEditedEmails] = useState(DEFAULT_CONFIG.approverEmail);
 
   // 페이징 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,24 +155,72 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
     setCurrentPage(1);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-5/6 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">이메일 알림 센터</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  // 설정 관리 핸들러
+  const handleSaveSettings = () => {
+    // 입력 검증
+    const emailValidation = Object.entries(editedEmails).every(([name, email]) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return email && emailRegex.test(email);
+    });
 
-        {/* Tab Navigation */}
-        <div className="flex border-b bg-gray-50">
+    if (!emailValidation) {
+      alert('올바른 이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    if (editedConfig.overdueThresholdHours < 1 || editedConfig.overdueThresholdHours > 72) {
+      alert('지연 알림 기준은 1시간에서 72시간 사이여야 합니다.');
+      return;
+    }
+
+    if (editedConfig.retryAttempts < 0 || editedConfig.retryAttempts > 10) {
+      alert('재발송 시도는 0회에서 10회 사이여야 합니다.');
+      return;
+    }
+
+    if (editedConfig.retryDelayMinutes < 1 || editedConfig.retryDelayMinutes > 60) {
+      alert('재발송 간격은 1분에서 60분 사이여야 합니다.');
+      return;
+    }
+
+    // 실제 구현에서는 API 호출로 설정을 저장
+    console.log('설정 저장:', { config: editedConfig, emails: editedEmails });
+    setIsEditingSettings(false);
+    // 성공 메시지 표시 (실제 구현에서는 toast 등 사용)
+    alert('설정이 저장되었습니다.');
+  };
+
+  const handleCancelSettings = () => {
+    setEditedConfig(DEFAULT_CONFIG);
+    setEditedEmails(DEFAULT_CONFIG.approverEmail);
+    setIsEditingSettings(false);
+  };
+
+  const handleEmailChange = (name: string, email: string) => {
+    setEditedEmails(prev => ({
+      ...prev,
+      [name]: email
+    }));
+  };
+
+  const handleConfigChange = (field: keyof typeof DEFAULT_CONFIG, value: number) => {
+    setEditedConfig(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">이메일 알림 센터</h2>
+        <p className="text-gray-600 mt-1">이메일 알림 설정 및 발송 이력을 관리합니다</p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
           {[
             { key: 'logs', label: '알림 로그' },
             { key: 'templates', label: '템플릿 관리' },
@@ -177,19 +229,20 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               {tab.label}
             </button>
           ))}
-        </div>
+        </nav>
+      </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto" style={{ height: 'calc(100% - 180px)' }}>
+      {/* Content */}
+      <div className="space-y-6">
           {/* 알림 로그 탭 */}
           {activeTab === 'logs' && (
             <div className="space-y-4">
@@ -431,17 +484,74 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           {/* 설정 탭 */}
           {activeTab === 'settings' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium">이메일 알림 설정</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">이메일 알림 설정</h3>
+                <div className="flex items-center space-x-3">
+                  {isEditingSettings ? (
+                    <>
+                      <button
+                        onClick={handleCancelSettings}
+                        className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={handleSaveSettings}
+                        className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                      >
+                        저장
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditingSettings(true)}
+                      className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                    >
+                      설정 편집
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {isEditingSettings && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-blue-800">설정 편집 모드</h4>
+                      <div className="mt-1 text-sm text-blue-700">
+                        이메일 주소와 알림 정책을 수정할 수 있습니다. 변경사항은 저장 버튼을 누르기 전까지 적용되지 않습니다.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* 이메일 설정 */}
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h4 className="font-medium text-gray-900 mb-4">승인자 이메일 주소</h4>
                   <div className="space-y-3">
-                    {Object.entries(DEFAULT_CONFIG.approverEmail).map(([name, email]) => (
-                      <div key={name} className="flex items-center justify-between p-2 bg-white rounded border">
-                        <span className="text-sm font-medium text-gray-700">{name}</span>
-                        <span className="text-sm text-gray-600">{email}</span>
+                    {Object.entries(isEditingSettings ? editedEmails : DEFAULT_CONFIG.approverEmail).map(([name, email]) => (
+                      <div key={name} className="p-2 bg-white rounded border">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700 w-20">{name}</span>
+                          {isEditingSettings ? (
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => handleEmailChange(name, e.target.value)}
+                              className="flex-1 ml-3 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="이메일 주소를 입력하세요"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-600">{email}</span>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -451,55 +561,103 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h4 className="font-medium text-gray-900 mb-4">이메일 발송 정책</h4>
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between p-2 bg-white rounded border">
-                      <span className="font-medium text-gray-700">지연 알림 기준</span>
-                      <span className="text-gray-600">{DEFAULT_CONFIG.overdueThresholdHours}시간 후</span>
+                    <div className="p-2 bg-white rounded border">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">지연 알림 기준</span>
+                        {isEditingSettings ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              value={editedConfig.overdueThresholdHours}
+                              onChange={(e) => handleConfigChange('overdueThresholdHours', parseInt(e.target.value) || 0)}
+                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              min="1"
+                              max="72"
+                            />
+                            <span className="text-gray-600">시간 후</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600">{DEFAULT_CONFIG.overdueThresholdHours}시간 후</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex justify-between p-2 bg-white rounded border">
-                      <span className="font-medium text-gray-700">재발송 시도</span>
-                      <span className="text-gray-600">최대 {DEFAULT_CONFIG.retryAttempts}회</span>
+                    <div className="p-2 bg-white rounded border">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">재발송 시도</span>
+                        {isEditingSettings ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600">최대</span>
+                            <input
+                              type="number"
+                              value={editedConfig.retryAttempts}
+                              onChange={(e) => handleConfigChange('retryAttempts', parseInt(e.target.value) || 0)}
+                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              min="0"
+                              max="10"
+                            />
+                            <span className="text-gray-600">회</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600">최대 {DEFAULT_CONFIG.retryAttempts}회</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex justify-between p-2 bg-white rounded border">
-                      <span className="font-medium text-gray-700">재발송 간격</span>
-                      <span className="text-gray-600">{DEFAULT_CONFIG.retryDelayMinutes}분</span>
+                    <div className="p-2 bg-white rounded border">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">재발송 간격</span>
+                        {isEditingSettings ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              value={editedConfig.retryDelayMinutes}
+                              onChange={(e) => handleConfigChange('retryDelayMinutes', parseInt(e.target.value) || 0)}
+                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              min="1"
+                              max="60"
+                            />
+                            <span className="text-gray-600">분</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600">{DEFAULT_CONFIG.retryDelayMinutes}분</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* 이메일 발송 통계 */}
-              <div className="bg-white border rounded-lg p-6">
-                <h4 className="font-medium text-gray-900 mb-4">이메일 발송 통계</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-3xl font-bold text-green-600">
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-4">이메일 발송 통계</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
                       {logs.filter(l => l.status === 'sent').length}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">발송 완료</div>
+                    <div className="text-xs text-gray-600 mt-1">발송 완료</div>
                   </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-3xl font-bold text-red-600">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">
                       {logs.filter(l => l.status === 'failed').length}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">발송 실패</div>
+                    <div className="text-xs text-gray-600 mt-1">발송 실패</div>
                   </div>
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <div className="text-3xl font-bold text-yellow-600">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">
                       {logs.filter(l => l.retryCount > 0).length}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">재발송</div>
+                    <div className="text-xs text-gray-600 mt-1">재발송</div>
                   </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-3xl font-bold text-blue-600">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-primary-600">
                       {templates.filter(t => t.enabled).length}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">활성 템플릿</div>
+                    <div className="text-xs text-gray-600 mt-1">활성 템플릿</div>
                   </div>
                 </div>
               </div>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
