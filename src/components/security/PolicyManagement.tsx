@@ -74,7 +74,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
     if (amount === 0) return '0';
     if (amount === Infinity) return '∞';
 
-    if (currency === 'KRW' || currency === 'USD') {
+    if (currency === 'USD') {
       return amount.toLocaleString();
     }
 

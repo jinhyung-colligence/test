@@ -80,7 +80,7 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
       fromAddress: "0x1234...",
       toAddress: "0x5678...",
       amount: 1000000,
-      currency: "KRW" as const,
+      currency: "USD" as const,
       groupId: "group-1",
       initiator: "테스트사용자",
       initiatedAt: new Date().toISOString(),

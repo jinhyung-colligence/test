@@ -18,7 +18,6 @@ export type UserRole =
   | "admin";
 
 export type Currency =
-  | "KRW"
   | "USD"
   | "BTC"
   | "ETH"

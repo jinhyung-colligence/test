@@ -57,7 +57,7 @@ export function PolicyRuleEditor({ rule, onSave, onCancel }: PolicyRuleEditorPro
     { value: 'block_transaction', label: '거래 차단' }
   ];
 
-  const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
+  const currencies: Currency[] = ['USD', 'BTC', 'ETH', 'USDC', 'USDT'];
   const approvers = ['박CFO', '이CISO', '김CTO', '정법무이사', '최CEO', '한비즈데브이사'];
 
   const handleAddCondition = () => {

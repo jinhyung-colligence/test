@@ -120,7 +120,6 @@ export function ApprovalPolicyDisplay({
           <div className="font-medium mb-1">{description}</div>
           <div className="text-xs text-blue-600">
             거래금액: {amount.toLocaleString()} {currency}
-            {currency !== 'KRW' && ` (≈ ${krwAmount.toLocaleString()} KRW)`}
           </div>
         </div>
         
