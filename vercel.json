@@ -1,11 +1,5 @@
 {
   "buildCommand": "npm run build",
   "framework": "nextjs",
-  "regions": ["icn1"],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ]
+  "regions": ["icn1"]
 }
