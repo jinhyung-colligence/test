@@ -1,4 +1,4 @@
-import { ClockIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { WalletGroup, ExpenseRequest } from "@/types/groups";
 import { mockGroups, mockExpenses } from "@/data/groupMockData";
 import {
@@ -138,14 +138,20 @@ export default function PendingApproval({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {expense.status === 'pending' ? (
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                          승인 대기
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <ClockIcon className="h-4 w-4" />
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            승인 대기
+                          </span>
+                        </div>
                       ) : (
                         <div>
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                            반려됨
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <XCircleIcon className="h-4 w-4" />
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                              반려됨
+                            </span>
+                          </div>
                           {expense.rejectedReason && (
                             <p className="text-xs text-red-600 mt-1">
                               {expense.rejectedReason}
@@ -155,12 +161,19 @@ export default function PendingApproval({
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-2">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => console.log('상세보기:', expense.id)}
+                          className="text-primary-600 hover:text-primary-900 text-sm font-medium"
+                        >
+                          상세보기
+                        </button>
+                        <div className="h-4 w-px bg-gray-300"></div>
                         {expense.status === 'pending' ? (
                           <>
                             <button
                               onClick={() => handleApproveExpense(expense.id)}
-                              className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition-colors"
+                              className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
                             >
                               승인
                             </button>
@@ -168,7 +181,7 @@ export default function PendingApproval({
                               onClick={() =>
                                 handleRejectExpense(expense.id, "검토 필요")
                               }
-                              className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition-colors"
+                              className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
                             >
                               반려
                             </button>
@@ -176,7 +189,7 @@ export default function PendingApproval({
                         ) : (
                           <button
                             onClick={() => handleReapproveExpense(expense.id)}
-                            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors"
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
                           >
                             재승인 처리
                           </button>
