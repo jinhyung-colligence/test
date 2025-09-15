@@ -9,6 +9,8 @@ import {
 } from "@/utils/approverAssignment";
 import { ApproverRoleBadge } from "../withdrawal/ApproverRoleBadge";
 import { CogIcon } from "@heroicons/react/24/outline";
+import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
+import { formatUserDisplay } from '@/utils/userHelpers';
 
 interface PolicyManagementProps {
   onPolicyChange?: (policies: ApprovalPolicy[]) => void;
@@ -29,17 +31,6 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
 
   const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
 
-  // 사용자 목록 데이터
-  const availableUsers = [
-    { id: '1', name: '김대표', position: 'CEO', email: 'ceo@company.com' },
-    { id: '2', name: '박재무', position: 'CFO', email: 'cfo@company.com' },
-    { id: '3', name: '이기술', position: 'CTO', email: 'cto@company.com' },
-    { id: '4', name: '최관리', position: '관리자', email: 'manager@company.com' },
-    { id: '5', name: '정부관', position: '부관리자', email: 'sub-manager@company.com' },
-    { id: '6', name: '한리스크', position: '리스크관리자', email: 'risk@company.com' },
-    { id: '7', name: '송컴플', position: '컴플라이언스', email: 'compliance@company.com' },
-    { id: '8', name: '조운영', position: '운영관리자', email: 'operations@company.com' },
-  ];
 
   // initialSubtab이 변경되면 activeTab 업데이트
   useEffect(() => {
@@ -170,10 +161,8 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
     }));
   };
 
-  // 사용자 이름으로 사용자 정보 찾기
-  const getUserByName = (name: string) => {
-    return availableUsers.find(user => user.name === name);
-  };
+  // 활성 사용자 목록 가져오기
+  const availableUsers = getActiveUsers();
 
   return (
     <div className="space-y-6">
@@ -340,7 +329,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                                       <option value="">결재자 선택</option>
                                       {availableUsers.map(user => (
                                         <option key={user.id} value={user.name}>
-                                          {user.name} ({user.position})
+                                          {formatUserDisplay(user, 'namePosition')}
                                         </option>
                                       ))}
                                     </select>
@@ -479,7 +468,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                                     <option value="">결재자 선택</option>
                                     {availableUsers.map(user => (
                                       <option key={user.id} value={user.name}>
-                                        {user.name} ({user.position})
+                                        {formatUserDisplay(user, 'namePosition')}
                                       </option>
                                     ))}
                                   </select>
@@ -637,7 +626,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                     <option value="">첫 번째 결재자 선택</option>
                     {availableUsers.map(user => (
                       <option key={user.id} value={user.name}>
-                        {user.name} ({user.position})
+                        {formatUserDisplay(user, 'namePosition')}
                       </option>
                     ))}
                   </select>
@@ -712,7 +701,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                     <option value="">첫 번째 추가 결재자 선택</option>
                     {availableUsers.map(user => (
                       <option key={user.id} value={user.name}>
-                        {user.name} ({user.position})
+                        {formatUserDisplay(user, 'namePosition')}
                       </option>
                     ))}
                   </select>

@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import { NotificationSystem, NotificationLog, NotificationTemplate, DEFAULT_CONFIG } from "@/utils/notificationSystem";
 import { APPROVAL_POLICIES, TRANSACTION_TYPE_POLICIES } from "@/utils/approverAssignment";
 import { MOCK_NOTIFICATION_LOGS, MOCK_NOTIFICATION_TEMPLATES } from "@/data/notificationMockData";
+import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
+import { formatUserDisplay } from '@/utils/userHelpers';
 
 interface NotificationCenterProps {
   initialSubtab?: 'logs' | 'templates' | 'settings';
@@ -35,49 +37,8 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const [showUserSelector, setShowUserSelector] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // 사용자 관리에서 가져온 사용자 목록 (실제로는 API에서 가져와야 함)
-  const availableUsers = [
-    {
-      id: '1',
-      name: '김관리자',
-      email: 'admin@company.com',
-      phone: '+82 010-1234-5678',
-      role: 'admin',
-      department: 'IT팀'
-    },
-    {
-      id: '2',
-      name: '이매니저',
-      email: 'manager@company.com',
-      phone: '+82 010-2345-6789',
-      role: 'manager',
-      department: '재무팀'
-    },
-    {
-      id: '3',
-      name: '박CFO',
-      email: 'cfo@company.com',
-      phone: '+82 010-3456-7890',
-      role: 'approver',
-      department: '경영진'
-    },
-    {
-      id: '4',
-      name: '최CISO',
-      email: 'ciso@company.com',
-      phone: '+82 010-4567-8901',
-      role: 'approver',
-      department: '보안팀'
-    },
-    {
-      id: '5',
-      name: '정CTO',
-      email: 'cto@company.com',
-      phone: '+82 010-5678-9012',
-      role: 'approver',
-      department: '기술팀'
-    }
-  ];
+  // 활성 사용자 목록 가져오기
+  const availableUsers = getActiveUsers();
 
   // 이미 추가된 승인자는 제외
   const availableUsersForSelection = availableUsers.filter(
@@ -953,7 +914,7 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
                                         <div className="flex items-center space-x-2">
                                           <span className="text-sm font-medium text-gray-900">{user.name}</span>
                                           <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">
-                                            {user.role}
+                                            {user.position || formatUserDisplay(user, 'name')}
                                           </span>
                                         </div>
                                         <p className="text-xs text-gray-600">{user.email}</p>

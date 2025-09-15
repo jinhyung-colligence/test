@@ -1,33 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  UsersIcon, 
-  PlusIcon, 
+import {
+  UsersIcon,
+  PlusIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   KeyIcon
 } from '@heroicons/react/24/outline'
 import { ServicePlan } from '@/app/page'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { User, UserRole, UserStatus, DEFAULT_PERMISSIONS_BY_ROLE, ROLE_NAMES } from '@/types/user'
+import { MOCK_USERS } from '@/data/userMockData'
+import { formatUserDisplay, getRoleName, getStatusName, searchUsers, getUserStatsByRole } from '@/utils/userHelpers'
 
 interface UserManagementProps {
   plan: ServicePlan
-}
-
-type UserRole = 'admin' | 'manager' | 'viewer' | 'approver' | 'initiator' | 'required_approver' | 'operator'
-type UserStatus = 'active' | 'inactive' | 'pending'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  phone: string
-  role: UserRole
-  status: UserStatus
-  lastLogin: string
-  permissions: string[]
-  department?: string
 }
 
 export default function UserManagement({ plan }: UserManagementProps) {
@@ -47,7 +35,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
     phone: '',
     role: 'viewer' as UserRole,
     department: '',
-    permissions: ['permission.view_assets', 'permission.view_transactions', 'permission.view_group_assets', 'permission.create_expense', 'permission.view_audit'] as string[]
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer as string[]
   })
   const { t, language } = useLanguage()
 
@@ -62,65 +50,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
     }
   }
 
-  const mockUsers: User[] = [
-    {
-      id: '1',
-      name: '김관리자',
-      email: 'admin@company.com',
-      phone: '+82 010-1234-5678',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-03-15T10:30:00Z',
-      permissions: ['permission.all'],
-      department: 'IT팀'
-    },
-    {
-      id: '2',
-      name: '이매니저',
-      email: 'manager@company.com',
-      phone: '+82 010-2345-6789',
-      role: 'manager',
-      status: 'active',
-      lastLogin: '2024-03-15T09:15:00Z',
-      permissions: ['permission.view_assets', 'permission.approve_transactions', 'permission.manage_users'],
-      department: '재무팀'
-    },
-    {
-      id: '3',
-      name: '박조회자',
-      email: 'viewer@company.com',
-      phone: '+82 010-3456-7890',
-      role: 'viewer',
-      status: 'active',
-      lastLogin: '2024-03-14T16:45:00Z',
-      permissions: ['permission.view_assets', 'permission.view_transactions'],
-      department: '회계팀'
-    },
-    {
-      id: '4',
-      name: '최승인자',
-      email: 'approver@company.com',
-      phone: '+82 010-4567-8901',
-      role: 'approver',
-      status: 'pending',
-      lastLogin: '2024-03-13T14:20:00Z',
-      permissions: ['permission.approve_transactions', 'permission.set_policies'],
-      department: '리스크팀'
-    }
-  ]
-
-  const getRoleName = (role: UserRole) => {
-    const roleNames = {
-      admin: '관리자',
-      manager: '매니저',
-      viewer: '조회자',
-      approver: '승인자',
-      initiator: '기안자',
-      required_approver: '필수 결재자',
-      operator: '운영자'
-    }
-    return roleNames[role] || role
-  }
 
   const getRoleColor = (role: UserRole) => {
     const colors = {
@@ -144,10 +73,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
     return colors[status]
   }
 
-  const getStatusName = (status: UserStatus) => {
-    return t(`user.status.${status}`)
-  }
-
   const formatDate = (timestamp: string) => {
     return new Intl.DateTimeFormat(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
@@ -158,11 +83,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
     }).format(new Date(timestamp))
   }
 
-  const filteredUsers = mockUsers.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = MOCK_USERS.filter(user => {
+    const matchesSearch = searchUsers(searchTerm, [user]).length > 0 || searchTerm === ''
     const matchesRole = filterRole === 'all' || user.role === filterRole
-    
+
     return matchesSearch && matchesRole
   })
 
@@ -204,7 +128,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
         phone: '',
         role: 'viewer',
         department: '',
-        permissions: []
+        permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer
       })
       
       // 5초 후 성공 메시지 숨김
@@ -330,20 +254,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
   }
 
   const handleRoleChange = (role: UserRole) => {
-    const rolePermissions = {
-      admin: ['permission.all'],
-      manager: ['permission.view_assets', 'permission.approve_transactions', 'permission.manage_users', 'permission.manage_groups', 'permission.approve_expense', 'permission.manage_budget', 'permission.approve_withdrawal'],
-      viewer: ['permission.view_assets', 'permission.view_transactions', 'permission.view_group_assets', 'permission.create_expense', 'permission.view_audit'],
-      approver: ['permission.approve_transactions', 'permission.set_policies', 'permission.approve_expense', 'permission.approve_withdrawal'],
-      initiator: ['permission.view_assets', 'permission.view_transactions', 'permission.initiate_withdrawal', 'permission.create_expense'],
-      required_approver: ['permission.view_assets', 'permission.view_transactions', 'permission.required_approval', 'permission.view_audit'],
-      operator: ['permission.view_assets', 'permission.view_transactions', 'permission.airgap_operation', 'permission.view_audit']
-    }
-    
     setNewUser({
       ...newUser,
       role,
-      permissions: rolePermissions[role] || []
+      permissions: DEFAULT_PERMISSIONS_BY_ROLE[role] || []
     })
   }
 
@@ -441,7 +355,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm font-medium">{t('users.stats.total')}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{mockUsers.length}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{MOCK_USERS.length}</p>
             </div>
             <UsersIcon className="h-8 w-8 text-blue-600" />
           </div>
@@ -452,7 +366,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
             <div>
               <p className="text-gray-600 text-sm font-medium">{t('users.stats.active')}</p>
               <p className="text-2xl font-bold text-green-600 mt-1">
-                {mockUsers.filter(u => u.status === 'active').length}
+                {MOCK_USERS.filter(u => u.status === 'active').length}
               </p>
             </div>
             <ShieldCheckIcon className="h-8 w-8 text-green-600" />
@@ -464,7 +378,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
             <div>
               <p className="text-gray-600 text-sm font-medium">{t('users.stats.admins')}</p>
               <p className="text-2xl font-bold text-red-600 mt-1">
-                {mockUsers.filter(u => u.role === 'admin').length}
+                {MOCK_USERS.filter(u => u.role === 'admin').length}
               </p>
             </div>
             <KeyIcon className="h-8 w-8 text-red-600" />
@@ -476,7 +390,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
             <div>
               <p className="text-gray-600 text-sm font-medium">{t('users.stats.pending')}</p>
               <p className="text-2xl font-bold text-yellow-600 mt-1">
-                {mockUsers.filter(u => u.status === 'pending').length}
+                {MOCK_USERS.filter(u => u.status === 'pending').length}
               </p>
             </div>
             <div className="h-8 w-8 bg-yellow-600 rounded-full animate-pulse"></div>
