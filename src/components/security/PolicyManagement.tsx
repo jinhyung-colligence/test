@@ -423,7 +423,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                     <p className="text-xs text-gray-600 mt-1">{typePolicy.description}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                      {isEditingThis ? (
+                    {isEditingThis ? (
                         <>
                           <button
                             onClick={() => handleSaveTypePolicy(typePolicyId)}
@@ -447,7 +447,6 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                         </button>
                       )}
                     </div>
-                  )}
                 </div>
 
                 {isEditingThis ? (
