@@ -18,7 +18,8 @@
       "Bash(find:*)",
       "Bash(awk:*)",
       "Bash(sed:*)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "WebFetch(domain:test-ashen-beta-36.vercel.app)"
     ],
     "deny": [],
     "ask": []
