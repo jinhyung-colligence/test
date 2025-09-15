@@ -7,6 +7,16 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorGuard from '@/components/ErrorGuard'
 import MetaMaskErrorHandler from '@/components/MetaMaskErrorHandler'
 import Script from 'next/script'
+import dynamic from 'next/dynamic'
+
+// 클라이언트에서만 실행되는 에러 억제 컴포넌트
+const UltimateErrorSuppression = dynamic(
+  () => import('@/utils/ultimateErrorSuppression').then(() => {
+    // 컴포넌트 대신 즉시 실행하는 더미 컴포넌트 반환
+    return () => null
+  }),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: 'Custody Dashboard - 커스터디 서비스',
@@ -23,51 +33,86 @@ export default function RootLayout({
       <body>
         <Script id="error-suppression" strategy="beforeInteractive">
           {`
-            if (typeof window !== 'undefined' && '${process.env.NODE_ENV}' === 'production') {
+            if (typeof window !== 'undefined') {
+              // 모든 console 메서드 오버라이드
               const originalError = console.error;
               const originalWarn = console.warn;
+              const originalLog = console.log;
+              const originalInfo = console.info;
+
+              const isMetaMaskMessage = (message) => {
+                return message.includes('Minified React error') ||
+                       message.includes('inpage.js') ||
+                       message.includes('runtime.lastError') ||
+                       message.includes('chrome-extension') ||
+                       message.includes('MetaMask') ||
+                       message.includes('Receiving end does not exist') ||
+                       message.includes('Could not establish connection') ||
+                       message.includes('Unchecked runtime.lastError');
+              };
 
               console.error = (...args) => {
                 const message = args.join(' ');
-                if (!message.includes('Minified React error') &&
-                    !message.includes('inpage.js') &&
-                    !message.includes('runtime.lastError') &&
-                    !message.includes('chrome-extension') &&
-                    !message.includes('MetaMask')) {
+                if (!isMetaMaskMessage(message)) {
                   originalError.apply(console, args);
                 }
               };
 
               console.warn = (...args) => {
                 const message = args.join(' ');
-                if (!message.includes('MetaMask') &&
-                    !message.includes('error suppressed') &&
-                    !message.includes('error handled')) {
+                if (!isMetaMaskMessage(message)) {
                   originalWarn.apply(console, args);
                 }
               };
 
-              window.addEventListener('error', (e) => {
-                if (e.filename?.includes('inpage.js') ||
+              console.log = (...args) => {
+                const message = args.join(' ');
+                if (!isMetaMaskMessage(message)) {
+                  originalLog.apply(console, args);
+                }
+              };
+
+              console.info = (...args) => {
+                const message = args.join(' ');
+                if (!isMetaMaskMessage(message)) {
+                  originalInfo.apply(console, args);
+                }
+              };
+
+              // 더 강력한 에러 이벤트 차단
+              const blockError = (e) => {
+                const message = e.message || e.error?.message || e.reason?.message || '';
+                if (isMetaMaskMessage(message) ||
                     e.filename?.includes('chrome-extension') ||
-                    e.message?.includes('Minified React error')) {
+                    e.filename?.includes('inpage.js')) {
                   e.preventDefault();
                   e.stopPropagation();
+                  e.stopImmediatePropagation();
+                  return false;
                 }
-              }, true);
+              };
 
-              window.addEventListener('unhandledrejection', (e) => {
-                const message = String(e.reason?.message || e.reason);
-                if (message.includes('runtime.lastError') ||
-                    message.includes('Receiving end does not exist')) {
-                  e.preventDefault();
-                }
-              }, true);
+              window.addEventListener('error', blockError, { capture: true, passive: false });
+              window.addEventListener('unhandledrejection', blockError, { capture: true, passive: false });
+
+              // DOM ready 후 추가 설정
+              document.addEventListener('DOMContentLoaded', () => {
+                // 모든 iframe에도 에러 차단 적용
+                const frames = document.querySelectorAll('iframe');
+                frames.forEach(frame => {
+                  try {
+                    frame.contentWindow?.addEventListener?.('error', blockError, true);
+                  } catch (e) {
+                    // Cross-origin iframe 무시
+                  }
+                });
+              });
             }
           `}
         </Script>
         <ErrorBoundary>
           <ErrorGuard>
+            <UltimateErrorSuppression />
             <MetaMaskErrorHandler />
             <LanguageProvider>
               <ServicePlanProvider>
