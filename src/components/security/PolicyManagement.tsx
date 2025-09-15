@@ -21,7 +21,7 @@ interface PolicyManagementProps {
 export default function PolicyManagement({ onPolicyChange, initialSubtab, initialCurrency }: PolicyManagementProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'amount' | 'type'>(initialSubtab || 'amount');
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(initialCurrency || 'KRW');
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(initialCurrency || 'USD');
   const [isEditing] = useState(true); // 항상 편집 모드
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null);
   const [editingTypePolicy, setEditingTypePolicy] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
   const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
 
-  const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
+  const currencies: Currency[] = ['USD', 'BTC', 'ETH', 'USDC', 'USDT'];
 
 
   // initialSubtab이 변경되면 activeTab 업데이트

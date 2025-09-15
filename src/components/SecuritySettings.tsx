@@ -21,7 +21,7 @@ interface SecuritySettingsProps {
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
   policySubtab?: "amount" | "type";
-  policyCurrency?: "KRW" | "USD" | "BTC" | "ETH" | "USDC" | "USDT";
+  policyCurrency?: "USD" | "BTC" | "ETH" | "USDC" | "USDT";
 }
 
 export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab, policyCurrency }: SecuritySettingsProps) {
@@ -44,8 +44,8 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
       // 알림 설정의 경우 서브탭을 포함한 URL로 이동
       router.push(`/security/notifications/logs`);
     } else if (newTab === "policies") {
-      // 정책 설정의 경우 금액별 정책의 KRW로 기본 이동
-      router.push(`/security/policies/amount/KRW`);
+      // 정책 설정의 경우 금액별 정책의 USD로 기본 이동
+      router.push(`/security/policies/amount/USD`);
     } else {
       router.push(`/security/${newTab}`);
     }

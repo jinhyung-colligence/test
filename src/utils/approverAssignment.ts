@@ -16,34 +16,6 @@ export interface ApprovalPolicy {
 export const APPROVAL_POLICIES: ApprovalPolicy[] = [
   {
     minAmount: 0,
-    maxAmount: 1000000,
-    currency: "KRW",
-    requiredApprovers: ["박CFO", "이CISO"],
-    description: "일반 거래 (100만원 미만)"
-  },
-  {
-    minAmount: 1000000,
-    maxAmount: 10000000,
-    currency: "KRW",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "중액 거래 (100만원 이상 1천만원 미만)"
-  },
-  {
-    minAmount: 10000000,
-    maxAmount: 100000000,
-    currency: "KRW",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
-    description: "고액 거래 (1천만원 이상 1억원 미만)"
-  },
-  {
-    minAmount: 100000000,
-    maxAmount: Infinity,
-    currency: "KRW",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "초고액 거래 (1억원 이상)"
-  },
-  {
-    minAmount: 0,
     maxAmount: 10000,
     currency: "USD",
     requiredApprovers: ["박CFO", "이CISO"],
@@ -167,7 +139,6 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
  * 환율 정보 (실제로는 외부 API에서 가져와야 함)
  */
 const EXCHANGE_RATES = {
-  KRW: 1,
   USD: 1300,
   BTC: 65000000,
   ETH: 3500000,
