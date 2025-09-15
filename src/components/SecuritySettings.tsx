@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   ShieldCheckIcon,
   WalletIcon,
@@ -17,20 +18,27 @@ import { NotificationCenter } from "./security/NotificationCenter";
 
 interface SecuritySettingsProps {
   plan: ServicePlan;
+  initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
 }
 
-export default function SecuritySettings({ plan }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab }: SecuritySettingsProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   // 탭 관리 상태
-  const [activeTab, setActiveTab] = useState<"security" | "addresses" | "accounts" | "policies" | "notifications">("security");
+  const [activeTab, setActiveTab] = useState<"security" | "addresses" | "accounts" | "policies" | "notifications">(initialTab || "security");
 
-  // URL 쿼리 파라미터에서 탭 설정
+  // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam && ['security', 'addresses', 'accounts', 'policies', 'notifications'].includes(tabParam)) {
-      setActiveTab(tabParam as typeof activeTab);
+    if (initialTab) {
+      setActiveTab(initialTab);
     }
-  }, []);
+  }, [initialTab]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: "security" | "addresses" | "accounts" | "policies" | "notifications") => {
+    setActiveTab(newTab);
+    router.push(`/security/${newTab}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -53,7 +61,7 @@ export default function SecuritySettings({ plan }: SecuritySettingsProps) {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              onClick={() => handleTabChange(tab.id as typeof activeTab)}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? "border-primary-500 text-primary-600"

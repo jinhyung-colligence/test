@@ -1,15 +1,15 @@
 'use client'
 
-import PageLayout from '@/components/PageLayout'
-import SecuritySettings from '@/components/SecuritySettings'
-import { useServicePlan } from '@/contexts/ServicePlanContext'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SecurityPage() {
-  const { selectedPlan } = useServicePlan()
+  const router = useRouter()
 
-  return (
-    <PageLayout activeTab="security">
-      <SecuritySettings plan={selectedPlan} />
-    </PageLayout>
-  )
+  useEffect(() => {
+    // 기본 탭으로 리다이렉트
+    router.replace('/security/security')
+  }, [router])
+
+  return null
 }
