@@ -22,6 +22,7 @@ interface User {
   id: string
   name: string
   email: string
+  phone: string
   role: UserRole
   status: UserStatus
   lastLogin: string
@@ -43,17 +44,30 @@ export default function UserManagement({ plan }: UserManagementProps) {
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
+    phone: '',
     role: 'viewer' as UserRole,
     department: '',
     permissions: [] as string[]
   })
   const { t, language } = useLanguage()
 
+  // SMS 인증 시뮬레이션 함수
+  const sendSMSVerification = async (phone: string, userName: string) => {
+    console.log(`SMS 발송 시뮬레이션: ${phone}로 ${userName}님의 계정 활성화 인증 코드 발송`)
+    // 실제로는 SMS API 호출
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return {
+      success: true,
+      message: `${phone}로 인증 코드가 발송되었습니다.`
+    }
+  }
+
   const mockUsers: User[] = [
     {
       id: '1',
       name: '김관리자',
       email: 'admin@company.com',
+      phone: '+82 010-1234-5678',
       role: 'admin',
       status: 'active',
       lastLogin: '2024-03-15T10:30:00Z',
@@ -64,6 +78,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
       id: '2',
       name: '이매니저',
       email: 'manager@company.com',
+      phone: '+82 010-2345-6789',
       role: 'manager',
       status: 'active',
       lastLogin: '2024-03-15T09:15:00Z',
@@ -74,6 +89,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
       id: '3',
       name: '박조회자',
       email: 'viewer@company.com',
+      phone: '+82 010-3456-7890',
       role: 'viewer',
       status: 'active',
       lastLogin: '2024-03-14T16:45:00Z',
@@ -84,6 +100,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
       id: '4',
       name: '최승인자',
       email: 'approver@company.com',
+      phone: '+82 010-4567-8901',
       role: 'approver',
       status: 'pending',
       lastLogin: '2024-03-13T14:20:00Z',
@@ -153,11 +170,16 @@ export default function UserManagement({ plan }: UserManagementProps) {
     setIsSubmitting(true)
     
     try {
-      // 이메일 발송 시뮬레이션 (실제로는 API 호출)
+      // 이메일 및 SMS 발송 시뮬레이션 (실제로는 API 호출)
       console.log('Sending invitation email to:', newUser.email)
-      
-      // 3초 대기로 이메일 발송 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      console.log('Sending SMS verification to:', newUser.phone)
+
+      // 이메일 발송 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // SMS 발송 시뮬레이션
+      const smsResult = await sendSMSVerification(newUser.phone, newUser.name)
+      console.log('SMS 발송 결과:', smsResult)
       
       // 새 사용자를 대기 상태로 추가 (실제로는 서버에 저장)
       const newUserData = {
@@ -179,6 +201,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
       setNewUser({
         name: '',
         email: '',
+        phone: '',
         role: 'viewer',
         department: '',
         permissions: []
@@ -363,7 +386,9 @@ export default function UserManagement({ plan }: UserManagementProps) {
                     <>
                       {successMessageData?.name}님의 이메일 ({successMessageData?.email})로 초대 링크가 전송되었습니다.
                       <br />
-                      이메일에서 승인을 완료하면 계정이 활성화됩니다.
+                      등록된 전화번호로 SMS 인증 코드도 발송되었습니다.
+                      <br />
+                      이메일과 SMS 인증을 완료하면 계정이 활성화됩니다.
                     </>
                   )}
                 </p>
@@ -482,6 +507,9 @@ export default function UserManagement({ plan }: UserManagementProps) {
                   {t('users.table.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  전화번호
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('users.table.role')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -516,6 +544,9 @@ export default function UserManagement({ plan }: UserManagementProps) {
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <p className="text-sm text-gray-900 font-mono">{user.phone}</p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
@@ -619,6 +650,23 @@ export default function UserManagement({ plan }: UserManagementProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="user@company.com"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  전화번호 *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={newUser.phone}
+                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="+82 010-1234-5678"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  SMS 인증에 사용됩니다. 국가코드를 포함하여 입력해주세요.
+                </p>
               </div>
 
               <div>
@@ -745,6 +793,23 @@ export default function UserManagement({ plan }: UserManagementProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="user@company.com"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  전화번호 *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={editingUser.phone}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="+82 010-1234-5678"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  SMS 인증에 사용됩니다. 국가코드를 포함하여 입력해주세요.
+                </p>
               </div>
 
               <div>

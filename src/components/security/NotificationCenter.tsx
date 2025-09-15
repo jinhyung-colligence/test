@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { NotificationSystem, NotificationLog, NotificationTemplate, DEFAULT_CONFIG } from "@/utils/notificationSystem";
 import { APPROVAL_POLICIES, TRANSACTION_TYPE_POLICIES } from "@/utils/approverAssignment";
@@ -16,6 +16,15 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    subject: '',
+    message: ''
+  });
+
+  // Refs for form inputs
+  const subjectInputRef = useRef<HTMLInputElement>(null);
+  const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 설정 편집 상태
   const [isEditingSettings, setIsEditingSettings] = useState(false);
@@ -224,6 +233,49 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
       ...prev,
       [field]: value
     }));
+  };
+
+  // 미리보기 생성 함수
+  const generatePreview = (subject: string, message: string) => {
+    // 샘플 데이터
+    const sampleData = {
+      approverName: '박CFO',
+      initiator: '김대리',
+      amount: '1,000,000',
+      currency: 'KRW',
+      toAddress: '0x1234...abcd',
+      initiatedAt: new Date().toLocaleString('ko-KR'),
+      priority: '높음',
+      overdueHours: '5',
+      rejectedBy: '이CISO',
+      rejectionReason: '승인 권한 부족',
+      emergencyReason: '긴급 보안 업데이트',
+      completedAt: new Date().toLocaleString('ko-KR')
+    };
+
+    // 변수 치환
+    let previewSubject = subject;
+    let previewMessage = message;
+
+    Object.entries(sampleData).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      previewSubject = previewSubject.replace(regex, value);
+      previewMessage = previewMessage.replace(regex, value);
+    });
+
+    return { subject: previewSubject, message: previewMessage };
+  };
+
+  // 미리보기 핸들러
+  const handlePreview = () => {
+    if (subjectInputRef.current && messageTextareaRef.current) {
+      const preview = generatePreview(
+        subjectInputRef.current.value,
+        messageTextareaRef.current.value
+      );
+      setPreviewData(preview);
+      setShowPreview(true);
+    }
   };
 
   return (
@@ -442,58 +494,268 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
           {/* 템플릿 관리 탭 */}
           {activeTab === 'templates' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">알림 템플릿</h3>
-                <button
-                  onClick={() => {
-                    setSelectedTemplate(null);
-                    setIsEditing(true);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  새 템플릿
-                </button>
-              </div>
+              {!isEditing ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">알림 템플릿</h3>
+                    <button
+                      onClick={() => {
+                        setSelectedTemplate(null);
+                        setIsEditing(true);
+                      }}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                    >
+                      새 템플릿
+                    </button>
+                  </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {templates.map((template) => (
-                  <div key={template.id} className="bg-white border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{template.name}</h4>
-                      <div className="flex items-center space-x-1">
-                        <span className={`w-2 h-2 rounded-full ${template.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                        <span className="text-xs text-gray-500">{template.enabled ? '활성' : '비활성'}</span>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {templates.map((template) => (
+                      <div key={template.id} className="bg-white border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900">{template.name}</h4>
+                          <div className="flex items-center space-x-1">
+                            <span className={`w-2 h-2 rounded-full ${template.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                            <span className="text-xs text-gray-500">{template.enabled ? '활성' : '비활성'}</span>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-3">{getTemplateDisplay(template.id)}</p>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleTestNotification(template.id)}
+                            className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                          >
+                            테스트
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedTemplate(template);
+                              setIsEditing(true);
+                            }}
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                          >
+                            편집
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3">{template.trigger}</p>
-                    
-                    <div className="mb-3">
-                      <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                        이메일 알림
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleTestNotification(template.id)}
-                        className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-                      >
-                        테스트
-                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* 템플릿 편집 UI */
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {selectedTemplate ? '템플릿 편집' : '새 템플릿 생성'}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {selectedTemplate ? `${selectedTemplate.name} 템플릿을 편집합니다` : '새로운 알림 템플릿을 생성합니다'}
+                        </p>
+                      </div>
                       <button
                         onClick={() => {
-                          setSelectedTemplate(template);
-                          setIsEditing(true);
+                          setIsEditing(false);
+                          setSelectedTemplate(null);
                         }}
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        className="text-gray-400 hover:text-gray-600"
                       >
-                        편집
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="p-6 space-y-6">
+                    {/* 기본 정보 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          템플릿 이름 *
+                        </label>
+                        <input
+                          type="text"
+                          defaultValue={selectedTemplate?.name || ''}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="템플릿 이름을 입력하세요"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          트리거 타입 *
+                        </label>
+                        <select
+                          defaultValue={selectedTemplate?.trigger || 'approval_pending'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                          <option value="approval_pending">승인 대기</option>
+                          <option value="approval_overdue">승인 지연</option>
+                          <option value="approval_completed">승인 완료</option>
+                          <option value="approval_rejected">승인 반려</option>
+                          <option value="emergency">긴급 승인</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 활성화 상태 */}
+                    <div className="flex items-center space-x-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          defaultChecked={selectedTemplate?.enabled !== false}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      </label>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">템플릿 활성화</span>
+                        <p className="text-xs text-gray-500">비활성화시 해당 이벤트에 대한 알림이 발송되지 않습니다</p>
+                      </div>
+                    </div>
+
+                    {/* 이메일 제목 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        이메일 제목 *
+                      </label>
+                      <input
+                        ref={subjectInputRef}
+                        type="text"
+                        defaultValue={selectedTemplate?.subject || ''}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="이메일 제목을 입력하세요 (변수 사용 가능: {amount}, {currency} 등)"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        변수를 사용하여 동적 제목을 만들 수 있습니다. 예: {`{{amount}} {{currency}}`} 출금 승인 요청
+                      </p>
+                    </div>
+
+                    {/* 이메일 본문 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        이메일 본문 *
+                      </label>
+                      <textarea
+                        ref={messageTextareaRef}
+                        defaultValue={selectedTemplate?.message || ''}
+                        rows={12}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="이메일 본문을 입력하세요..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        마크다운 문법과 변수를 사용할 수 있습니다. 사용 가능한 변수는 아래를 참고하세요.
+                      </p>
+                    </div>
+
+                    {/* 사용 가능한 변수 */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">사용 가능한 변수</h4>
+                      <p className="text-xs text-gray-600 mb-4">
+                        템플릿에서 아래 변수들을 사용하여 동적 내용을 만들 수 있습니다. 변수는 반드시 <code className="bg-white px-1 rounded text-primary-600">{`{{변수명}}`}</code> 형태로 사용해야 합니다.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        {[
+                          { var: 'approverName', desc: '승인자 이름' },
+                          { var: 'initiator', desc: '출금 신청자' },
+                          { var: 'amount', desc: '출금 금액' },
+                          { var: 'currency', desc: '통화 (KRW, USD 등)' },
+                          { var: 'toAddress', desc: '출금 받을 주소' },
+                          { var: 'initiatedAt', desc: '신청 일시' },
+                          { var: 'priority', desc: '우선순위 (낮음/보통/높음)' },
+                          { var: 'overdueHours', desc: '지연된 시간 (시간 단위)' },
+                          { var: 'rejectedBy', desc: '반려한 승인자' },
+                          { var: 'rejectionReason', desc: '반려 사유' },
+                          { var: 'emergencyReason', desc: '긴급 승인 사유' },
+                          { var: 'completedAt', desc: '승인 완료 일시' }
+                        ].map(({ var: variable, desc }) => (
+                          <div key={variable} className="flex items-center justify-between bg-white px-3 py-2 rounded border">
+                            <code className="text-primary-600 font-mono text-xs">
+                              {`{{${variable}}}`}
+                            </code>
+                            <span className="text-gray-600 text-xs ml-2 flex-1 text-right">
+                              {desc}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                        <p className="text-blue-800">
+                          <strong>사용 예시:</strong> <code className="bg-white px-1 rounded">{`{{amount}} {{currency}}`}</code> 출금 신청이
+                          <code className="bg-white px-1 rounded">{`{{initiator}}`}</code>님에 의해 제출되었습니다.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 미리보기 */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h4 className="text-sm font-medium text-blue-800">미리보기</h4>
+                          <p className="mt-1 text-sm text-blue-700">
+                            실제 이메일이 어떻게 표시될지 미리보기를 확인하려면 '미리보기' 버튼을 클릭하세요.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={handlePreview}
+                          className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        >
+                          미리보기
+                        </button>
+                        <button
+                          onClick={() => {
+                            // 테스트 발송 로직
+                            alert('테스트 이메일이 발송되었습니다.');
+                          }}
+                          className="px-4 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                        >
+                          테스트 발송
+                        </button>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => {
+                            setIsEditing(false);
+                            setSelectedTemplate(null);
+                          }}
+                          className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={() => {
+                            // 저장 로직
+                            alert('템플릿이 저장되었습니다.');
+                            setIsEditing(false);
+                            setSelectedTemplate(null);
+                          }}
+                          className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                        >
+                          {selectedTemplate ? '수정 완료' : '템플릿 생성'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -675,6 +937,128 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
             </div>
           )}
       </div>
+
+      {/* 미리보기 모달 */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            {/* 모달 헤더 */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">이메일 미리보기</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    샘플 데이터를 사용하여 실제 이메일 모습을 확인합니다
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+              {/* 이메일 미리보기 */}
+              <div className="bg-white border border-gray-300 rounded-lg shadow-sm">
+                {/* 이메일 헤더 */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-700 w-16">보낸사람:</span>
+                      <span className="text-sm text-gray-900">noreply@custody-system.com</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-700 w-16">받는사람:</span>
+                      <span className="text-sm text-gray-900">박CFO &lt;cfo@company.com&gt;</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-700 w-16">제목:</span>
+                      <span className="text-sm font-semibold text-gray-900">{previewData.subject}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-700 w-16">시간:</span>
+                      <span className="text-sm text-gray-600">{new Date().toLocaleString('ko-KR')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 이메일 본문 */}
+                <div className="p-6">
+                  <div className="prose prose-sm max-w-none">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                      {previewData.message}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* 이메일 푸터 */}
+                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                  <div className="text-xs text-gray-500">
+                    <p>이 이메일은 Custody 시스템에서 자동으로 발송되었습니다.</p>
+                    <p>문의사항이 있으시면 시스템 관리자에게 연락해 주세요.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 샘플 데이터 정보 */}
+              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-sm font-medium text-blue-800">샘플 데이터 사용됨</h4>
+                    <div className="mt-2 text-sm text-blue-700">
+                      <p>이 미리보기는 다음 샘플 데이터를 사용합니다:</p>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                        <div><span className="font-medium">승인자명</span>: 박CFO</div>
+                        <div><span className="font-medium">신청자</span>: 김대리</div>
+                        <div><span className="font-medium">금액</span>: 1,000,000</div>
+                        <div><span className="font-medium">통화</span>: KRW</div>
+                        <div><span className="font-medium">출금주소</span>: 0x1234...abcd</div>
+                        <div><span className="font-medium">우선순위</span>: 높음</div>
+                        <div><span className="font-medium">지연시간</span>: 5시간</div>
+                        <div><span className="font-medium">반려자</span>: 이CISO</div>
+                        <div><span className="font-medium">반려사유</span>: 승인 권한 부족</div>
+                        <div><span className="font-medium">긴급사유</span>: 긴급 보안 업데이트</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={() => {
+                    alert('테스트 이메일이 발송되었습니다.');
+                    setShowPreview(false);
+                  }}
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  테스트 발송
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

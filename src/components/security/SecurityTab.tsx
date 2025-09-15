@@ -16,7 +16,7 @@ interface SecurityTabProps {
 export default function SecurityTab({ plan }: SecurityTabProps) {
   // 정책 설정 (시스템 전체)
   const [authenticatorPolicyEnabled, setAuthenticatorPolicyEnabled] = useState(true);
-  const [smsPolicyEnabled, setSmsPolicyEnabled] = useState(false);
+  const [smsPolicyEnabled, setSmsPolicyEnabled] = useState(true);
   const [ipWhitelistEnabled, setIpWhitelistEnabled] = useState(
     plan === "enterprise"
   );
@@ -82,7 +82,7 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
                 )}
               </div>
               <p className="text-sm text-gray-600">
-                로그인 시 모든 관리자에게 SMS 인증을 요구 (전화번호는 로그인 시 입력)
+                로그인 시 모든 관리자에게 SMS 인증을 요구
               </p>
             </div>
             <div className="flex items-center">
