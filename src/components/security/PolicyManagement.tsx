@@ -25,8 +25,21 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   const [editingTypePolicy, setEditingTypePolicy] = useState<string | null>(null);
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
   const [showAddTypePolicyModal, setShowAddTypePolicyModal] = useState(false);
+  const [editingApprovers, setEditingApprovers] = useState<{[key: string]: string[]}>({});
 
   const currencies: Currency[] = ['KRW', 'USD', 'BTC', 'ETH', 'USDC', 'USDT'];
+
+  // 사용자 목록 데이터
+  const availableUsers = [
+    { id: '1', name: '김대표', position: 'CEO', email: 'ceo@company.com' },
+    { id: '2', name: '박재무', position: 'CFO', email: 'cfo@company.com' },
+    { id: '3', name: '이기술', position: 'CTO', email: 'cto@company.com' },
+    { id: '4', name: '최관리', position: '관리자', email: 'manager@company.com' },
+    { id: '5', name: '정부관', position: '부관리자', email: 'sub-manager@company.com' },
+    { id: '6', name: '한리스크', position: '리스크관리자', email: 'risk@company.com' },
+    { id: '7', name: '송컴플', position: '컴플라이언스', email: 'compliance@company.com' },
+    { id: '8', name: '조운영', position: '운영관리자', email: 'operations@company.com' },
+  ];
 
   // initialSubtab이 변경되면 activeTab 업데이트
   useEffect(() => {
@@ -123,6 +136,43 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
   const handleSaveNewTypePolicy = () => {
     // 새 유형별 정책 저장 로직
     setShowAddTypePolicyModal(false);
+  };
+
+  // 결재자 관리 헬퍼 함수들
+  const getApproversForPolicy = (policyId: string, originalApprovers: string[]) => {
+    return editingApprovers[policyId] || originalApprovers;
+  };
+
+  const handleApproverChange = (policyId: string, index: number, newValue: string) => {
+    const currentApprovers = getApproversForPolicy(policyId, []);
+    const updatedApprovers = [...currentApprovers];
+    updatedApprovers[index] = newValue;
+    setEditingApprovers(prev => ({
+      ...prev,
+      [policyId]: updatedApprovers
+    }));
+  };
+
+  const handleAddApprover = (policyId: string, originalApprovers: string[]) => {
+    const currentApprovers = getApproversForPolicy(policyId, originalApprovers);
+    setEditingApprovers(prev => ({
+      ...prev,
+      [policyId]: [...currentApprovers, '']
+    }));
+  };
+
+  const handleRemoveApprover = (policyId: string, index: number, originalApprovers: string[]) => {
+    const currentApprovers = getApproversForPolicy(policyId, originalApprovers);
+    const updatedApprovers = currentApprovers.filter((_, i) => i !== index);
+    setEditingApprovers(prev => ({
+      ...prev,
+      [policyId]: updatedApprovers
+    }));
+  };
+
+  // 사용자 이름으로 사용자 정보 찾기
+  const getUserByName = (name: string) => {
+    return availableUsers.find(user => user.name === name);
   };
 
   return (
@@ -273,33 +323,48 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-2">필요 결재자 ({policy.requiredApprovers.length}명)</label>
-                        <div className="space-y-2">
-                          {policy.requiredApprovers.map((approver, approverIndex) => (
-                            <div key={approver} className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-500 w-4">{approverIndex + 1}.</span>
-                              <select className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value={approver}>{approver}</option>
-                                <option value="CEO">CEO</option>
-                                <option value="CFO">CFO</option>
-                                <option value="CTO">CTO</option>
-                                <option value="관리자">관리자</option>
-                                <option value="부관리자">부관리자</option>
-                              </select>
-                              <button
-                                className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                title="결재자 제거"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                          <button className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
-                            + 결재자 추가
-                          </button>
-                        </div>
+                        {(() => {
+                          const currentApprovers = getApproversForPolicy(policyId, policy.requiredApprovers);
+                          return (
+                            <>
+                              <label className="block text-xs font-medium text-gray-700 mb-2">필요 결재자 ({currentApprovers.length}명)</label>
+                              <div className="space-y-2">
+                                {currentApprovers.map((approver, approverIndex) => (
+                                  <div key={`${policyId}-${approverIndex}`} className="flex items-center space-x-2">
+                                    <span className="text-xs text-gray-500 w-4">{approverIndex + 1}.</span>
+                                    <select
+                                      value={approver}
+                                      onChange={(e) => handleApproverChange(policyId, approverIndex, e.target.value)}
+                                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                      <option value="">결재자 선택</option>
+                                      {availableUsers.map(user => (
+                                        <option key={user.id} value={user.name}>
+                                          {user.name} ({user.position})
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      onClick={() => handleRemoveApprover(policyId, approverIndex, policy.requiredApprovers)}
+                                      className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                      title="결재자 제거"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={() => handleAddApprover(policyId, policy.requiredApprovers)}
+                                  className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                  + 결재자 추가
+                                </button>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   ) : (
@@ -398,35 +463,48 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-2">추가 결재자 ({typePolicy.additionalApprovers.length}명)</label>
-                      <div className="space-y-2">
-                        {typePolicy.additionalApprovers.map((approver, approverIndex) => (
-                          <div key={approver} className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 w-4">{approverIndex + 1}.</span>
-                            <select className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                              <option value={approver}>{approver}</option>
-                              <option value="CEO">CEO</option>
-                              <option value="CFO">CFO</option>
-                              <option value="CTO">CTO</option>
-                              <option value="관리자">관리자</option>
-                              <option value="부관리자">부관리자</option>
-                              <option value="리스크관리자">리스크관리자</option>
-                              <option value="컴플라이언스">컴플라이언스</option>
-                            </select>
-                            <button
-                              className="p-1 text-red-600 hover:bg-red-50 rounded"
-                              title="결재자 제거"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                        <button className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
-                          + 추가 결재자 추가
-                        </button>
-                      </div>
+                      {(() => {
+                        const currentApprovers = getApproversForPolicy(typePolicyId, typePolicy.additionalApprovers);
+                        return (
+                          <>
+                            <label className="block text-xs font-medium text-gray-700 mb-2">추가 결재자 ({currentApprovers.length}명)</label>
+                            <div className="space-y-2">
+                              {currentApprovers.map((approver, approverIndex) => (
+                                <div key={`${typePolicyId}-${approverIndex}`} className="flex items-center space-x-2">
+                                  <span className="text-xs text-gray-500 w-4">{approverIndex + 1}.</span>
+                                  <select
+                                    value={approver}
+                                    onChange={(e) => handleApproverChange(typePolicyId, approverIndex, e.target.value)}
+                                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  >
+                                    <option value="">결재자 선택</option>
+                                    {availableUsers.map(user => (
+                                      <option key={user.id} value={user.name}>
+                                        {user.name} ({user.position})
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    onClick={() => handleRemoveApprover(typePolicyId, approverIndex, typePolicy.additionalApprovers)}
+                                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="결재자 제거"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => handleAddApprover(typePolicyId, typePolicy.additionalApprovers)}
+                                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                + 추가 결재자 추가
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <div className="bg-gray-50 rounded-lg p-3">
@@ -558,11 +636,11 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                 <div className="space-y-2">
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">첫 번째 결재자 선택</option>
-                    <option value="CEO">CEO</option>
-                    <option value="CFO">CFO</option>
-                    <option value="CTO">CTO</option>
-                    <option value="관리자">관리자</option>
-                    <option value="부관리자">부관리자</option>
+                    {availableUsers.map(user => (
+                      <option key={user.id} value={user.name}>
+                        {user.name} ({user.position})
+                      </option>
+                    ))}
                   </select>
                   <button className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
                     + 결재자 추가
@@ -633,13 +711,11 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
                 <div className="space-y-2">
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">첫 번째 추가 결재자 선택</option>
-                    <option value="CEO">CEO</option>
-                    <option value="CFO">CFO</option>
-                    <option value="CTO">CTO</option>
-                    <option value="관리자">관리자</option>
-                    <option value="부관리자">부관리자</option>
-                    <option value="리스크관리자">리스크관리자</option>
-                    <option value="컴플라이언스">컴플라이언스</option>
+                    {availableUsers.map(user => (
+                      <option key={user.id} value={user.name}>
+                        {user.name} ({user.position})
+                      </option>
+                    ))}
                   </select>
                   <button className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
                     + 추가 결재자 추가
