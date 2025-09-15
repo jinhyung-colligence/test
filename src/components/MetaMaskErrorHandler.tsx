@@ -71,7 +71,13 @@ function isMetaMaskError(errorOrEvent: any): boolean {
       'web3',
       'wallet',
       'inpage.js',
-      'metamask'
+      'metamask',
+      'runtime.lastError',
+      'Receiving end does not exist',
+      'Could not establish connection',
+      'Minified React error #418',
+      'Minified React error #423',
+      'Minified React error #425'
     ]
 
     return metamaskKeywords.some(keyword =>
