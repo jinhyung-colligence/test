@@ -173,8 +173,8 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     approvals: [],
     rejections: [
       {
-        userId: "3",
-        userName: "이CISO",
+        userId: "2",
+        userName: "박CFO",
         rejectedAt: "2025-09-01T09:00:00Z",
         reason: "리스크 관리 정책 위반 - 단일 거래 한도 초과",
       },
@@ -190,10 +190,10 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
       {
         timestamp: "2025-09-01T09:00:00Z",
-        action: "이CISO 결재 반려",
-        userId: "3",
-        userName: "이CISO",
-        details: "리스크 관리 정책 위반 - 단일 거래 한도 초과로 인한 반려",
+        action: "박CFO 결재 반료",
+        userId: "2",
+        userName: "박CFO",
+        details: "리스크 관리 정책 위반 - 단일 거래 한도 초과로 인한 반료",
       },
     ],
   },
@@ -528,8 +528,15 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     status: "archived",
     priority: "medium",
     description: "차익거래를 위한 개인 지갑 이체",
-    requiredApprovals: ["2", "3"],
-    approvals: [],
+    requiredApprovals: ["박CFO", "이CISO"],
+    approvals: [
+      {
+        userId: "2",
+        userName: "박CFO",
+        role: "required_approver",
+        approvedAt: "2025-08-15T15:00:00Z",
+      },
+    ],
     rejections: [
       {
         userId: "3",
@@ -552,8 +559,15 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         details: "차익거래를 위한 개인 지갑으로의 BTC 이체 신청",
       },
       {
+        timestamp: "2025-08-15T15:00:00Z",
+        action: "박CFO 결재 완료",
+        userId: "2",
+        userName: "박CFO",
+        details: "차익거래 목적의 개인 지갑 이체 승인",
+      },
+      {
         timestamp: "2025-08-15T15:30:00Z",
-        action: "이CISO 결재 반려",
+        action: "이CISO 결재 반료",
         userId: "3",
         userName: "이CISO",
         details: "개인 지갑으로의 대량 이체는 보안 정책상 승인 불가",

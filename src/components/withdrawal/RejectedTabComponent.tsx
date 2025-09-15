@@ -423,7 +423,7 @@ export default function RejectedTabComponent({
                           showProgressSummary={false}
                         />
 
-                        {request.status === "rejected" &&
+                        {(request.status === "rejected" || request.status === "archived") &&
                           request.rejections.length > 0 && (
                             <div className="bg-gray-50 p-4 rounded-lg border">
                               <div className="flex items-center mb-3">

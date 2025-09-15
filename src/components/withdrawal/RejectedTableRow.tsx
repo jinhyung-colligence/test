@@ -98,7 +98,7 @@ export function RejectedTableRow({
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>
                 {request.status === "rejected" || request.status === "archived"
-                  ? `${request.rejections.length}/${request.requiredApprovals.length}`
+                  ? `${request.approvals.length + request.rejections.length}/${request.requiredApprovals.length}`
                   : `${request.approvals.length}/${request.requiredApprovals.length}`}
               </span>
               {request.status === "approved" && (
@@ -120,7 +120,7 @@ export function RejectedTableRow({
                 style={{
                   width:
                     request.status === "rejected" || request.status === "archived"
-                      ? `${(request.rejections.length / request.requiredApprovals.length) * 100}%`
+                      ? `${((request.approvals.length + request.rejections.length) / request.requiredApprovals.length) * 100}%`
                       : `${(request.approvals.length / request.requiredApprovals.length) * 100}%`,
                 }}
               />

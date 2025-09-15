@@ -37,4 +37,20 @@ export interface ExpenseRequest {
   approvedBy?: string;
   approvedAt?: string;
   rejectedReason?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+
+  // 결재 관련
+  requiredApprovals?: string[];
+  approvals?: Array<{
+    userId: string;
+    userName: string;
+    approvedAt: string;
+  }>;
+  rejections?: Array<{
+    userId: string;
+    userName: string;
+    rejectedAt: string;
+    reason: string;
+  }>;
 }

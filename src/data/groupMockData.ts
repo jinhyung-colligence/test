@@ -93,6 +93,14 @@ export const mockExpenses: ExpenseRequest[] = [
     requestedBy: "이기술",
     requestedAt: "2025-01-08",
     status: "pending",
+    requiredApprovals: ["김매니저", "최관리", "박재무"],
+    approvals: [
+      {
+        userId: "manager001",
+        userName: "김매니저",
+        approvedAt: "2025-01-09T10:30:00Z"
+      }
+    ]
   },
   {
     id: "3",
@@ -105,6 +113,24 @@ export const mockExpenses: ExpenseRequest[] = [
     requestedAt: "2025-01-10",
     status: "rejected",
     rejectedReason: "예산 재검토 필요",
+    rejectedBy: "최관리",
+    rejectedAt: "2025-01-11T14:20:00Z",
+    requiredApprovals: ["이기술", "최관리"],
+    approvals: [
+      {
+        userId: "tech001",
+        userName: "이기술",
+        approvedAt: "2025-01-11T09:15:00Z"
+      }
+    ],
+    rejections: [
+      {
+        userId: "manager002",
+        userName: "최관리",
+        rejectedAt: "2025-01-11T14:20:00Z",
+        reason: "예산 재검토 필요"
+      }
+    ]
   },
   
   // === 2024년 12월 (작년) ===
@@ -144,6 +170,8 @@ export const mockExpenses: ExpenseRequest[] = [
     requestedBy: "한리스크",
     requestedAt: "2024-12-10",
     status: "pending",
+    requiredApprovals: ["박재무", "김매니저"],
+    approvals: []
   },
   
   // === 2024년 11월 ===

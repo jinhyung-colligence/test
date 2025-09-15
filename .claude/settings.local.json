@@ -17,7 +17,8 @@
       "Bash(npx typescript:*)",
       "Bash(find:*)",
       "Bash(awk:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npm run typecheck:*)"
     ],
     "deny": [],
     "ask": []
