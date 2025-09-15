@@ -90,11 +90,37 @@ export default function PolicyManagement({ onPolicyChange, initialSubtab, initia
 
   // 편집 모드 핸들러
   const handleEditPolicy = (policyId: string) => {
-    setEditingPolicy(editingPolicy === policyId ? null : policyId);
+    if (editingPolicy === policyId) {
+      // 편집 모드 종료
+      setEditingPolicy(null);
+    } else {
+      // 편집 모드 시작 - 현재 정책의 결재자 정보를 editingApprovers에 초기화
+      const policy = APPROVAL_POLICIES.find(p => `${p.currency}-${p.minAmount}-${p.maxAmount}` === policyId);
+      if (policy) {
+        setEditingApprovers(prev => ({
+          ...prev,
+          [policyId]: [...policy.requiredApprovers]
+        }));
+      }
+      setEditingPolicy(policyId);
+    }
   };
 
   const handleEditTypePolicy = (typePolicyId: string) => {
-    setEditingTypePolicy(editingTypePolicy === typePolicyId ? null : typePolicyId);
+    if (editingTypePolicy === typePolicyId) {
+      // 편집 모드 종료
+      setEditingTypePolicy(null);
+    } else {
+      // 편집 모드 시작 - 현재 유형별 정책의 결재자 정보를 editingApprovers에 초기화
+      const typePolicy = TRANSACTION_TYPE_POLICIES.find((tp, index) => `${tp.type}-${index}` === typePolicyId);
+      if (typePolicy) {
+        setEditingApprovers(prev => ({
+          ...prev,
+          [typePolicyId]: [...typePolicy.additionalApprovers]
+        }));
+      }
+      setEditingTypePolicy(typePolicyId);
+    }
   };
 
   const handleSavePolicy = (policyId: string) => {
