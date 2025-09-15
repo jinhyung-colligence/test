@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   WalletIcon,
   PlusIcon,
@@ -50,6 +51,7 @@ import {
 
 interface GroupWalletManagementProps {
   plan: ServicePlan;
+  initialTab?: "groups" | "pending" | "completed" | "budget";
 }
 
 
@@ -102,13 +104,29 @@ const getStatusIcon = (status: ExpenseStatus) => {
 
 export default function GroupWalletManagement({
   plan,
+  initialTab,
 }: GroupWalletManagementProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"groups" | "pending" | "completed" | "budget">(
-    "groups"
+    initialTab || "groups"
   );
+
+  // initialTab이 변경되면 activeTab 업데이트
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: "groups" | "pending" | "completed" | "budget") => {
+    setActiveTab(newTab);
+    router.push(`/groups/${newTab}`);
+  };
   
   
   const { t, language } = useLanguage();
@@ -235,7 +253,7 @@ export default function GroupWalletManagement({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              onClick={() => handleTabChange(tab.id as typeof activeTab)}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? "border-primary-500 text-primary-600"

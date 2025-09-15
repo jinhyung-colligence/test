@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   CurrencyDollarIcon,
   ArrowsRightLeftIcon,
@@ -15,6 +16,7 @@ import { ServicePlan } from '@/app/page'
 
 interface AdditionalServicesProps {
   plan: ServicePlan
+  initialTab?: 'staking' | 'lending' | 'swap' | 'krw'
 }
 
 interface StakingPosition {
@@ -38,8 +40,23 @@ interface LendingPosition {
 }
 
 
-export default function AdditionalServices({ plan }: AdditionalServicesProps) {
-  const [activeTab, setActiveTab] = useState<'staking' | 'lending' | 'swap' | 'krw'>('staking')
+export default function AdditionalServices({ plan, initialTab }: AdditionalServicesProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState<'staking' | 'lending' | 'swap' | 'krw'>(initialTab || 'staking')
+
+  // initialTab이 변경되면 activeTab 업데이트
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: 'staking' | 'lending' | 'swap' | 'krw') => {
+    setActiveTab(newTab);
+    router.push(`/services/${newTab}`);
+  };
 
   const stakingPositions: StakingPosition[] = [
     {
@@ -658,7 +675,7 @@ export default function AdditionalServices({ plan }: AdditionalServicesProps) {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => handleTabChange(tab.id as any)}
                 className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
