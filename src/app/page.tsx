@@ -12,5 +12,5 @@ export default function HomePage() {
     router.replace('/overview')
   }, [router])
 
-  return null
+  return <div>Loading...</div>
 }
