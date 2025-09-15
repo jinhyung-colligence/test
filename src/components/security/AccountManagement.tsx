@@ -12,6 +12,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
+import OneWonVerification from "./OneWonVerification";
 
 interface ConnectedAccount {
   id: string;
@@ -35,6 +36,8 @@ interface AccountManagementProps {
 
 export default function AccountManagement({ plan }: AccountManagementProps) {
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showOneWonVerification, setShowOneWonVerification] = useState(false);
+  const [pendingAccount, setPendingAccount] = useState<Omit<ConnectedAccount, 'id' | 'status' | 'connectedAt' | 'isVerified'> | null>(null);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([
     {
       id: "1",
@@ -92,20 +95,55 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
 
   const handleAddAccount = () => {
     if (newAccount.bankCode && newAccount.accountNumber && newAccount.accountHolder) {
-      const account: ConnectedAccount = {
-        id: Date.now().toString(),
+      // 먼저 pending 계정 정보를 저장
+      setPendingAccount({
         bankName: newAccount.bankName,
         bankCode: newAccount.bankCode,
         accountNumber: newAccount.accountNumber,
         accountHolder: newAccount.accountHolder,
         accountType: newAccount.accountType,
-        status: 'pending',
-        connectedAt: new Date().toISOString(),
         dailyLimit: newAccount.dailyLimit,
-        monthlyLimit: newAccount.monthlyLimit,
-        isVerified: false
-      };
-      setConnectedAccounts([...connectedAccounts, account]);
+        monthlyLimit: newAccount.monthlyLimit
+      });
+
+      // 모달 닫고 1원 인증 시작
+      setShowAccountModal(false);
+      setShowOneWonVerification(true);
+    }
+  };
+
+  const handleVerificationComplete = (isSuccess: boolean) => {
+    setShowOneWonVerification(false);
+
+    if (isSuccess && pendingAccount) {
+      // 기존 pending 계좌가 있는지 확인
+      const existingAccountIndex = connectedAccounts.findIndex(
+        acc => acc.accountNumber === pendingAccount.accountNumber &&
+               acc.bankCode === pendingAccount.bankCode
+      );
+
+      if (existingAccountIndex >= 0) {
+        // 기존 pending 계좌 업데이트
+        const updatedAccounts = [...connectedAccounts];
+        updatedAccounts[existingAccountIndex] = {
+          ...updatedAccounts[existingAccountIndex],
+          status: 'connected',
+          isVerified: true
+        };
+        setConnectedAccounts(updatedAccounts);
+      } else {
+        // 새 계좌 추가
+        const account: ConnectedAccount = {
+          id: Date.now().toString(),
+          ...pendingAccount,
+          status: 'connected',
+          connectedAt: new Date().toISOString(),
+          isVerified: true
+        };
+        setConnectedAccounts([...connectedAccounts, account]);
+      }
+
+      // 폼 초기화
       setNewAccount({
         bankName: "",
         bankCode: "",
@@ -115,11 +153,38 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
         dailyLimit: 5000000,
         monthlyLimit: 50000000
       });
-      setShowAccountModal(false);
+      setPendingAccount(null);
+    } else {
+      // 인증 실패 시 원래 모달로 돌아가기 (새 계좌 추가인 경우만)
+      const existingAccount = connectedAccounts.find(
+        acc => acc.accountNumber === pendingAccount?.accountNumber &&
+               acc.bankCode === pendingAccount?.bankCode
+      );
 
-      // 실제로는 오픈뱅킹 API를 통한 1원 인증 프로세스가 시작됩니다
-      alert('계좌 연결 요청이 완료되었습니다. 1원 인증을 통해 계좌를 확인해 주세요.');
+      if (!existingAccount) {
+        setShowAccountModal(true);
+      }
+      setPendingAccount(null);
     }
+  };
+
+  const handleVerificationCancel = () => {
+    setShowOneWonVerification(false);
+    setShowAccountModal(true);
+    setPendingAccount(null);
+  };
+
+  const handleRetryVerification = (account: ConnectedAccount) => {
+    setPendingAccount({
+      bankName: account.bankName,
+      bankCode: account.bankCode,
+      accountNumber: account.accountNumber,
+      accountHolder: account.accountHolder,
+      accountType: account.accountType,
+      dailyLimit: account.dailyLimit,
+      monthlyLimit: account.monthlyLimit
+    });
+    setShowOneWonVerification(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -280,15 +345,26 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => {
-                          setConnectedAccounts(connectedAccounts.filter(acc => acc.id !== account.id));
-                        }}
-                        className="text-red-600 hover:text-red-900 transition-colors"
-                        title="연결 해제"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        {account.status === 'pending' && (
+                          <button
+                            onClick={() => handleRetryVerification(account)}
+                            className="text-primary-600 hover:text-primary-900 transition-colors text-sm px-2 py-1 border border-primary-300 rounded hover:bg-primary-50"
+                            title="1원 인증하기"
+                          >
+                            인증하기
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setConnectedAccounts(connectedAccounts.filter(acc => acc.id !== account.id));
+                          }}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                          title="연결 해제"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -461,6 +537,17 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 1원 인증 모달 */}
+      {showOneWonVerification && pendingAccount && (
+        <OneWonVerification
+          bankName={pendingAccount.bankName}
+          accountNumber={pendingAccount.accountNumber}
+          accountHolder={pendingAccount.accountHolder}
+          onComplete={handleVerificationComplete}
+          onCancel={handleVerificationCancel}
+        />
       )}
     </div>
   );
