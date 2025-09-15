@@ -14,11 +14,14 @@ export const MetaMaskErrorHandler: React.FC<MetaMaskErrorHandlerProps> = ({ onEr
 
       // MetaMask 관련 에러 감지
       if (isMetaMaskError(error) || isMetaMaskError(event)) {
-        console.warn('MetaMask error handled:', {
-          message: event.message,
-          filename: event.filename,
-          error: error.message
-        })
+        // 개발 환경에서만 로그 출력
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('MetaMask error handled:', {
+            message: event.message,
+            filename: event.filename,
+            error: error.message
+          })
+        }
 
         // 브라우저 콘솔에 에러 표시 방지
         event.preventDefault()
@@ -34,7 +37,10 @@ export const MetaMaskErrorHandler: React.FC<MetaMaskErrorHandlerProps> = ({ onEr
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason))
 
       if (isMetaMaskError(error) || isMetaMaskError(event.reason)) {
-        console.warn('MetaMask promise rejection handled:', error.message)
+        // 개발 환경에서만 로그 출력
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('MetaMask promise rejection handled:', error.message)
+        }
 
         // 브라우저 콘솔에 에러 표시 방지
         event.preventDefault()

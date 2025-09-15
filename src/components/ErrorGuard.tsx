@@ -25,7 +25,10 @@ class ErrorGuard extends Component<ErrorGuardProps, ErrorGuardState> {
                              error.stack?.includes('chrome-extension')
 
     if (isMetaMaskRelated) {
-      console.warn('MetaMask-related error suppressed:', error.message)
+      // 프로덕션에서는 로그를 남기지 않음
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('MetaMask-related error suppressed:', error.message)
+      }
       return { hasError: false }
     }
 
@@ -39,7 +42,10 @@ class ErrorGuard extends Component<ErrorGuardProps, ErrorGuardState> {
                              errorInfo.componentStack?.includes('inpage.js')
 
     if (isMetaMaskRelated) {
-      console.warn('MetaMask error boundary triggered:', error.message)
+      // 프로덕션에서는 메타마스크 에러 로그를 완전히 억제
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('MetaMask error boundary triggered:', error.message)
+      }
       return
     }
 
