@@ -18,19 +18,21 @@ import {
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { 
-  GroupType, 
-  ExpenseStatus, 
-  CryptoCurrency, 
-  CryptoAmount, 
-  WalletGroup, 
-  ExpenseRequest 
+import {
+  GroupType,
+  ExpenseStatus,
+  CryptoCurrency,
+  CryptoAmount,
+  WalletGroup,
+  ExpenseRequest,
 } from "@/types/groups";
-import { mockGroups, mockExpenses, mockGroupRequests } from "@/data/groupMockData";
+import {
+  mockGroups,
+  mockExpenses,
+  mockGroupRequests,
+} from "@/data/groupMockData";
 import GroupManagement from "@/components/groups/GroupManagement";
 import GroupApprovalTab from "@/components/groups/GroupApprovalTab";
-import PendingApproval from "@/components/groups/PendingApproval";
-import ApprovalCompleted from "@/components/groups/ApprovalCompleted";
 import BudgetStatus from "@/components/groups/BudgetStatus";
 import RejectedManagementTab from "@/components/groups/RejectedManagementTab";
 import { CreateWithdrawalModal } from "@/components/withdrawal/CreateWithdrawalModal";
@@ -50,28 +52,32 @@ import {
   formatDate,
   getBudgetUsagePercentage,
   getQuarterlyBudgetUsagePercentage,
-  getYearlyBudgetUsagePercentage
+  getYearlyBudgetUsagePercentage,
 } from "@/utils/groupsUtils";
 
 interface GroupWalletManagementProps {
   plan: ServicePlan;
-  initialTab?: "groups" | "approval" | "pending" | "completed" | "budget" | "rejected";
+  initialTab?:
+    | "groups"
+    | "approval"
+    | "budget"
+    | "rejected";
 }
-
 
 // 가상자산 아이콘 컴포넌트
 const getCryptoIcon = (currency: CryptoCurrency) => {
   return (
-    <img 
-      src={getCryptoIconUrl(currency)} 
+    <img
+      src={getCryptoIconUrl(currency)}
       alt={currency}
       className="w-5 h-5"
       onError={(e) => {
         // 이미지 로드 실패시 폴백
         const target = e.target as HTMLImageElement;
-        target.style.display = 'none';
-        const fallback = document.createElement('div');
-        fallback.className = 'w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold';
+        target.style.display = "none";
+        const fallback = document.createElement("div");
+        fallback.className =
+          "w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold";
         fallback.textContent = currency[0];
         target.parentNode?.replaceChild(fallback, target);
       }}
@@ -80,14 +86,20 @@ const getCryptoIcon = (currency: CryptoCurrency) => {
 };
 
 // 아이콘과 함께 가상자산 금액 포맷팅
-const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => {
+const formatCryptoAmountWithIcon = (
+  cryptoAmount: CryptoAmount
+): JSX.Element => {
   const decimals = getCurrencyDecimals(cryptoAmount.currency);
-  const formattedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
-  
+  const formattedNumber = cryptoAmount.amount
+    .toFixed(decimals)
+    .replace(/\.?0+$/, "");
+
   return (
     <div className="flex items-center space-x-2">
       {getCryptoIcon(cryptoAmount.currency)}
-      <span>{formattedNumber} {cryptoAmount.currency}</span>
+      <span>
+        {formattedNumber} {cryptoAmount.currency}
+      </span>
     </div>
   );
 };
@@ -128,9 +140,9 @@ export default function GroupWalletManagement({
     description: "",
     priority: "medium" as "low" | "medium" | "high" | "critical",
   });
-  const [activeTab, setActiveTab] = useState<"groups" | "approval" | "pending" | "completed" | "budget" | "rejected">(
-    initialTab || "groups"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "groups" | "approval" | "budget" | "rejected"
+  >(initialTab || "groups");
 
   // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
@@ -140,37 +152,19 @@ export default function GroupWalletManagement({
   }, [initialTab]);
 
   // 탭 변경 함수 (URL도 함께 변경)
-  const handleTabChange = (newTab: "groups" | "approval" | "pending" | "completed" | "budget" | "rejected") => {
+  const handleTabChange = (
+    newTab:
+      | "groups"
+      | "approval"
+      | "budget"
+      | "rejected"
+  ) => {
     setActiveTab(newTab);
     router.push(`/groups/${newTab}`);
   };
-  
-  
+
   const { t, language } = useLanguage();
 
-
-
-
-
-
-
-
-
-
-
-  const handleApproveExpense = (expenseId: string) => {
-    console.log("Approving expense:", expenseId);
-  };
-
-  const handleRejectExpense = (expenseId: string, reason: string) => {
-    console.log("Rejecting expense:", expenseId, "Reason:", reason);
-  };
-
-  const handleReapproveExpense = (expenseId: string) => {
-    console.log("Re-approving expense:", expenseId);
-    // 실제로는 rejected 상태를 pending으로 변경하는 API 호출
-    alert("재승인 처리되어 승인 대기 상태로 변경되었습니다.");
-  };
 
   // 출금 신청 처리
   const handleCreateWithdrawalRequest = (request: any) => {
@@ -211,9 +205,7 @@ export default function GroupWalletManagement({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            그룹 관리
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">그룹 관리</h3>
           <p className="text-gray-500 mb-4">
             엔터프라이즈 플랜에서만 사용 가능한 기능입니다
           </p>
@@ -258,27 +250,18 @@ export default function GroupWalletManagement({
               id: "approval",
               name: "그룹 승인",
               icon: BanknotesIcon,
-              count: mockGroups.filter(g => g.status === 'pending').length || 2
+              count:
+                mockGroups.filter((g) => g.status === "pending").length || 2,
             },
-            {
-              id: "pending",
-              name: "승인 대기",
-              icon: ClockIcon,
-              count: mockExpenses.filter(e => e.status === 'pending' || e.status === 'rejected').length
-            },
-            {
-              id: "completed",
-              name: "승인 완료",
-              icon: CheckCircleIcon,
-              count: mockExpenses.filter(e => e.status === 'approved').length
-            },
-            { id: "budget", name: "예산 현황", icon: ChartBarIcon },
             {
               id: "rejected",
               name: "반려/보류 관리",
               icon: XCircleIcon,
-              count: mockGroupRequests.filter(r => r.status === 'rejected' || r.status === 'archived').length
+              count: mockGroupRequests.filter(
+                (r) => r.status === "rejected" || r.status === "archived"
+              ).length,
             },
+            { id: "budget", name: "예산 현황", icon: ChartBarIcon },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -292,11 +275,13 @@ export default function GroupWalletManagement({
               <tab.icon className="h-5 w-5 mr-2" />
               {tab.name}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                  activeTab === tab.id
-                    ? "bg-primary-100 text-primary-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}>
+                <span
+                  className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                    activeTab === tab.id
+                      ? "bg-primary-100 text-primary-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
                   {tab.count}
                 </span>
               )}
@@ -332,7 +317,12 @@ export default function GroupWalletManagement({
             // TODO: 실제 승인 처리 로직
           }}
           onRejectRequest={(requestId, reason) => {
-            console.log("Rejecting group request:", requestId, "Reason:", reason);
+            console.log(
+              "Rejecting group request:",
+              requestId,
+              "Reason:",
+              reason
+            );
             // TODO: 실제 반려 처리 로직
           }}
           onReapproveRequest={(requestId) => {
@@ -342,17 +332,7 @@ export default function GroupWalletManagement({
         />
       )}
 
-      {/* 승인 대기 탭 */}
-      {activeTab === "pending" && (
-        <PendingApproval 
-          onApproveExpense={handleApproveExpense}
-          onRejectExpense={handleRejectExpense}
-          onReapproveExpense={handleReapproveExpense}
-        />
-      )}
 
-      {/* 승인 완료 탭 */}
-      {activeTab === "completed" && <ApprovalCompleted />}
 
       {/* 예산 현황 탭 */}
       {activeTab === "budget" && <BudgetStatus />}
@@ -365,8 +345,6 @@ export default function GroupWalletManagement({
           onArchive={handleArchiveRequest}
         />
       )}
-
-
 
       {/* 출금 신청 모달 */}
       <CreateWithdrawalModal
