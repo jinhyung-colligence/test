@@ -126,7 +126,7 @@ export default function GroupWalletManagement({
     currency: "",
     groupId: "",
     description: "",
-    priority: "medium" as const,
+    priority: "medium" as "low" | "medium" | "high" | "critical",
   });
   const [activeTab, setActiveTab] = useState<"groups" | "approval" | "pending" | "completed" | "budget" | "rejected">(
     initialTab || "groups"
@@ -186,7 +186,7 @@ export default function GroupWalletManagement({
       currency: "",
       groupId: "",
       description: "",
-      priority: "medium",
+      priority: "medium" as "low" | "medium" | "high" | "critical",
     });
     alert("출금 신청이 완료되었습니다.");
   };

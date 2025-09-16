@@ -21,9 +21,10 @@ interface SecuritySettingsProps {
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
   policyCurrency?: "USD" | "BTC" | "ETH" | "USDC" | "USDT";
+  policySubtab?: "amount" | "type";
 }
 
-export default function SecuritySettings({ plan, initialTab, notificationSubtab, policyCurrency }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab, notificationSubtab, policyCurrency, policySubtab }: SecuritySettingsProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 탭 관리 상태

@@ -85,7 +85,7 @@ export default function WithdrawalManagement({
     currency: "",
     groupId: "",
     description: "",
-    priority: "medium" as const,
+    priority: "medium" as "low" | "medium" | "high" | "critical",
   });
 
   // Import mock data from separate file
@@ -186,7 +186,7 @@ export default function WithdrawalManagement({
       network: "Bitcoin", // 기본값으로 설정
       currency: originalRequest.currency,
       groupId: originalRequest.groupId,
-      priority: "medium" as const,
+      priority: "medium" as "low" | "medium" | "high" | "critical",
       description: `재신청: ${originalRequest.description}`,
     });
 

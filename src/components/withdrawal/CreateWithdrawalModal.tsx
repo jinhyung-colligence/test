@@ -19,7 +19,7 @@ interface WhitelistedAddress {
   address: string;
   network: string;
   coin: string;
-  type: "personal" | "exchange";
+  type: "personal" | "exchange" | "vasp";
 }
 
 interface NetworkAsset {
