@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { Modal } from "@/components/common/Modal";
 
 interface NewRequest {
   title: string;
@@ -53,7 +54,7 @@ export function CreateWithdrawalModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <Modal isOpen={true}>
       <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
@@ -351,6 +352,6 @@ export function CreateWithdrawalModal({
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }
