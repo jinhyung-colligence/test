@@ -11,10 +11,13 @@ import {
   GroupType,
   CryptoCurrency,
   CryptoAmount,
-  WalletGroup
+  WalletGroup,
+  BudgetSetup
 } from "@/types/groups";
 import { Modal } from "@/components/common/Modal";
 import { mockGroups } from "@/data/groupMockData";
+import BudgetSetupForm from "./BudgetSetupForm";
+import BudgetDistribution from "./BudgetDistribution";
 import {
   getCryptoIconUrl,
   getCurrencyDecimals,
@@ -26,6 +29,7 @@ import {
   getQuarterlyBudgetUsagePercentage,
   getYearlyBudgetUsagePercentage
 } from "@/utils/groupsUtils";
+import { distributeBudget } from "@/utils/budgetCalculator";
 
 interface GroupManagementProps {
   onCreateGroup?: () => void;
@@ -69,18 +73,80 @@ const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => 
 
 export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal, onCreateGroupRequest }: GroupManagementProps) {
   const [internalShowCreateModal, setInternalShowCreateModal] = useState(false);
-  
+
   const showCreateModal = externalShowCreateModal !== undefined ? externalShowCreateModal : internalShowCreateModal;
+
+  // 새로운 그룹 상태
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const [newGroup, setNewGroup] = useState({
     name: "",
     type: "department" as GroupType,
     description: "",
+    currency: 'USDC' as CryptoCurrency, // 그룹 전체 자산 설정
     monthlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
     quarterlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
     yearlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
+    budgetSetup: null as BudgetSetup | null, // 새로운 예산 설정
     manager: "",
   });
+
+  // 그룹 자산 변경 시 모든 예산의 자산도 함께 변경
+  const handleCurrencyChange = (currency: CryptoCurrency) => {
+    setNewGroup({
+      ...newGroup,
+      currency,
+      monthlyBudget: { ...newGroup.monthlyBudget, currency },
+      quarterlyBudget: { ...newGroup.quarterlyBudget, currency },
+      yearlyBudget: { ...newGroup.yearlyBudget, currency },
+    });
+  };
+
+  // 년도 변경 핸들러
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    // 년도 변경시 기존 예산 설정 초기화
+    setNewGroup({
+      ...newGroup,
+      budgetSetup: null
+    });
+  };
+
+  // 예산 설정 생성
+  const handleCreateBudgetSetup = (
+    baseType: 'yearly' | 'quarterly' | 'monthly',
+    baseAmount: number,
+    selectedQuarter?: number,
+    selectedMonth?: number
+  ) => {
+    try {
+      const budgetSetup = distributeBudget(
+        baseAmount,
+        newGroup.currency,
+        selectedYear,
+        baseType,
+        selectedQuarter,
+        selectedMonth
+      );
+
+      setNewGroup({
+        ...newGroup,
+        budgetSetup
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "예산 생성 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 예산 설정 변경
+  const handleBudgetSetupChange = (updatedSetup: BudgetSetup) => {
+    setNewGroup({
+      ...newGroup,
+      budgetSetup: updatedSetup
+    });
+  };
+
 
   const handleCreateGroup = () => {
     // 그룹 생성 요청 생성
@@ -106,13 +172,16 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     }
 
     handleCloseModal();
+    setSelectedYear(currentYear);
     setNewGroup({
       name: "",
       type: "department",
       description: "",
+      currency: 'USDC' as CryptoCurrency,
       monthlyBudget: { amount: 0, currency: 'USDC' },
       quarterlyBudget: { amount: 0, currency: 'USDC' },
       yearlyBudget: { amount: 0, currency: 'USDC' },
+      budgetSetup: null,
       manager: "",
     });
 
@@ -267,41 +336,59 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   )}
                 </div>
 
-                {/* 예산 기간별 요약 - 동적으로 표시 */}
+                {/* 예산 정보 */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className={`grid divide-x divide-gray-200 ${
-                    group.yearlyBudget.amount > 0 ? 'grid-cols-3' : 
-                    group.quarterlyBudget.amount > 0 ? 'grid-cols-2' : 
-                    'grid-cols-1'
-                  }`}>
-                    <div className="p-3 text-center">
-                      <div className="text-xs text-gray-500 mb-1">월간 예산</div>
-                      <div className="text-sm font-semibold">{formatCryptoAmount(group.monthlyBudget)}</div>
-                      <div className="text-xs text-gray-400">
-                        잔여: {formatCryptoAmount({ amount: group.monthlyBudget.amount - group.budgetUsed.amount, currency: group.monthlyBudget.currency })}
+                  {group.budgetSetup ? (
+                    <div className="p-3">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">
+                          {group.budgetSetup.baseType === 'yearly' && '연간'}
+                          {group.budgetSetup.baseType === 'quarterly' && '분기'}
+                          {group.budgetSetup.baseType === 'monthly' && '월간'} 기준 예산
+                        </div>
+                        <div className="text-sm font-semibold">
+                          {group.budgetSetup.baseAmount.toLocaleString()} {group.budgetSetup.currency}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(group.budgetSetup.startDate).toLocaleDateString('ko-KR')} ~ {new Date(group.budgetSetup.endDate).toLocaleDateString('ko-KR')}
+                        </div>
                       </div>
                     </div>
-                    
-                    {group.quarterlyBudget.amount > 0 && (
+                  ) : (
+                    <div className={`grid divide-x divide-gray-200 ${
+                      group.yearlyBudget.amount > 0 ? 'grid-cols-3' :
+                      group.quarterlyBudget.amount > 0 ? 'grid-cols-2' :
+                      'grid-cols-1'
+                    }`}>
                       <div className="p-3 text-center">
-                        <div className="text-xs text-gray-500 mb-1">분기 예산</div>
-                        <div className="text-sm font-semibold">{formatCryptoAmount(group.quarterlyBudget)}</div>
+                        <div className="text-xs text-gray-500 mb-1">월간 예산</div>
+                        <div className="text-sm font-semibold">{formatCryptoAmount(group.monthlyBudget)}</div>
                         <div className="text-xs text-gray-400">
-                          {getQuarterlyBudgetUsagePercentage(group)}% 사용
+                          잔여: {formatCryptoAmount({ amount: group.monthlyBudget.amount - group.budgetUsed.amount, currency: group.monthlyBudget.currency })}
                         </div>
                       </div>
-                    )}
-                    
-                    {group.yearlyBudget.amount > 0 && (
-                      <div className="p-3 text-center">
-                        <div className="text-xs text-gray-500 mb-1">연간 예산</div>
-                        <div className="text-sm font-semibold">{formatCryptoAmount(group.yearlyBudget)}</div>
-                        <div className="text-xs text-gray-400">
-                          {getYearlyBudgetUsagePercentage(group)}% 사용
+
+                      {group.quarterlyBudget.amount > 0 && (
+                        <div className="p-3 text-center">
+                          <div className="text-xs text-gray-500 mb-1">분기 예산</div>
+                          <div className="text-sm font-semibold">{formatCryptoAmount(group.quarterlyBudget)}</div>
+                          <div className="text-xs text-gray-400">
+                            {getQuarterlyBudgetUsagePercentage(group)}% 사용
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+
+                      {group.yearlyBudget.amount > 0 && (
+                        <div className="p-3 text-center">
+                          <div className="text-xs text-gray-500 mb-1">연간 예산</div>
+                          <div className="text-sm font-semibold">{formatCryptoAmount(group.yearlyBudget)}</div>
+                          <div className="text-xs text-gray-400">
+                            {getYearlyBudgetUsagePercentage(group)}% 사용
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 그룹 정보 */}
@@ -340,8 +427,9 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
 
       {/* 그룹 생성 모달 */}
       <Modal isOpen={showCreateModal}>
-        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+            {/* 고정 헤더 */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
               <h3 className="text-xl font-semibold text-gray-900">
                 새 그룹 생성
               </h3>
@@ -365,13 +453,15 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreateGroup();
-              }}
-              className="space-y-4"
-            >
+            {/* 스크롤 가능한 컨텐츠 영역 */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCreateGroup();
+                }}
+                className="space-y-4"
+              >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   그룹명 *
@@ -423,134 +513,44 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 />
               </div>
 
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  월 예산 *
+                  자산 *
                 </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    required
-                    value={newGroup.monthlyBudget.amount}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        monthlyBudget: {
-                          ...newGroup.monthlyBudget,
-                          amount: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="0"
-                  />
-                  <select
-                    value={newGroup.monthlyBudget.currency}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        monthlyBudget: {
-                          ...newGroup.monthlyBudget,
-                          currency: e.target.value as CryptoCurrency,
-                        },
-                      })
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="BTC">BTC</option>
-                    <option value="ETH">ETH</option>
-                    <option value="SOL">SOL</option>
-                    <option value="USDC">USDC</option>
-                    <option value="USDT">USDT</option>
-                  </select>
-                </div>
+                <select
+                  value={newGroup.currency}
+                  onChange={(e) => handleCurrencyChange(e.target.value as CryptoCurrency)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                  <option value="SOL">Solana (SOL)</option>
+                  <option value="USDC">USD Coin (USDC)</option>
+                  <option value="USDT">Tether (USDT)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  이 그룹의 모든 예산은 선택한 자산으로 설정됩니다.
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  분기 예산 *
+                  기준 년도 *
                 </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    required
-                    value={newGroup.quarterlyBudget.amount}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        quarterlyBudget: {
-                          ...newGroup.quarterlyBudget,
-                          amount: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="0"
-                  />
-                  <select
-                    value={newGroup.quarterlyBudget.currency}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        quarterlyBudget: {
-                          ...newGroup.quarterlyBudget,
-                          currency: e.target.value as CryptoCurrency,
-                        },
-                      })
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="BTC">BTC</option>
-                    <option value="ETH">ETH</option>
-                    <option value="SOL">SOL</option>
-                    <option value="USDC">USDC</option>
-                    <option value="USDT">USDT</option>
-                  </select>
-                </div>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => handleYearChange(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value={currentYear}>{currentYear}년</option>
+                  <option value={currentYear + 1}>{currentYear + 1}년</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  예산 계산의 기준이 되는 년도입니다. 과거 년도는 선택할 수 없습니다.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  연 예산 *
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    required
-                    value={newGroup.yearlyBudget.amount}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        yearlyBudget: {
-                          ...newGroup.yearlyBudget,
-                          amount: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="0"
-                  />
-                  <select
-                    value={newGroup.yearlyBudget.currency}
-                    onChange={(e) =>
-                      setNewGroup({
-                        ...newGroup,
-                        yearlyBudget: {
-                          ...newGroup.yearlyBudget,
-                          currency: e.target.value as CryptoCurrency,
-                        },
-                      })
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="BTC">BTC</option>
-                    <option value="ETH">ETH</option>
-                    <option value="SOL">SOL</option>
-                    <option value="USDC">USDC</option>
-                    <option value="USDT">USDT</option>
-                  </select>
-                </div>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -568,7 +568,45 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 />
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              {/* 예산 설정 */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-900">예산 설정</h4>
+                  <p className="text-xs text-gray-500">기준 예산을 설정하면 자동으로 하위 기간별 예산이 분배됩니다</p>
+                </div>
+
+                <div className="space-y-6">
+                  {!newGroup.budgetSetup ? (
+                    <BudgetSetupForm
+                      currency={newGroup.currency}
+                      year={selectedYear}
+                      onCreateBudgetSetup={handleCreateBudgetSetup}
+                    />
+                  ) : (
+                    <div>
+                      <BudgetDistribution
+                        budgetSetup={newGroup.budgetSetup}
+                        onChange={handleBudgetSetupChange}
+                        className="mb-4"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewGroup({ ...newGroup, budgetSetup: null })}
+                        className="text-sm text-red-600 hover:text-red-700"
+                      >
+                        예산 설정 다시하기
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              </form>
+            </div>
+
+            {/* 고정 푸터 */}
+            <div className="border-t border-gray-200 p-6 flex-shrink-0">
+              <div className="flex space-x-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}
@@ -578,12 +616,16 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 </button>
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleCreateGroup();
+                  }}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   승인 요청
                 </button>
               </div>
-            </form>
+            </div>
         </div>
       </Modal>
     </>
