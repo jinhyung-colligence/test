@@ -236,7 +236,7 @@ export default function GroupWalletManagement({
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />
-            출금 신청
+            지출 신청
           </button>
         </div>
       </div>

@@ -71,11 +71,11 @@ export function CreateGroupWithdrawalModal({
   const selectedGroup = groups.find(group => group.id === newRequest.groupId);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" style={{ zIndex: 99999 }}>
       <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
-            그룹 출금 신청
+            그룹 지출 신청
           </h3>
           <button
             onClick={onClose}
