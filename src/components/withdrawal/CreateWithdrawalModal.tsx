@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 interface NewRequest {
   title: string;
@@ -12,13 +13,28 @@ interface NewRequest {
   priority: "low" | "medium" | "high" | "critical";
 }
 
+interface WhitelistedAddress {
+  id: string;
+  label: string;
+  address: string;
+  network: string;
+  coin: string;
+  type: "personal" | "exchange";
+}
+
+interface NetworkAsset {
+  value: string;
+  name: string;
+}
+
 interface CreateWithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (request: NewRequest) => void;
   newRequest: NewRequest;
   onRequestChange: (request: NewRequest) => void;
-  networkAssets: Record<string, string[]>;
+  networkAssets: Record<string, NetworkAsset[]>;
+  whitelistedAddresses: WhitelistedAddress[];
 }
 
 export function CreateWithdrawalModal({
@@ -27,7 +43,8 @@ export function CreateWithdrawalModal({
   onSubmit,
   newRequest,
   onRequestChange,
-  networkAssets
+  networkAssets,
+  whitelistedAddresses
 }: CreateWithdrawalModalProps) {
   if (!isOpen) return null;
 
@@ -77,16 +94,242 @@ export function CreateWithdrawalModal({
                 onRequestChange({ ...newRequest, title: e.target.value })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="예: 분기별 정산을 위한 비트코인 출금"
+              placeholder="출금 목적을 간략히 입력하세요"
             />
           </div>
 
-          {/* 나머지 폼 필드들 - 길어서 생략하고 기본 구조만 */}
-          {/* ... 실제로는 모든 폼 필드들이 여기에 들어갑니다 ... */}
+          {/* 네트워크 및 자산 선택 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                출금 네트워크 *
+              </label>
+              <select
+                value={newRequest.network}
+                onChange={(e) =>
+                  onRequestChange({
+                    ...newRequest,
+                    network: e.target.value,
+                    currency: "",
+                    toAddress: "",
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">네트워크를 선택하세요</option>
+                <option value="Bitcoin">Bitcoin Network</option>
+                <option value="Ethereum">Ethereum Network</option>
+                <option value="Solana">Solana Network</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                출금 자산 *
+              </label>
+              <select
+                value={newRequest.currency}
+                onChange={(e) =>
+                  onRequestChange({
+                    ...newRequest,
+                    currency: e.target.value,
+                    toAddress: "",
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                disabled={!newRequest.network}
+              >
+                <option value="">
+                  {newRequest.network
+                    ? "자산을 선택하세요"
+                    : "먼저 네트워크를 선택하세요"}
+                </option>
+                {newRequest.network &&
+                  networkAssets[
+                    newRequest.network as keyof typeof networkAssets
+                  ]?.map((asset) => (
+                    <option key={asset.value} value={asset.value}>
+                      {asset.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-700">
-              <strong>보안 알림:</strong><br />
+          {/* 출금 금액 */}
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                출금 금액 *
+              </label>
+              <input
+                type="number"
+                step="0.00000001"
+                required
+                value={newRequest.amount}
+                onChange={(e) =>
+                  onRequestChange({
+                    ...newRequest,
+                    amount: Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          {/* 출금 주소 */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              출금 주소 *
+            </label>
+            <div className="space-y-2">
+              {whitelistedAddresses
+                .filter(
+                  (addr) =>
+                    addr.network === newRequest.network &&
+                    addr.coin === newRequest.currency
+                )
+                .map((address) => (
+                  <div
+                    key={address.id}
+                    onClick={() =>
+                      onRequestChange({
+                        ...newRequest,
+                        toAddress: address.address,
+                      })
+                    }
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      newRequest.toAddress === address.address
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <img
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${address.coin.toLowerCase()}.png`}
+                          alt={address.coin}
+                          className="w-5 h-5 rounded-full mr-2"
+                          onError={(e) => {
+                            (
+                              e.target as HTMLImageElement
+                            ).src = `data:image/svg+xml;base64,${btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                              <circle cx="10" cy="10" r="10" fill="#f3f4f6"/>
+                              <text x="10" y="14" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#6b7280">
+                                ${address.coin}
+                              </text>
+                            </svg>
+                          `)}`;
+                          }}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">
+                            {address.label}
+                          </div>
+                          <div className="text-xs font-mono text-gray-500">
+                            {address.address.length > 30
+                              ? `${address.address.slice(
+                                  0,
+                                  15
+                                )}...${address.address.slice(-15)}`
+                              : address.address}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          address.type === "personal"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-orange-100 text-orange-800"
+                        }`}
+                      >
+                        {address.type === "personal" ? "개인지갑" : "VASP"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+              {newRequest.network &&
+                newRequest.currency &&
+                whitelistedAddresses.filter(
+                  (addr) =>
+                    addr.network === newRequest.network &&
+                    addr.coin === newRequest.currency
+                ).length === 0 && (
+                  <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
+                    <p className="text-gray-500 text-sm">
+                      {newRequest.network} 네트워크의 {newRequest.currency}{" "}
+                      자산에 대한 등록된 출금 주소가 없습니다.
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      보안 설정에서 출금 주소를 먼저 등록해주세요.
+                    </p>
+                  </div>
+                )}
+
+              {(!newRequest.network || !newRequest.currency) && (
+                <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
+                  <p className="text-gray-500 text-sm">
+                    네트워크와 자산을 먼저 선택해주세요.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 우선순위 */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              우선순위 *
+            </label>
+            <select
+              value={newRequest.priority}
+              onChange={(e) =>
+                onRequestChange({
+                  ...newRequest,
+                  priority: e.target.value as any,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="low">낮음 - 일반 출금</option>
+              <option value="medium">보통 - 정기 업무</option>
+              <option value="high">높음 - 중요 거래</option>
+              <option value="critical">긴급 - 즉시 처리</option>
+            </select>
+          </div>
+
+          {/* 상세 설명 */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              상세 설명 *
+            </label>
+            <textarea
+              required
+              value={newRequest.description}
+              onChange={(e) =>
+                onRequestChange({
+                  ...newRequest,
+                  description: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="출금 목적과 상세 내용을 입력하세요"
+              rows={3}
+            />
+          </div>
+
+          {/* 보안 알림 */}
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+              <p className="text-yellow-800 text-sm font-medium">
+                보안 알림
+              </p>
+            </div>
+            <p className="text-yellow-700 text-sm mt-1">
               모든 출금은 필수 결재자의 승인을 받아야 하며, Air-gap 환경에서
               최종 서명이 진행됩니다.
             </p>

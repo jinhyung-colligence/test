@@ -7,7 +7,6 @@ import {
   PlusIcon,
   BanknotesIcon,
   ChartBarIcon,
-  DocumentCheckIcon,
   UserGroupIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -15,6 +14,7 @@ import {
   ExclamationCircleIcon,
   UserIcon,
   CogIcon,
+  ArrowUpOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -31,6 +31,8 @@ import GroupManagement from "@/components/groups/GroupManagement";
 import PendingApproval from "@/components/groups/PendingApproval";
 import ApprovalCompleted from "@/components/groups/ApprovalCompleted";
 import BudgetStatus from "@/components/groups/BudgetStatus";
+import { CreateWithdrawalModal } from "@/components/withdrawal/CreateWithdrawalModal";
+import { networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
 import {
   getCryptoIconUrl,
   getCurrencyDecimals,
@@ -109,8 +111,21 @@ export default function GroupWalletManagement({
   const router = useRouter();
   const pathname = usePathname();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+  // 출금 신청 모달 관련 상태
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [newWithdrawalRequest, setNewWithdrawalRequest] = useState({
+    title: "",
+    fromAddress: "",
+    toAddress: "",
+    amount: 0,
+    network: "",
+    currency: "",
+    groupId: "",
+    description: "",
+    priority: "medium" as const,
+  });
   const [activeTab, setActiveTab] = useState<"groups" | "pending" | "completed" | "budget">(
     initialTab || "groups"
   );
@@ -132,13 +147,6 @@ export default function GroupWalletManagement({
   const { t, language } = useLanguage();
 
 
-  const [newExpense, setNewExpense] = useState({
-    groupId: "",
-    title: "",
-    amount: { amount: 0, currency: 'USDC' as CryptoCurrency },
-    description: "",
-    category: "operations",
-  });
 
 
 
@@ -147,17 +155,6 @@ export default function GroupWalletManagement({
 
 
 
-  const handleCreateExpense = () => {
-    console.log("Creating expense:", newExpense);
-    setShowExpenseModal(false);
-    setNewExpense({
-      groupId: "",
-      title: "",
-      amount: { amount: 0, currency: 'USDC' },
-      description: "",
-      category: "operations",
-    });
-  };
 
   const handleApproveExpense = (expenseId: string) => {
     console.log("Approving expense:", expenseId);
@@ -171,6 +168,25 @@ export default function GroupWalletManagement({
     console.log("Re-approving expense:", expenseId);
     // 실제로는 rejected 상태를 pending으로 변경하는 API 호출
     alert("재승인 처리되어 승인 대기 상태로 변경되었습니다.");
+  };
+
+  // 출금 신청 처리
+  const handleCreateWithdrawalRequest = (request: any) => {
+    console.log("Creating withdrawal request:", request);
+    // TODO: 실제 API 호출
+    setShowWithdrawalModal(false);
+    setNewWithdrawalRequest({
+      title: "",
+      fromAddress: "",
+      toAddress: "",
+      amount: 0,
+      network: "",
+      currency: "",
+      groupId: "",
+      description: "",
+      priority: "medium",
+    });
+    alert("출금 신청이 완료되었습니다.");
   };
 
   if (plan !== "enterprise") {
@@ -207,27 +223,11 @@ export default function GroupWalletManagement({
             그룹 생성
           </button>
           <button
-            onClick={() => setShowExpenseModal(true)}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            onClick={() => setShowWithdrawalModal(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <DocumentCheckIcon className="h-5 w-5 mr-2" />
-            지출 신청
-          </button>
-          <button className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-            <svg
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            리포트 출력
+            <ArrowUpOnSquareIcon className="h-5 w-5 mr-2" />
+            출금 신청
           </button>
         </div>
       </div>
@@ -303,177 +303,17 @@ export default function GroupWalletManagement({
       {activeTab === "budget" && <BudgetStatus />}
 
 
-      {/* 지출 신청 모달 */}
-      {showExpenseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">지출 신청</h3>
-              <button
-                onClick={() => setShowExpenseModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreateExpense();
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  그룹 선택 *
-                </label>
-                <select
-                  required
-                  value={newExpense.groupId}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, groupId: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">그룹을 선택하세요</option>
-                  {mockGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  지출 제목 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newExpense.title}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="지출 제목을 입력하세요"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  금액 *
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    required
-                    value={newExpense.amount.amount}
-                    onChange={(e) =>
-                      setNewExpense({
-                        ...newExpense,
-                        amount: {
-                          ...newExpense.amount,
-                          amount: Number(e.target.value),
-                        },
-                      })
-                    }
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="0"
-                  />
-                  <select
-                    value={newExpense.amount.currency}
-                    onChange={(e) =>
-                      setNewExpense({
-                        ...newExpense,
-                        amount: {
-                          ...newExpense.amount,
-                          currency: e.target.value as CryptoCurrency,
-                        },
-                      })
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="BTC">BTC</option>
-                    <option value="ETH">ETH</option>
-                    <option value="SOL">SOL</option>
-                    <option value="USDC">USDC</option>
-                    <option value="USDT">USDT</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  카테고리 *
-                </label>
-                <select
-                  value={newExpense.category}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, category: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="operations">운영비</option>
-                  <option value="software">소프트웨어</option>
-                  <option value="infrastructure">인프라</option>
-                  <option value="equipment">장비</option>
-                  <option value="marketing">마케팅</option>
-                  <option value="other">기타</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  상세 설명 *
-                </label>
-                <textarea
-                  required
-                  value={newExpense.description}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      description: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="지출에 대한 상세 설명을 입력하세요"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowExpenseModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  신청
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* 출금 신청 모달 */}
+      <CreateWithdrawalModal
+        isOpen={showWithdrawalModal}
+        onClose={() => setShowWithdrawalModal(false)}
+        onSubmit={handleCreateWithdrawalRequest}
+        newRequest={newWithdrawalRequest}
+        onRequestChange={setNewWithdrawalRequest}
+        networkAssets={networkAssets}
+        whitelistedAddresses={whitelistedAddresses}
+      />
     </div>
   );
 }
