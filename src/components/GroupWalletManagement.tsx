@@ -35,7 +35,7 @@ import GroupManagement from "@/components/groups/GroupManagement";
 import GroupApprovalTab from "@/components/groups/GroupApprovalTab";
 import BudgetStatus from "@/components/groups/BudgetStatus";
 import RejectedManagementTab from "@/components/groups/RejectedManagementTab";
-import { CreateWithdrawalModal } from "@/components/withdrawal/CreateWithdrawalModal";
+import { CreateGroupWithdrawalModal } from "@/components/withdrawal/CreateGroupWithdrawalModal";
 import { networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
 import {
   getCryptoIconUrl,
@@ -347,7 +347,7 @@ export default function GroupWalletManagement({
       )}
 
       {/* 출금 신청 모달 */}
-      <CreateWithdrawalModal
+      <CreateGroupWithdrawalModal
         isOpen={showWithdrawalModal}
         onClose={() => setShowWithdrawalModal(false)}
         onSubmit={handleCreateWithdrawalRequest}
@@ -355,6 +355,7 @@ export default function GroupWalletManagement({
         onRequestChange={setNewWithdrawalRequest}
         networkAssets={networkAssets}
         whitelistedAddresses={whitelistedAddresses}
+        groups={mockGroups}
       />
     </div>
   );

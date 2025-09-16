@@ -83,7 +83,6 @@ export default function WithdrawalManagement({
     amount: 0,
     network: "",
     currency: "",
-    groupId: "",
     description: "",
     priority: "medium" as "low" | "medium" | "high" | "critical",
   });
@@ -101,7 +100,6 @@ export default function WithdrawalManagement({
       amount: 0,
       network: "",
       currency: "",
-      groupId: "",
       description: "",
       priority: "medium",
     });
@@ -185,7 +183,6 @@ export default function WithdrawalManagement({
       amount: originalRequest.amount,
       network: "Bitcoin", // 기본값으로 설정
       currency: originalRequest.currency,
-      groupId: originalRequest.groupId,
       priority: "medium" as "low" | "medium" | "high" | "critical",
       description: `재신청: ${originalRequest.description}`,
     });

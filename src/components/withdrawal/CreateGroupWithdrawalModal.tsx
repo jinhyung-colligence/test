@@ -8,6 +8,7 @@ interface NewRequest {
   amount: number;
   network: string;
   currency: string;
+  groupId: string;
   description: string;
   priority: "low" | "medium" | "high" | "critical";
 }
@@ -26,7 +27,19 @@ interface NetworkAsset {
   name: string;
 }
 
-interface CreateWithdrawalModalProps {
+interface WalletGroup {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  balance: { amount: number; currency: string };
+  monthlyBudget: { amount: number; currency: string };
+  quarterlyBudget: { amount: number; currency: string };
+  yearlyBudget: { amount: number; currency: string };
+  budgetUsed: { amount: number; currency: string };
+}
+
+interface CreateGroupWithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (request: NewRequest) => void;
@@ -34,17 +47,19 @@ interface CreateWithdrawalModalProps {
   onRequestChange: (request: NewRequest) => void;
   networkAssets: Record<string, NetworkAsset[]>;
   whitelistedAddresses: WhitelistedAddress[];
+  groups: WalletGroup[];
 }
 
-export function CreateWithdrawalModal({
+export function CreateGroupWithdrawalModal({
   isOpen,
   onClose,
   onSubmit,
   newRequest,
   onRequestChange,
   networkAssets,
-  whitelistedAddresses
-}: CreateWithdrawalModalProps) {
+  whitelistedAddresses,
+  groups
+}: CreateGroupWithdrawalModalProps) {
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,12 +67,15 @@ export function CreateWithdrawalModal({
     onSubmit(newRequest);
   };
 
+  // 선택된 그룹 정보 가져오기
+  const selectedGroup = groups.find(group => group.id === newRequest.groupId);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
-            새 출금 신청
+            그룹 출금 신청
           </h3>
           <button
             onClick={onClose}
@@ -80,6 +98,50 @@ export function CreateWithdrawalModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 그룹 선택 */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              출금 그룹 *
+            </label>
+            <select
+              required
+              value={newRequest.groupId}
+              onChange={(e) =>
+                onRequestChange({ ...newRequest, groupId: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="">그룹을 선택하세요</option>
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name} - {group.balance.amount.toLocaleString()} {group.balance.currency}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 선택된 그룹 정보 표시 */}
+          {selectedGroup && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-gray-900">{selectedGroup.name}</h4>
+                  <p className="text-sm text-gray-600">{selectedGroup.description}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-900">
+                    잔액: {selectedGroup.balance.amount.toLocaleString()} {selectedGroup.balance.currency}
+                  </div>
+                  {selectedGroup.monthlyBudget.amount > 0 && (
+                    <div className="text-xs text-gray-500">
+                      월예산: {selectedGroup.monthlyBudget.amount.toLocaleString()} {selectedGroup.monthlyBudget.currency}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 출금 제목 */}
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -320,19 +382,6 @@ export function CreateWithdrawalModal({
             />
           </div>
 
-          {/* 보안 알림 */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <div className="flex items-center">
-              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
-              <p className="text-yellow-800 text-sm font-medium">
-                보안 알림
-              </p>
-            </div>
-            <p className="text-yellow-700 text-sm mt-1">
-              모든 출금은 필수 결재자의 승인을 받아야 하며, Air-gap 환경에서
-              최종 서명이 진행됩니다.
-            </p>
-          </div>
 
           <div className="flex space-x-3 pt-4">
             <button
