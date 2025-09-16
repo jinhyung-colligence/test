@@ -12,7 +12,7 @@ interface GroupsTabPageProps {
 }
 
 // 유효한 탭 목록
-const VALID_TABS = ['groups', 'approval', 'pending', 'completed', 'budget', 'rejected'] as const
+const VALID_TABS = ['groups', 'approval', 'budget', 'rejected'] as const
 type ValidTab = typeof VALID_TABS[number]
 
 function isValidTab(tab: string): tab is ValidTab {
