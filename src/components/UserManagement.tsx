@@ -18,6 +18,7 @@ import {
   ROLE_NAMES,
 } from "@/types/user";
 import { MOCK_USERS } from "@/data/userMockData";
+import { Modal } from "@/components/common/Modal";
 import {
   formatUserDisplay,
   getRoleName,
@@ -604,9 +605,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
         )}
       </div>
 
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showAddModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 사용자 추가
@@ -787,13 +787,13 @@ export default function UserManagement({ plan }: UserManagementProps) {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </Modal>
 
       {/* 사용자 수정 모달 */}
-      {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showEditModal && !!editingUser}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+          {editingUser && (
+          <>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 사용자 정보 수정
@@ -1046,14 +1046,16 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 </button>
               </div>
             </form>
+          </>
+          )}
           </div>
-        </div>
-      )}
+        </Modal>
 
       {/* 사용자 비활성 확인 모달 */}
-      {showDeactivateModal && deactivatingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showDeactivateModal && !!deactivatingUser}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+          {deactivatingUser && (
+          <>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 사용자 비활성 확인
@@ -1130,7 +1132,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
                         <li>사용자는 즉시 로그인할 수 없게 됩니다</li>
                         <li>모든 시스템 권한이 제한됩니다</li>
                         <li>진행 중인 작업이 중단될 수 있습니다</li>
-                        <li>필요시 나중에 다시 활성화할 수 있습니다</li>
+                        <li>비활성화 후에는 다시 활성화할 수 없습니다</li>
                       </ul>
                     </div>
                   </div>
@@ -1180,9 +1182,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 )}
               </button>
             </div>
+          </>
+          )}
           </div>
-        </div>
-      )}
+        </Modal>
     </div>
   );
 }
