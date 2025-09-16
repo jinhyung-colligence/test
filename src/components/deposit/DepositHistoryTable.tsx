@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DepositHistory } from "@/types/deposit";
+import { Modal } from "@/components/common/Modal";
 import { formatAmount, formatDateTime } from "@/utils/depositHelpers";
 import DepositStatusBadge from "./DepositStatusBadge";
 import DepositTimeline from "./DepositTimeline";
@@ -369,9 +370,8 @@ export default function DepositHistoryTable({
       </div>
 
       {/* 상세 정보 모달 */}
-      {selectedDeposit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+      <Modal isOpen={!!selectedDeposit}>
+        <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
                 입금 상세 정보
@@ -391,9 +391,8 @@ export default function DepositHistoryTable({
                 return <DepositTimeline deposit={deposit} />;
               })()}
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

@@ -146,16 +146,14 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
   };
 
   const generateQRCode = (address: string): string => {
-    return `data:image/svg+xml;base64,${btoa(`
+    const svgContent = `
       <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="#fff"/>
         <text x="100" y="110" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">QR Code</text>
-        <text x="100" y="125" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${address.substring(
-          0,
-          10
-        )}...</text>
+        <text x="100" y="125" text-anchor="middle" font-family="Arial" font-size="8" fill="#666">${address.substring(0, 10)}...</text>
       </svg>
-    `)}`;
+    `;
+    return `data:image/svg+xml;base64,${btoa(svgContent)}`;
   };
 
   const generateFromAddress = (symbol: string): string => {

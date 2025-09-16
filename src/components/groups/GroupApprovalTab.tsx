@@ -9,6 +9,7 @@ import {
   BanknotesIcon
 } from "@heroicons/react/24/outline";
 import { GroupCreationRequest } from "@/types/groups";
+import { Modal } from "@/components/common/Modal";
 import { mockGroupRequests } from "@/data/groupMockData";
 import {
   getCryptoIconUrl,
@@ -741,9 +742,8 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
       )}
 
       {/* 반려 사유 입력 모달 */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showRejectModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 반려 사유 입력
@@ -800,9 +800,8 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                 </button>
               </div>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

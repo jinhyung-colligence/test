@@ -7,12 +7,13 @@ import {
   UserIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { 
-  GroupType, 
-  CryptoCurrency, 
-  CryptoAmount, 
-  WalletGroup 
+import {
+  GroupType,
+  CryptoCurrency,
+  CryptoAmount,
+  WalletGroup
 } from "@/types/groups";
+import { Modal } from "@/components/common/Modal";
 import { mockGroups } from "@/data/groupMockData";
 import {
   getCryptoIconUrl,
@@ -338,9 +339,8 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       </div>
 
       {/* 그룹 생성 모달 */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showCreateModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 새 그룹 생성
@@ -584,9 +584,8 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 </button>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </Modal>
     </>
   );
 }

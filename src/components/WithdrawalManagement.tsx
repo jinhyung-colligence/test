@@ -20,6 +20,7 @@ import {
   ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Modal } from "@/components/common/Modal";
 import {
   WithdrawalManagementProps,
   WithdrawalRequest,
@@ -487,9 +488,8 @@ export default function WithdrawalManagement({
       />
 
       {/* 승인/반려 확인 팝업 */}
-      {showApprovalModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+      <Modal isOpen={showApprovalModal.show}>
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -662,14 +662,12 @@ export default function WithdrawalManagement({
                 );
               })()}
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 재신청 확인 팝업 */}
-      {showReapplicationModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+      <Modal isOpen={showReapplicationModal.show}>
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -743,14 +741,12 @@ export default function WithdrawalManagement({
                 </button>
               </div>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 아카이브 확인 팝업 */}
-      {showArchiveModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+      <Modal isOpen={showArchiveModal.show}>
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -826,9 +822,8 @@ export default function WithdrawalManagement({
                 </button>
               </div>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 하단 여백 추가 */}
       <div className="pb-8"></div>
