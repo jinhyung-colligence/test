@@ -12,7 +12,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { DepositTransaction, DepositHistory } from "@/types/deposit";
-import { generateMockDeposits, generateMockDepositHistory } from "@/utils/depositHelpers";
+import {
+  generateMockDeposits,
+  generateMockDepositHistory,
+} from "@/utils/depositHelpers";
 import DepositProgressCard from "./deposit/DepositProgressCard";
 import DepositHistoryTable from "./deposit/DepositHistoryTable";
 import DepositStatistics from "./deposit/DepositStatistics";
@@ -48,10 +51,12 @@ interface Transaction {
 
 export default function DepositManagement({ plan }: DepositManagementProps) {
   // 진행 중인 입금 상태
-  const [activeDeposits, setActiveDeposits] = useState<DepositTransaction[]>([]);
+  const [activeDeposits, setActiveDeposits] = useState<DepositTransaction[]>(
+    []
+  );
   // 입금 히스토리 상태
   const [depositHistory, setDepositHistory] = useState<DepositHistory[]>([]);
-  
+
   const [assets, setAssets] = useState<Asset[]>([
     {
       id: "1",
@@ -161,7 +166,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     };
 
     const generateRandomBase58 = (length: number) => {
-      const chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+      const chars =
+        "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
       return Array.from(
         { length },
         () => chars[Math.floor(Math.random() * chars.length)]
@@ -260,62 +266,67 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
         };
       })
     );
-    
+
     // 초기 Mock 데이터 생성
     setActiveDeposits(generateMockDeposits(5));
     setDepositHistory(generateMockDepositHistory(20));
   }, []);
-  
+
   // 실시간 업데이트 시뮬레이션
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveDeposits(prevDeposits => 
-        prevDeposits.map(deposit => {
+      setActiveDeposits((prevDeposits) =>
+        prevDeposits.map((deposit) => {
           // 진행 중인 상태만 업데이트
-          if (deposit.status === "confirming" && deposit.currentConfirmations < deposit.requiredConfirmations) {
+          if (
+            deposit.status === "confirming" &&
+            deposit.currentConfirmations < deposit.requiredConfirmations
+          ) {
             const newConfirmations = Math.min(
               deposit.currentConfirmations + Math.floor(Math.random() * 2) + 1,
               deposit.requiredConfirmations + 2
             );
-            
+
             let newStatus = deposit.status as any;
             if (newConfirmations >= deposit.requiredConfirmations) {
               newStatus = Math.random() > 0.1 ? "confirmed" : "credited";
             }
-            
+
             return {
               ...deposit,
               currentConfirmations: newConfirmations,
               status: newStatus as any,
-              confirmedAt: newStatus === "confirmed" || newStatus === "credited" 
-                ? new Date().toISOString() 
-                : deposit.confirmedAt,
-              creditedAt: newStatus === "credited" 
-                ? new Date().toISOString()
-                : deposit.creditedAt
+              confirmedAt:
+                newStatus === "confirmed" || newStatus === "credited"
+                  ? new Date().toISOString()
+                  : deposit.confirmedAt,
+              creditedAt:
+                newStatus === "credited"
+                  ? new Date().toISOString()
+                  : deposit.creditedAt,
             };
           }
-          
+
           // confirmed 상태를 credited로 전환
           if (deposit.status === "confirmed" && Math.random() < 0.3) {
             return {
               ...deposit,
               status: "credited" as any,
-              creditedAt: new Date().toISOString()
+              creditedAt: new Date().toISOString(),
             };
           }
-          
+
           return deposit;
         })
       );
-      
+
       // 새로운 입금 감지 시뮬레이션 (5% 확률)
       if (Math.random() < 0.05) {
         const newDeposit = generateMockDeposits(1)[0];
-        setActiveDeposits(prev => [newDeposit, ...prev.slice(0, 9)]); // 최대 10개 유지
+        setActiveDeposits((prev) => [newDeposit, ...prev.slice(0, 9)]); // 최대 10개 유지
       }
     }, 5000); // 5초마다 업데이트
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -328,7 +339,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">입금 관리</h1>
           <p className="text-gray-600 mt-1">
-            암호화폐 자산 입금 주소 관리 및 진행 상황 추적
+            가산자산 자산 입금 주소 관리 및 진행 상황 추적
           </p>
         </div>
         <button
@@ -339,20 +350,22 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
           자산 추가
         </button>
       </div>
-      
-      
+
       {/* 진행 중인 입금 현황 */}
-      {activeDeposits.filter(d => d.status !== "credited").length > 0 && (
+      {activeDeposits.filter((d) => d.status !== "credited").length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">진행 중인 입금</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              진행 중인 입금
+            </h2>
             <span className="text-sm text-gray-500">
-              실시간 업데이트 중 • {activeDeposits.filter(d => d.status !== "credited").length}건
+              실시간 업데이트 중 •{" "}
+              {activeDeposits.filter((d) => d.status !== "credited").length}건
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeDeposits
-              .filter(deposit => deposit.status !== "credited")
+              .filter((deposit) => deposit.status !== "credited")
               .slice(0, 6)
               .map((deposit) => (
                 <DepositProgressCard
@@ -370,7 +383,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
 
       {/* 입금 주소 관리 섹션 */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">입금 주소 관리</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          입금 주소 관리
+        </h2>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -440,7 +455,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{asset.network}</div>
+                      <div className="text-sm text-gray-900">
+                        {asset.network}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2 max-w-xs">
@@ -448,7 +465,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           {asset.depositAddress}
                         </div>
                         <button
-                          onClick={() => handleCopyAddress(asset.depositAddress)}
+                          onClick={() =>
+                            handleCopyAddress(asset.depositAddress)
+                          }
                           className="p-2 text-gray-500 hover:text-primary-600 transition-colors flex-shrink-0"
                           title="주소 복사"
                         >
@@ -490,7 +509,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
             </table>
           </div>
         </div>
-        
+
         {assets.length === 0 && (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -511,7 +530,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
           </div>
         )}
       </div>
-      
+
       {/* 입금 히스토리 섹션 */}
       <div>
         <DepositHistoryTable deposits={depositHistory} />
@@ -522,9 +541,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                자산 추가
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">자산 추가</h3>
               <button
                 onClick={() => setShowAddAsset(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -559,15 +576,25 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       }}
                       className={`p-3 border-2 rounded-lg transition-all duration-200 hover:shadow-md ${
                         selectedAsset === asset.symbol
-                          ? 'border-primary-500 bg-primary-50 text-primary-700'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                          ? "border-primary-500 bg-primary-50 text-primary-700"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                       }`}
                     >
                       <div className="flex flex-col items-center space-y-1.5">
                         {asset.symbol === "CUSTOM_ERC20" ? (
                           <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
                             </svg>
                           </div>
                         ) : (
@@ -576,7 +603,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                             alt={asset.symbol}
                             className="w-8 h-8 rounded-full"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              (
+                                e.target as HTMLImageElement
+                              ).src = `data:image/svg+xml;base64,${btoa(`
                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
                                   <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
                                   <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
@@ -590,12 +619,17 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                         <div className="text-center">
                           <div className="text-xs font-semibold">
                             {asset.symbol}
-                            {(asset.symbol === "USDT" || asset.symbol === "USDC") && (
-                              <span className="ml-1 text-xs text-blue-600 font-normal">ERC20</span>
+                            {(asset.symbol === "USDT" ||
+                              asset.symbol === "USDC") && (
+                              <span className="ml-1 text-xs text-blue-600 font-normal">
+                                ERC20
+                              </span>
                             )}
                           </div>
                           <div className="text-xs text-gray-500 truncate max-w-full leading-tight">
-                            {asset.symbol === "CUSTOM_ERC20" ? "Custom" : asset.name}
+                            {asset.symbol === "CUSTOM_ERC20"
+                              ? "Custom"
+                              : asset.name}
                           </div>
                         </div>
                       </div>
@@ -607,8 +641,10 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
               {/* Custom ERC-20 입력 필드들 */}
               {showCustomERC20 && (
                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
-                  <h4 className="text-sm font-medium text-gray-900">Custom ERC-20 토큰 정보</h4>
-                  
+                  <h4 className="text-sm font-medium text-gray-900">
+                    Custom ERC-20 토큰 정보
+                  </h4>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -617,7 +653,12 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       <input
                         type="text"
                         value={customERC20.symbol}
-                        onChange={(e) => setCustomERC20({...customERC20, symbol: e.target.value.toUpperCase()})}
+                        onChange={(e) =>
+                          setCustomERC20({
+                            ...customERC20,
+                            symbol: e.target.value.toUpperCase(),
+                          })
+                        }
                         placeholder="예: USDT"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
@@ -629,7 +670,12 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       <input
                         type="text"
                         value={customERC20.name}
-                        onChange={(e) => setCustomERC20({...customERC20, name: e.target.value})}
+                        onChange={(e) =>
+                          setCustomERC20({
+                            ...customERC20,
+                            name: e.target.value,
+                          })
+                        }
                         placeholder="예: Tether USD"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
@@ -643,7 +689,12 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                     <input
                       type="text"
                       value={customERC20.contractAddress}
-                      onChange={(e) => setCustomERC20({...customERC20, contractAddress: e.target.value})}
+                      onChange={(e) =>
+                        setCustomERC20({
+                          ...customERC20,
+                          contractAddress: e.target.value,
+                        })
+                      }
                       placeholder="0x..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
                     />
@@ -662,14 +713,14 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           if (file) {
                             // 파일 크기 제한 (2MB)
                             if (file.size > 2 * 1024 * 1024) {
-                              alert('파일 크기는 2MB를 초과할 수 없습니다.');
+                              alert("파일 크기는 2MB를 초과할 수 없습니다.");
                               return;
                             }
-                            
+
                             const reader = new FileReader();
                             reader.onload = (event) => {
                               const result = event.target?.result as string;
-                              setCustomERC20({...customERC20, image: result});
+                              setCustomERC20({ ...customERC20, image: result });
                               setImagePreview(result);
                             };
                             reader.readAsDataURL(file);
@@ -682,8 +733,18 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                         htmlFor="logo-upload"
                         className="flex items-center px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                       >
-                        <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        <svg
+                          className="w-4 h-4 mr-2 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
                         </svg>
                         <span className="text-sm text-gray-700">파일 선택</span>
                       </label>
@@ -697,11 +758,13 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           <button
                             type="button"
                             onClick={() => {
-                              setCustomERC20({...customERC20, image: ""});
+                              setCustomERC20({ ...customERC20, image: "" });
                               setImagePreview("");
                               // 파일 입력 초기화
-                              const input = document.getElementById('logo-upload') as HTMLInputElement;
-                              if (input) input.value = '';
+                              const input = document.getElementById(
+                                "logo-upload"
+                              ) as HTMLInputElement;
+                              if (input) input.value = "";
                             }}
                             className="text-red-500 hover:text-red-700 text-sm"
                           >
@@ -722,7 +785,12 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                     <input
                       type="url"
                       value={customERC20.priceApiUrl}
-                      onChange={(e) => setCustomERC20({...customERC20, priceApiUrl: e.target.value})}
+                      onChange={(e) =>
+                        setCustomERC20({
+                          ...customERC20,
+                          priceApiUrl: e.target.value,
+                        })
+                      }
                       placeholder="https://api.example.com/price"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
@@ -732,7 +800,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                   </div>
 
                   <div className="text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
-                    <strong>주의:</strong> 컨트랙트 주소가 정확한지 확인해주세요. 잘못된 주소로 인한 손실에 대해 책임지지 않습니다.
+                    <strong>주의:</strong> 컨트랙트 주소가 정확한지
+                    확인해주세요. 잘못된 주소로 인한 손실에 대해 책임지지
+                    않습니다.
                   </div>
                 </div>
               )}
@@ -751,13 +821,19 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                   onClick={() => {
                     if (selectedAsset === "CUSTOM_ERC20") {
                       // Custom ERC-20 토큰 검증 및 추가
-                      if (customERC20.symbol && customERC20.name && customERC20.contractAddress) {
+                      if (
+                        customERC20.symbol &&
+                        customERC20.name &&
+                        customERC20.contractAddress
+                      ) {
                         const newAsset: Asset = {
                           id: Date.now().toString(),
                           symbol: customERC20.symbol,
                           name: customERC20.name,
                           network: "Ethereum (ERC-20)",
-                          icon: customERC20.image || `data:image/svg+xml;base64,${btoa(`
+                          icon:
+                            customERC20.image ||
+                            `data:image/svg+xml;base64,${btoa(`
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
                               <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
                               <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
@@ -769,7 +845,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           qrCode: "",
                           isActive: true,
                           contractAddress: customERC20.contractAddress,
-                          priceApiUrl: customERC20.priceApiUrl
+                          priceApiUrl: customERC20.priceApiUrl,
                         };
                         setAssets([...assets, newAsset]);
                         setShowAddAsset(false);
@@ -786,7 +862,9 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       }
                     } else if (selectedAsset) {
                       // 일반 자산 추가
-                      const assetInfo = availableAssets.find(a => a.symbol === selectedAsset);
+                      const assetInfo = availableAssets.find(
+                        (a) => a.symbol === selectedAsset
+                      );
                       if (assetInfo) {
                         const newAsset: Asset = {
                           id: Date.now().toString(),
@@ -794,9 +872,11 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           name: assetInfo.name,
                           network: assetInfo.network,
                           icon: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${assetInfo.symbol.toLowerCase()}.png`,
-                          depositAddress: generateDepositAddress(assetInfo.symbol),
+                          depositAddress: generateDepositAddress(
+                            assetInfo.symbol
+                          ),
                           qrCode: "",
-                          isActive: true
+                          isActive: true,
                         };
                         setAssets([...assets, newAsset]);
                         setShowAddAsset(false);
@@ -805,8 +885,10 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                     }
                   }}
                   disabled={
-                    selectedAsset === "CUSTOM_ERC20" 
-                      ? !customERC20.symbol || !customERC20.name || !customERC20.contractAddress
+                    selectedAsset === "CUSTOM_ERC20"
+                      ? !customERC20.symbol ||
+                        !customERC20.name ||
+                        !customERC20.contractAddress
                       : !selectedAsset
                   }
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
