@@ -26,11 +26,13 @@ import {
   WalletGroup, 
   ExpenseRequest 
 } from "@/types/groups";
-import { mockGroups, mockExpenses } from "@/data/groupMockData";
+import { mockGroups, mockExpenses, mockGroupRequests } from "@/data/groupMockData";
 import GroupManagement from "@/components/groups/GroupManagement";
+import GroupApprovalTab from "@/components/groups/GroupApprovalTab";
 import PendingApproval from "@/components/groups/PendingApproval";
 import ApprovalCompleted from "@/components/groups/ApprovalCompleted";
 import BudgetStatus from "@/components/groups/BudgetStatus";
+import RejectedManagementTab from "@/components/groups/RejectedManagementTab";
 import { CreateWithdrawalModal } from "@/components/withdrawal/CreateWithdrawalModal";
 import { networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
 import {
@@ -53,7 +55,7 @@ import {
 
 interface GroupWalletManagementProps {
   plan: ServicePlan;
-  initialTab?: "groups" | "pending" | "completed" | "budget";
+  initialTab?: "groups" | "approval" | "pending" | "completed" | "budget" | "rejected";
 }
 
 
@@ -126,7 +128,7 @@ export default function GroupWalletManagement({
     description: "",
     priority: "medium" as const,
   });
-  const [activeTab, setActiveTab] = useState<"groups" | "pending" | "completed" | "budget">(
+  const [activeTab, setActiveTab] = useState<"groups" | "approval" | "pending" | "completed" | "budget" | "rejected">(
     initialTab || "groups"
   );
 
@@ -138,7 +140,7 @@ export default function GroupWalletManagement({
   }, [initialTab]);
 
   // 탭 변경 함수 (URL도 함께 변경)
-  const handleTabChange = (newTab: "groups" | "pending" | "completed" | "budget") => {
+  const handleTabChange = (newTab: "groups" | "approval" | "pending" | "completed" | "budget" | "rejected") => {
     setActiveTab(newTab);
     router.push(`/groups/${newTab}`);
   };
@@ -189,6 +191,21 @@ export default function GroupWalletManagement({
     alert("출금 신청이 완료되었습니다.");
   };
 
+  // 재승인 요청 처리
+  const handleReapprovalRequest = (requestId: string) => {
+    console.log("Re-approving group request:", requestId);
+    // TODO: 실제 재승인 처리 로직 (rejected를 pending으로 변경)
+    alert("재승인 요청이 처리되어 승인 대기 상태로 변경되었습니다.");
+    handleTabChange("approval");
+  };
+
+  // 처리완료 (아카이브) 처리
+  const handleArchiveRequest = (requestId: string) => {
+    console.log("Archiving group request:", requestId);
+    // TODO: 실제 아카이브 처리 로직 (rejected를 archived로 변경)
+    alert("처리완료 되었습니다.");
+  };
+
   if (plan !== "enterprise") {
     return (
       <div className="flex items-center justify-center h-64">
@@ -237,19 +254,31 @@ export default function GroupWalletManagement({
         <nav className="flex space-x-8">
           {[
             { id: "groups", name: "그룹 관리", icon: UserGroupIcon },
-            { 
-              id: "pending", 
-              name: "승인 대기", 
-              icon: ClockIcon,
-              count: mockExpenses.filter(e => e.status === 'pending' || e.status === 'rejected').length 
+            {
+              id: "approval",
+              name: "그룹 승인",
+              icon: BanknotesIcon,
+              count: mockGroups.filter(g => g.status === 'pending').length || 2
             },
-            { 
-              id: "completed", 
-              name: "승인 완료", 
+            {
+              id: "pending",
+              name: "승인 대기",
+              icon: ClockIcon,
+              count: mockExpenses.filter(e => e.status === 'pending' || e.status === 'rejected').length
+            },
+            {
+              id: "completed",
+              name: "승인 완료",
               icon: CheckCircleIcon,
-              count: mockExpenses.filter(e => e.status === 'approved').length 
+              count: mockExpenses.filter(e => e.status === 'approved').length
             },
             { id: "budget", name: "예산 현황", icon: ChartBarIcon },
+            {
+              id: "rejected",
+              name: "반려/보류 관리",
+              icon: XCircleIcon,
+              count: mockGroupRequests.filter(r => r.status === 'rejected' || r.status === 'archived').length
+            },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -278,11 +307,37 @@ export default function GroupWalletManagement({
 
       {/* 그룹 관리 탭 */}
       {activeTab === "groups" && (
-        <GroupManagement 
+        <GroupManagement
           showCreateModal={showCreateModal}
           onCloseCreateModal={() => setShowCreateModal(false)}
           onCreateGroup={() => {
             // 그룹 생성 후 처리 로직
+          }}
+          onCreateGroupRequest={(request) => {
+            console.log("Group creation request submitted:", request);
+            // TODO: 실제 API 호출을 통해 요청 저장
+            // 잠시 후 승인 탭으로 이동
+            setTimeout(() => {
+              handleTabChange("approval");
+            }, 1000);
+          }}
+        />
+      )}
+
+      {/* 그룹 승인 탭 */}
+      {activeTab === "approval" && (
+        <GroupApprovalTab
+          onApproveRequest={(requestId) => {
+            console.log("Approving group request:", requestId);
+            // TODO: 실제 승인 처리 로직
+          }}
+          onRejectRequest={(requestId, reason) => {
+            console.log("Rejecting group request:", requestId, "Reason:", reason);
+            // TODO: 실제 반려 처리 로직
+          }}
+          onReapproveRequest={(requestId) => {
+            console.log("Re-approving group request:", requestId);
+            // TODO: 재승인 처리 로직
           }}
         />
       )}
@@ -301,6 +356,15 @@ export default function GroupWalletManagement({
 
       {/* 예산 현황 탭 */}
       {activeTab === "budget" && <BudgetStatus />}
+
+      {/* 반려/보류 관리 탭 */}
+      {activeTab === "rejected" && (
+        <RejectedManagementTab
+          groupRequests={mockGroupRequests}
+          onReapprovalRequest={handleReapprovalRequest}
+          onArchive={handleArchiveRequest}
+        />
+      )}
 
 
 

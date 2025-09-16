@@ -1,4 +1,4 @@
-import { WalletGroup, ExpenseRequest } from '@/types/groups';
+import { WalletGroup, ExpenseRequest, GroupCreationRequest } from '@/types/groups';
 import { MOCK_USERS } from '@/data/userMockData';
 
 export const mockGroups: WalletGroup[] = [
@@ -253,4 +253,135 @@ export const mockExpenses: ExpenseRequest[] = [
     status: "rejected",
     rejectedReason: "효과 분석 후 재신청 요청",
   },
+];
+
+export const mockGroupRequests: GroupCreationRequest[] = [
+  {
+    id: "req-1",
+    name: "신규 마케팅팀",
+    type: "department",
+    description: "신제품 출시를 위한 마케팅 전담팀",
+    monthlyBudget: { amount: 2000, currency: 'USDC' },
+    quarterlyBudget: { amount: 6000, currency: 'USDC' },
+    yearlyBudget: { amount: 24000, currency: 'USDC' },
+    manager: "박신규",
+    status: "pending",
+    requestedBy: "박신규",
+    requestedAt: "2025-01-15T09:30:00Z",
+    requiredApprovals: ["김매니저", "박재무", "최관리"],
+    approvals: [
+      {
+        userId: "manager001",
+        userName: "김매니저",
+        approvedAt: "2025-01-15T14:30:00Z"
+      }
+    ],
+    rejections: []
+  },
+  {
+    id: "req-2",
+    name: "AI 연구 프로젝트팀",
+    type: "project",
+    description: "차세대 AI 기술 연구개발 프로젝트",
+    monthlyBudget: { amount: 5.0, currency: 'ETH' },
+    quarterlyBudget: { amount: 15.0, currency: 'ETH' },
+    yearlyBudget: { amount: 60.0, currency: 'ETH' },
+    manager: "이연구",
+    status: "pending",
+    requestedBy: "이연구",
+    requestedAt: "2025-01-14T16:20:00Z",
+    requiredApprovals: ["이기술", "최관리", "박재무"],
+    approvals: [],
+    rejections: []
+  },
+  {
+    id: "req-3",
+    name: "보안 강화팀",
+    type: "team",
+    description: "시스템 보안 및 컴플라이언스 전담팀",
+    monthlyBudget: { amount: 1.2, currency: 'BTC' },
+    quarterlyBudget: { amount: 3.6, currency: 'BTC' },
+    yearlyBudget: { amount: 14.4, currency: 'BTC' },
+    manager: "윤보안",
+    status: "rejected",
+    requestedBy: "윤보안",
+    requestedAt: "2025-01-13T11:45:00Z",
+    requiredApprovals: ["이기술", "김매니저", "박재무"],
+    approvals: [
+      {
+        userId: "tech001",
+        userName: "이기술",
+        approvedAt: "2025-01-13T15:20:00Z"
+      }
+    ],
+    rejections: [
+      {
+        userId: "manager001",
+        userName: "김매니저",
+        rejectedAt: "2025-01-14T10:15:00Z",
+        reason: "현재 예산 상황상 추가 팀 신설은 어려움. 기존 IT 인프라팀과 통합 고려 필요"
+      }
+    ],
+    rejectedAt: "2025-01-14T10:15:00Z",
+    rejectedReason: "현재 예산 상황상 추가 팀 신설은 어려움. 기존 IT 인프라팀과 통합 고려 필요"
+  },
+  {
+    id: "req-4",
+    name: "글로벌 사업팀",
+    type: "department",
+    description: "해외 시장 진출을 위한 사업 개발팀",
+    monthlyBudget: { amount: 800, currency: 'SOL' },
+    quarterlyBudget: { amount: 2400, currency: 'SOL' },
+    yearlyBudget: { amount: 9600, currency: 'SOL' },
+    manager: "정글로벌",
+    status: "approved",
+    requestedBy: "정글로벌",
+    requestedAt: "2025-01-10T08:00:00Z",
+    requiredApprovals: ["최관리", "박재무"],
+    approvals: [
+      {
+        userId: "manager002",
+        userName: "최관리",
+        approvedAt: "2025-01-10T16:30:00Z"
+      },
+      {
+        userId: "finance001",
+        userName: "박재무",
+        approvedAt: "2025-01-11T09:45:00Z"
+      }
+    ],
+    rejections: [],
+    approvedAt: "2025-01-11T09:45:00Z"
+  },
+  {
+    id: "req-5",
+    name: "블록체인 연구팀",
+    type: "team",
+    description: "차세대 블록체인 기술 연구 및 개발팀",
+    monthlyBudget: { amount: 3.0, currency: 'BTC' },
+    quarterlyBudget: { amount: 9.0, currency: 'BTC' },
+    yearlyBudget: { amount: 36.0, currency: 'BTC' },
+    manager: "임블록",
+    status: "archived",
+    requestedBy: "임블록",
+    requestedAt: "2025-01-08T10:00:00Z",
+    requiredApprovals: ["이기술", "최관리", "박재무"],
+    approvals: [
+      {
+        userId: "tech001",
+        userName: "이기술",
+        approvedAt: "2025-01-08T14:30:00Z"
+      }
+    ],
+    rejections: [
+      {
+        userId: "manager002",
+        userName: "최관리",
+        rejectedAt: "2025-01-09T11:20:00Z",
+        reason: "현재 연구팀이 너무 많아서 리소스 분산 우려. 기존 DeFi 연구팀과 통합을 고려해주세요."
+      }
+    ],
+    rejectedAt: "2025-01-09T11:20:00Z",
+    rejectedReason: "현재 연구팀이 너무 많아서 리소스 분산 우려. 기존 DeFi 연구팀과 통합을 고려해주세요."
+  }
 ];

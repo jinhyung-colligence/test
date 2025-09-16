@@ -30,6 +30,7 @@ interface GroupManagementProps {
   onCreateGroup?: () => void;
   showCreateModal?: boolean;
   onCloseCreateModal?: () => void;
+  onCreateGroupRequest?: (request: any) => void;
 }
 
 // 가상자산 아이콘 컴포넌트
@@ -65,7 +66,7 @@ const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => 
   );
 };
 
-export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal }: GroupManagementProps) {
+export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal, onCreateGroupRequest }: GroupManagementProps) {
   const [internalShowCreateModal, setInternalShowCreateModal] = useState(false);
   
   const showCreateModal = externalShowCreateModal !== undefined ? externalShowCreateModal : internalShowCreateModal;
@@ -81,10 +82,28 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
   });
 
   const handleCreateGroup = () => {
-    console.log("Creating group:", newGroup);
+    // 그룹 생성 요청 생성
+    const groupRequest = {
+      id: `req-${Date.now()}`,
+      ...newGroup,
+      status: "pending",
+      requestedBy: "현재사용자", // TODO: 실제 사용자 정보
+      requestedAt: new Date().toISOString(),
+      requiredApprovals: ["김매니저", "박재무", "최관리"], // TODO: 정책에 따른 결재자 선정
+      approvals: [],
+      rejections: []
+    };
+
+    console.log("Creating group approval request:", groupRequest);
+
+    if (onCreateGroupRequest) {
+      onCreateGroupRequest(groupRequest);
+    }
+
     if (onCreateGroup) {
       onCreateGroup();
     }
+
     handleCloseModal();
     setNewGroup({
       name: "",
@@ -95,6 +114,8 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       yearlyBudget: { amount: 0, currency: 'USDC' },
       manager: "",
     });
+
+    alert("그룹 생성 요청이 승인 대기 상태로 등록되었습니다.");
   };
 
   const handleCloseModal = () => {
@@ -109,7 +130,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     <>
       {/* 그룹 카드 목록 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {mockGroups.map((group) => {
+        {mockGroups.filter(group => !group.status || group.status === 'active').map((group) => {
           const usagePercentage = getBudgetUsagePercentage(group);
           const isOverBudget = usagePercentage > 100;
           const isNearLimit = usagePercentage > 80;
@@ -559,7 +580,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
-                  생성
+                  승인 요청
                 </button>
               </div>
             </form>

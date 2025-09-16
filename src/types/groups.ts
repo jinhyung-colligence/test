@@ -1,6 +1,20 @@
 export type GroupType = "department" | "project" | "team";
 export type ExpenseStatus = "pending" | "approved" | "rejected" | "draft";
+export type GroupStatus = "pending" | "approved" | "rejected" | "active" | "archived";
 export type CryptoCurrency = 'BTC' | 'ETH' | 'SOL' | 'USDC' | 'USDT';
+
+export interface ApprovalRecord {
+  userId: string;
+  userName: string;
+  approvedAt: string;
+}
+
+export interface RejectionRecord {
+  userId: string;
+  userName: string;
+  rejectedAt: string;
+  reason: string;
+}
 
 export interface CryptoAmount {
   amount: number;
@@ -22,6 +36,35 @@ export interface WalletGroup {
   members: string[];
   manager: string;
   createdAt: string;
+  status?: GroupStatus;
+  requestedBy?: string;
+  requestedAt?: string;
+  requiredApprovals?: string[];
+  approvals?: ApprovalRecord[];
+  rejections?: RejectionRecord[];
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectedReason?: string;
+}
+
+export interface GroupCreationRequest {
+  id: string;
+  name: string;
+  type: GroupType;
+  description: string;
+  monthlyBudget: CryptoAmount;
+  quarterlyBudget: CryptoAmount;
+  yearlyBudget: CryptoAmount;
+  manager: string;
+  status: GroupStatus;
+  requestedBy: string;
+  requestedAt: string;
+  requiredApprovals: string[];
+  approvals: ApprovalRecord[];
+  rejections: RejectionRecord[];
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectedReason?: string;
 }
 
 export interface ExpenseRequest {
