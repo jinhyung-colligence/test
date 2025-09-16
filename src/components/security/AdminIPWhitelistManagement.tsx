@@ -13,6 +13,7 @@ import {
   EyeSlashIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline'
+import { Modal } from '@/components/common/Modal'
 
 interface IPWhitelistEntry {
   id: string
@@ -342,9 +343,8 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
       </div>
 
       {/* IP 추가 모달 */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showAddModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">IP 대역 추가</h3>
               <button
@@ -427,9 +427,8 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
                 </button>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

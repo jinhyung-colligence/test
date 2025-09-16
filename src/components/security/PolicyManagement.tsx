@@ -6,6 +6,7 @@ import {
   ApprovalPolicy
 } from "@/utils/approverAssignment";
 import { CogIcon } from "@heroicons/react/24/outline";
+import { Modal } from "@/components/common/Modal";
 import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
 import { formatUserDisplay } from '@/utils/userHelpers';
 
@@ -360,9 +361,8 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
       </div>
 
       {/* Add Policy Modal */}
-      {showAddPolicyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showAddPolicyModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">새 정책 추가</h3>
               <button
@@ -516,9 +516,8 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
                 추가
               </button>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

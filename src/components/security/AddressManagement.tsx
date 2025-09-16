@@ -9,6 +9,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import { Modal } from "@/components/common/Modal";
 
 interface WhitelistedAddress {
   id: string;
@@ -216,9 +217,8 @@ export default function AddressManagement() {
       </div>
 
       {/* Travel Rule 경고 모달 */}
-      {showTravelRuleWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+      <Modal isOpen={showTravelRuleWarning}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
             <div className="flex items-start mb-4">
               <ExclamationTriangleIcon className="h-8 w-8 text-amber-500 mr-3 flex-shrink-0 mt-1" />
               <div>
@@ -273,141 +273,138 @@ export default function AddressManagement() {
                 이해했습니다
               </button>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 주소 추가 모달 */}
-      {showAddressModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">주소 추가</h3>
-              <button
-                onClick={() => setShowAddressModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+      <Modal isOpen={showAddressModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">주소 추가</h3>
+            <button
+              onClick={() => setShowAddressModal(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddAddress();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                라벨 *
+              </label>
+              <input
+                type="text"
+                required
+                value={newAddress.label}
+                onChange={(e) =>
+                  setNewAddress({ ...newAddress, label: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="예: 메인 BTC 지갑"
+              />
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddAddress();
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  라벨 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newAddress.label}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, label: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="예: 메인 BTC 지갑"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                주소 *
+              </label>
+              <textarea
+                required
+                value={newAddress.address}
+                onChange={(e) =>
+                  setNewAddress({ ...newAddress, address: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="출금할 주소를 입력하세요"
+                rows={3}
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  주소 *
-                </label>
-                <textarea
-                  required
-                  value={newAddress.address}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, address: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="출금할 주소를 입력하세요"
-                  rows={3}
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                코인 *
+              </label>
+              <select
+                value={newAddress.coin}
+                onChange={(e) =>
+                  setNewAddress({ ...newAddress, coin: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+                <option value="SOL">Solana (SOL)</option>
+                <option value="USDT">Tether (USDT)</option>
+                <option value="USDC">USD Coin (USDC)</option>
+              </select>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  코인 *
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                타입 *
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="addressType"
+                    value="personal"
+                    checked={newAddress.type === "personal"}
+                    onChange={(e) =>
+                      setNewAddress({
+                        ...newAddress,
+                        type: e.target.value as "personal" | "vasp",
+                      })
+                    }
+                    className="mr-2 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm">개인 지갑</span>
                 </label>
-                <select
-                  value={newAddress.coin}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, coin: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="BTC">Bitcoin (BTC)</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                  <option value="SOL">Solana (SOL)</option>
-                  <option value="USDT">Tether (USDT)</option>
-                  <option value="USDC">USD Coin (USDC)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  타입 *
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="addressType"
+                    value="vasp"
+                    checked={newAddress.type === "vasp"}
+                    onChange={(e) =>
+                      setNewAddress({
+                        ...newAddress,
+                        type: e.target.value as "personal" | "vasp",
+                      })
+                    }
+                    className="mr-2 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm">거래소/VASP</span>
                 </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="addressType"
-                      value="personal"
-                      checked={newAddress.type === "personal"}
-                      onChange={(e) =>
-                        setNewAddress({
-                          ...newAddress,
-                          type: e.target.value as "personal" | "vasp",
-                        })
-                      }
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">개인 지갑</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="addressType"
-                      value="vasp"
-                      checked={newAddress.type === "vasp"}
-                      onChange={(e) =>
-                        setNewAddress({
-                          ...newAddress,
-                          type: e.target.value as "personal" | "vasp",
-                        })
-                      }
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">거래소/VASP</span>
-                  </label>
-                </div>
               </div>
+            </div>
 
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddressModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  추가
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAddressModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                추가
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

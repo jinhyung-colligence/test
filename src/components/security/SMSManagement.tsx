@@ -9,6 +9,7 @@ import {
   XMarkIcon,
   PencilIcon
 } from '@heroicons/react/24/outline'
+import { Modal } from '@/components/common/Modal'
 
 interface SMSManagementProps {
   isVisible: boolean
@@ -237,9 +238,8 @@ export default function SMSManagement({
       </div>
 
       {/* 전화번호 설정/변경 모달 */}
-      {(showSetupModal || showEditModal) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showSetupModal || showEditModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 {showSetupModal ? '전화번호 등록' : '전화번호 변경'}
@@ -316,9 +316,8 @@ export default function SMSManagement({
                 </button>
               </div>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

@@ -11,6 +11,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
+import { Modal } from "@/components/common/Modal";
 import { ServicePlan } from "@/app/page";
 import OneWonVerification from "./OneWonVerification";
 
@@ -399,9 +400,8 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
       </div>
 
       {/* 계좌 연결 모달 */}
-      {showAccountModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal isOpen={showAccountModal}>
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900">계좌 연결</h3>
               <button
@@ -535,9 +535,8 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
                 </button>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 1원 인증 모달 */}
       {showOneWonVerification && pendingAccount && (

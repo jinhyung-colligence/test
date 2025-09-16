@@ -5,6 +5,7 @@ import { APPROVAL_POLICIES, TRANSACTION_TYPE_POLICIES } from "@/utils/approverAs
 import { MOCK_NOTIFICATION_LOGS, MOCK_NOTIFICATION_TEMPLATES } from "@/data/notificationMockData";
 import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
 import { formatUserDisplay } from '@/utils/userHelpers';
+import { Modal } from "@/components/common/Modal";
 
 interface NotificationCenterProps {
   initialSubtab?: 'logs' | 'templates' | 'settings';
@@ -1177,9 +1178,8 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
       </div>
 
       {/* 미리보기 모달 */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <Modal isOpen={showPreview}>
+        <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
             {/* 모달 헤더 */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -1294,9 +1294,8 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
                 </button>
               </div>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

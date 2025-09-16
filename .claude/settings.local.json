@@ -22,7 +22,11 @@
       "WebFetch(domain:test-ashen-beta-36.vercel.app)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(Remove-Item -Recurse -Force src/app/security/policies/type)"
+      "Bash(Remove-Item -Recurse -Force src/app/security/policies/type)",
+      "Bash(cat:*)",
+      "Bash(timeout 30s npm run build)",
+      "Read(///**)",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []
