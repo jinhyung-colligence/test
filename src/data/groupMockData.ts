@@ -361,11 +361,11 @@ export const mockGroupRequests: GroupCreationRequest[] = [
       startDate: '2025-09-01',
       endDate: '2025-12-31'
     },
-    manager: "9",
+    manager: "김매니저",
     status: "pending",
     requestedBy: "박신규",
     requestedAt: "2025-01-15T09:30:00Z",
-    requiredApprovals: ["9", "2", "4"],
+    requiredApprovals: ["김매니저", "최관리", "박재무"],
     approvals: [
       {
         userId: "manager001",
@@ -383,6 +383,23 @@ export const mockGroupRequests: GroupCreationRequest[] = [
     monthlyBudget: { amount: 5.0, currency: 'ETH' },
     quarterlyBudget: { amount: 15.0, currency: 'ETH' },
     yearlyBudget: { amount: 60.0, currency: 'ETH' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'quarterly',
+      baseAmount: 15.0,
+      currency: 'ETH',
+      selectedQuarter: 4,
+      quarterlyBudgets: [{ quarter: 4, amount: 15.0 }],
+      monthlyBudgets: [
+        { month: 10, amount: 5.0 },
+        { month: 11, amount: 5.0 },
+        { month: 12, amount: 5.0 }
+      ],
+      remainingMonths: [10, 11, 12],
+      remainingQuarters: [4],
+      startDate: '2025-10-01',
+      endDate: '2025-12-31'
+    },
     manager: "이연구",
     status: "pending",
     requestedBy: "이연구",
@@ -430,6 +447,19 @@ export const mockGroupRequests: GroupCreationRequest[] = [
     monthlyBudget: { amount: 800, currency: 'SOL' },
     quarterlyBudget: { amount: 2400, currency: 'SOL' },
     yearlyBudget: { amount: 9600, currency: 'SOL' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'monthly',
+      baseAmount: 800,
+      currency: 'SOL',
+      selectedMonth: 11,
+      quarterlyBudgets: [],
+      monthlyBudgets: [{ month: 11, amount: 800 }],
+      remainingMonths: [11],
+      remainingQuarters: [4],
+      startDate: '2025-11-01',
+      endDate: '2025-11-30'
+    },
     manager: "정글로벌",
     status: "approved",
     requestedBy: "정글로벌",

@@ -361,19 +361,21 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="text-sm">
-                          <span className="text-gray-500">월간:</span> {formatCryptoAmountWithIcon(request.monthlyBudget)}
-                        </div>
-                        {request.quarterlyBudget.amount > 0 && (
-                          <div className="text-sm">
-                            <span className="text-gray-500">분기:</span> {formatCryptoAmountWithIcon(request.quarterlyBudget)}
-                          </div>
-                        )}
-                        {request.yearlyBudget.amount > 0 && (
-                          <div className="text-sm">
+                      <div className="text-sm">
+                        {request.budgetSetup?.baseType === 'yearly' && request.yearlyBudget.amount > 0 && (
+                          <>
                             <span className="text-gray-500">연간:</span> {formatCryptoAmountWithIcon(request.yearlyBudget)}
-                          </div>
+                          </>
+                        )}
+                        {request.budgetSetup?.baseType === 'quarterly' && request.quarterlyBudget.amount > 0 && (
+                          <>
+                            <span className="text-gray-500">분기:</span> {formatCryptoAmountWithIcon(request.quarterlyBudget)}
+                          </>
+                        )}
+                        {request.budgetSetup?.baseType === 'monthly' && (
+                          <>
+                            <span className="text-gray-500">월간:</span> {formatCryptoAmountWithIcon(request.monthlyBudget)}
+                          </>
                         )}
                       </div>
                     </td>
@@ -519,92 +521,123 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
 
           {/* 메인 콘텐츠 */}
           <div className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* 왼쪽: 그룹 요약 */}
-              <div className="lg:col-span-1">
-                <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                  그룹 요약
-                </h5>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 왼쪽: 그룹 정보 */}
+              <div>
+                <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">그룹 정보</h5>
                 <div className="space-y-4">
-                  {/* 그룹 기본 정보 */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">그룹명</span>
-                        <span className="font-medium">{selectedRequest.name}</span>
+                  {/* 기본 정보 */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">그룹명</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{selectedRequest.name}</p>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">유형</span>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(selectedRequest.type)}`}>
-                          {getTypeName(selectedRequest.type)}
-                        </span>
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">유형</span>
+                        <div className="mt-1">
+                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(selectedRequest.type)}`}>
+                            {getTypeName(selectedRequest.type)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">관리자</span>
-                        <span className="font-medium">{selectedRequest.manager}</span>
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">관리자</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{selectedRequest.manager}</p>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">요청자</span>
-                        <span className="font-medium">{selectedRequest.requestedBy}</span>
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">기준 년도</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{selectedRequest.budgetSetup?.year || '미설정'}년</p>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">요청일</span>
-                        <span className="font-medium">{formatDate(selectedRequest.requestedAt)}</span>
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">요청일</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(selectedRequest.requestedAt)}</p>
                       </div>
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">기준 통화</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">{selectedRequest.budgetSetup?.currency || '미설정'}</p>
+                      </div>
+                    </div>
+
+                    {/* 그룹 설명 */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">그룹 설명</span>
+                      <p className="text-sm text-gray-700 mt-2 leading-relaxed">
+                        {selectedRequest.description}
+                      </p>
                     </div>
                   </div>
 
-                  {/* 상세 설명 */}
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h6 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                      <DocumentTextIcon className="w-4 h-4 mr-2 text-gray-500" />
-                      그룹 설명
-                    </h6>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {selectedRequest.description}
-                    </p>
-                  </div>
+                  {/* 예산 설정 정보 */}
+                  {selectedRequest.budgetSetup && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">예산 설정 상세</h5>
+                      <div className="bg-white border border-gray-200 rounded-lg p-5">
 
-                  {/* 예산 정보 */}
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h6 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <BanknotesIcon className="w-4 h-4 mr-2 text-gray-500" />
-                      예산 정보
-                    </h6>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">월간 예산:</span>
-                        {formatCryptoAmountWithIcon(selectedRequest.monthlyBudget)}
+                      {/* 예산 기준 정보 */}
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-800">
+                            {selectedRequest.budgetSetup.baseType === 'yearly' ? '연간 기준' :
+                             selectedRequest.budgetSetup.baseType === 'quarterly' ? '분기 기준' : '월간 기준'} 예산
+                          </span>
+                          <span className="text-lg font-bold text-gray-900">
+                            {selectedRequest.budgetSetup.baseAmount.toLocaleString()} {selectedRequest.budgetSetup.currency}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          기간: {selectedRequest.budgetSetup.startDate} ~ {selectedRequest.budgetSetup.endDate}
+                        </div>
                       </div>
-                      {selectedRequest.quarterlyBudget.amount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">분기 예산:</span>
-                          {formatCryptoAmountWithIcon(selectedRequest.quarterlyBudget)}
+
+                      {/* 분기별 예산 (연간인 경우) */}
+                      {selectedRequest.budgetSetup.baseType === 'yearly' && selectedRequest.budgetSetup.quarterlyBudgets.length > 0 && (
+                        <div className="mb-4">
+                          <div className="text-xs font-medium text-gray-700 mb-2 block">분기별 분배</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {selectedRequest.budgetSetup.quarterlyBudgets.map((qb) => (
+                              <div key={qb.quarter} className="bg-gray-50 border border-gray-200 rounded p-3">
+                                <div className="text-xs text-gray-500">{qb.quarter}분기</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {qb.amount.toLocaleString()} {selectedRequest.budgetSetup!.currency}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
-                      {selectedRequest.yearlyBudget.amount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">연간 예산:</span>
-                          {formatCryptoAmountWithIcon(selectedRequest.yearlyBudget)}
+
+                      {/* 월별 예산 */}
+                      <div>
+                        <div className="text-xs font-medium text-gray-700 mb-2 block">월별 분배</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedRequest.budgetSetup.monthlyBudgets.map((mb) => (
+                            <div key={mb.month} className="bg-gray-50 border border-gray-200 rounded p-3">
+                              <div className="text-xs text-gray-500">{mb.month}월</div>
+                              <div className="text-sm font-semibold text-gray-900">
+                                {mb.amount.toLocaleString()} {selectedRequest.budgetSetup!.currency}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      )}
+                      </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
               {/* 오른쪽: 결재 정보 */}
-              <div className="lg:col-span-2">
-                <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                  결재 정보
-                </h5>
+              <div>
+                <h5 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">결재 정보</h5>
                 <div className="space-y-4">
-                  {/* 필수 결재자 승인 현황 */}
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+
+                  {/* 결재자별 상세 현황 */}
+                  <div className="bg-gray-50 p-4 rounded-lg border">
                     <h6 className="text-sm font-medium text-gray-700 mb-3">
                       필수 결재자 승인 현황
                     </h6>
-                    <div className="space-y-2">
+                    <div className="space-y-3 mb-4">
                       {selectedRequest.requiredApprovals.map((approver, index) => {
                         const state = getApprovalState(approver, selectedRequest, index);
 
@@ -634,25 +667,21 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                       })}
                     </div>
 
-                    {/* 진행률 표시 */}
-                    <div className="mt-4 pt-3 border-t border-gray-200">
+                    {/* 진행률 요약 */}
+                    <div className="pt-3 border-t border-gray-200">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">
                           승인 진행률: {selectedRequest.approvals.length}/{selectedRequest.requiredApprovals.length}
                           {selectedRequest.rejections.length > 0 && ` (반려 ${selectedRequest.rejections.length}건)`}
                         </span>
                         <span className={`font-medium ${
-                          selectedRequest.status === 'rejected'
-                            ? 'text-red-600'
-                            : selectedRequest.approvals.length === selectedRequest.requiredApprovals.length
-                              ? 'text-green-600'
-                              : 'text-blue-600'
+                          selectedRequest.status === 'rejected' ? 'text-red-600' :
+                          selectedRequest.status === 'approved' ? 'text-green-600' :
+                          'text-blue-600'
                         }`}>
-                          {selectedRequest.status === 'rejected'
-                            ? '반려됨'
-                            : selectedRequest.approvals.length === selectedRequest.requiredApprovals.length
-                              ? '결재완료'
-                              : '결재진행중'}
+                          {selectedRequest.status === 'rejected' ? '반려됨' :
+                           selectedRequest.status === 'approved' ? '승인 완료' :
+                           '진행 중'}
                         </span>
                       </div>
                     </div>
@@ -660,80 +689,81 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
 
                   {/* 반려 사유 상세 (반려된 경우) */}
                   {selectedRequest.status === 'rejected' && selectedRequest.rejectedReason && (
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <div className="flex items-center mb-3">
-                        <svg
-                          className="w-5 h-5 text-gray-600 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
+                    <div className="bg-white border border-red-200 rounded-lg p-5">
+                      <h6 className="text-sm font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
-                        <span className="text-sm font-medium text-gray-800">
-                          반려 사유 상세
-                        </span>
-                      </div>
-                      <div className="bg-white p-3 rounded border">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700">
-                            반려 사유
-                          </span>
-                          <span className="text-xs text-gray-500">
+                        반려 사유
+                      </h6>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-red-900">반려자</span>
+                          <span className="text-xs text-red-700">
                             {selectedRequest.rejectedAt ? formatDate(selectedRequest.rejectedAt) : formatDate(selectedRequest.requestedAt)}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-800 mb-2">
-                          {selectedRequest.rejectedReason}
-                        </p>
-                        <div className="text-xs text-gray-500">
-                          반려자: {selectedRequest.rejections[0]?.userName || '관리자'}
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-red-900">
+                            {selectedRequest.rejections[0]?.userName || '관리자'}
+                          </span>
+                        </div>
+                        <div className="bg-white border border-red-200 rounded p-3">
+                          <p className="text-sm text-gray-800 leading-relaxed">
+                            {selectedRequest.rejectedReason}
+                          </p>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* 액션 버튼 */}
-                  <div className="flex justify-end space-x-3">
-                    {selectedRequest.status === 'pending' && (
-                      <>
+                  {(selectedRequest.status === 'pending' || selectedRequest.status === 'rejected') && (
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                      {selectedRequest.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              handleApproveRequest(selectedRequest.id);
+                              setSelectedRequest(null);
+                            }}
+                            className="flex items-center px-6 py-3 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            승인
+                          </button>
+                          <button
+                            onClick={() => {
+                              openRejectModal(selectedRequest.id);
+                              setSelectedRequest(null);
+                            }}
+                            className="flex items-center px-6 py-3 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            반려
+                          </button>
+                        </>
+                      )}
+                      {selectedRequest.status === 'rejected' && (
                         <button
                           onClick={() => {
-                            handleApproveRequest(selectedRequest.id);
+                            handleReapproveRequest(selectedRequest.id);
                             setSelectedRequest(null);
                           }}
-                          className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                          className="flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                         >
-                          승인
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          재승인 처리
                         </button>
-                        <button
-                          onClick={() => {
-                            openRejectModal(selectedRequest.id);
-                            setSelectedRequest(null);
-                          }}
-                          className="px-6 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-                        >
-                          반려
-                        </button>
-                      </>
-                    )}
-                    {selectedRequest.status === 'rejected' && (
-                      <button
-                        onClick={() => {
-                          handleReapproveRequest(selectedRequest.id);
-                          setSelectedRequest(null);
-                        }}
-                        className="px-6 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        재승인 처리
-                      </button>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
