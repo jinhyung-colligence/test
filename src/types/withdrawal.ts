@@ -85,3 +85,36 @@ export interface WithdrawalManagementProps {
   plan: ServicePlan;
   initialTab?: "approval" | "airgap" | "audit" | "rejected";
 }
+
+// 승인 인증 관련 타입
+export type AuthenticationStep = "otp" | "sms" | "complete";
+
+export type AuthenticationStatus = "pending" | "verified" | "failed" | "expired";
+
+export interface ApprovalAuthStep {
+  step: AuthenticationStep;
+  status: AuthenticationStatus;
+  attempts: number;
+  maxAttempts: number;
+  expiresAt?: string;
+  verifiedAt?: string;
+}
+
+export interface ApprovalAuthSession {
+  requestId: string;
+  sessionId: string;
+  initiatedAt: string;
+  otpAuth: ApprovalAuthStep;
+  smsAuth: ApprovalAuthStep;
+  isCompleted: boolean;
+  completedAt?: string;
+  failureReason?: string;
+}
+
+export interface UserAuthInfo {
+  userId: string;
+  userName: string;
+  phoneNumber: string;
+  hasOtpEnabled: boolean;
+  hasSmsEnabled: boolean;
+}

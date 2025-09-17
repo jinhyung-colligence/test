@@ -413,7 +413,7 @@ export default function ApprovalTab({
                             onClick={() => onApproval(request.id, "approve")}
                             className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                           >
-                            승인
+                            승인 (OTP + SMS 인증)
                           </button>
                           <button
                             onClick={() => onApproval(request.id, "reject")}
