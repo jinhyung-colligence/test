@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { ServicePlan } from '@/app/page'
 import Sidebar from './Sidebar'
 import AssetOverview from './AssetOverview'
@@ -23,6 +24,28 @@ export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'd
 export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
   const { isCollapsed } = useSidebar()
+  const pathname = usePathname()
+
+  // URL 변경에 따라 activeTab 업데이트
+  useEffect(() => {
+    const getTabFromPathname = (): DashboardTab => {
+      if (pathname.startsWith('/withdrawal')) return 'withdrawal'
+      if (pathname.startsWith('/groups')) return 'groups'
+      if (pathname.startsWith('/services')) return 'services'
+      if (pathname.startsWith('/security')) return 'security'
+
+      switch (pathname) {
+        case '/overview': return 'overview'
+        case '/transactions': return 'transactions'
+        case '/users': return 'users'
+        case '/deposit': return 'deposit'
+        case '/': return 'overview'
+        default: return 'overview'
+      }
+    }
+
+    setActiveTab(getTabFromPathname())
+  }, [pathname])
 
   const renderContent = () => {
     switch (activeTab) {

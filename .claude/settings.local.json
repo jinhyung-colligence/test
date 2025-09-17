@@ -28,7 +28,8 @@
       "Read(///**)",
       "Read(//tmp/**)",
       "Bash(npm run lint)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DepositHistory } from "@/types/deposit";
 import { Modal } from "@/components/common/Modal";
 import { formatAmount, formatDateTime } from "@/utils/depositHelpers";
@@ -22,6 +22,10 @@ export default function DepositHistoryTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDeposit, setSelectedDeposit] = useState<string | null>(null);
   const [copiedHash, setCopiedHash] = useState<string>("");
+
+  // 동적 truncate를 위한 ref와 상태
+  const txHashRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+  const [txHashMaxChars, setTxHashMaxChars] = useState<{ [key: string]: number }>({});
 
   // 필터링 로직
   const getFilteredDeposits = () => {
@@ -90,10 +94,77 @@ export default function DepositHistoryTable({
   // 고유 자산 목록 생성
   const uniqueAssets = Array.from(new Set(deposits.map(d => d.asset)));
 
-  const truncateHash = (hash: string, length: number = 12) => {
-    if (hash.length <= length) return hash;
-    return `${hash.substring(0, length/2)}...${hash.substring(hash.length - length/2)}`;
+  // 동적 truncate 함수 (CLAUDE.md 규칙 적용)
+  const calculateMaxChars = (element: HTMLElement | null) => {
+    if (!element) return 45; // 기본값
+
+    const containerWidth = element.offsetWidth;
+    const fontSize = 0.75; // rem - text-xs
+    const basePixelSize = 16; // 1rem = 16px
+    const charWidth = fontSize * basePixelSize * 0.6; // monospace 문자 너비
+    const padding = 8; // 여백
+    const buttonWidth = 40; // 복사 버튼 너비
+
+    const availableWidth = containerWidth - padding - buttonWidth;
+    const maxChars = Math.floor(availableWidth / charWidth);
+
+    // 최소 20자, 최대 100자로 제한
+    return Math.max(20, Math.min(100, maxChars));
   };
+
+  const truncateDynamic = (text: string, maxChars: number) => {
+    if (!text || text.length <= maxChars) {
+      return text;
+    }
+
+    const dotsLength = 3;
+    const availableChars = maxChars - dotsLength;
+
+    // 앞 65%, 뒤 35% 비율로 분배
+    const frontChars = Math.ceil(availableChars * 0.65);
+    const backChars = availableChars - frontChars;
+
+    return `${text.slice(0, frontChars)}...${text.slice(-backChars)}`;
+  };
+
+  // 트랜잭션 해시 최대 문자 수 업데이트
+  const updateTxHashMaxChars = () => {
+    const newMaxChars: { [key: string]: number } = {};
+    Object.keys(txHashRefs.current).forEach(depositId => {
+      const element = txHashRefs.current[depositId];
+      if (element) {
+        newMaxChars[depositId] = calculateMaxChars(element);
+      }
+    });
+    setTxHashMaxChars(newMaxChars);
+  };
+
+  // ResizeObserver로 크기 변경 감지
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      updateTxHashMaxChars();
+    });
+
+    // 모든 트랜잭션 해시 요소 관찰
+    Object.values(txHashRefs.current).forEach(element => {
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    // 윈도우 리사이즈도 감지
+    window.addEventListener('resize', updateTxHashMaxChars);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateTxHashMaxChars);
+    };
+  }, [currentPage, searchTerm, statusFilter, assetFilter, dateFilter]); // 의존성을 안정적인 값들로 변경
+
+  // 초기 계산
+  useEffect(() => {
+    updateTxHashMaxChars();
+  }, [currentPage, searchTerm, statusFilter, assetFilter, dateFilter]);
 
   const truncateAddress = (address: string, length: number = 16) => {
     if (address.length <= length) return address;
@@ -216,7 +287,7 @@ export default function DepositHistoryTable({
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-36">
                       금액
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-40">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-56">
                       트랜잭션 해시
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase w-20">
@@ -277,12 +348,21 @@ export default function DepositHistoryTable({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-1">
-                          <code className="text-xs font-mono text-gray-700">
-                            {truncateHash(deposit.txHash)}
+                          <code
+                            ref={(el) => {
+                              txHashRefs.current[deposit.id] = el;
+                            }}
+                            className="text-xs font-mono text-gray-700 break-all flex-1"
+                            title={deposit.txHash}
+                          >
+                            {truncateDynamic(
+                              deposit.txHash,
+                              txHashMaxChars[deposit.id] || 45
+                            )}
                           </code>
                           <button
                             onClick={() => handleCopyHash(deposit.txHash)}
-                            className="ml-1 p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                            className="ml-1 p-1 text-gray-400 hover:text-primary-600 transition-colors flex-shrink-0"
                             title="트랜잭션 해시 복사"
                           >
                             {copiedHash === deposit.txHash ? (
