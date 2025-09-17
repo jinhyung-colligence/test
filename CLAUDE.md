@@ -1,72 +1,145 @@
-# WithdrawalManagement 리팩토링 진행상황
+# Claude 설정
 
-## 🎯 목표
-- 대형 파일 (4756 라인) 을 관리 가능한 크기로 분할
-- 재사용 가능한 컴포넌트 구조 구축
-- 4000 라인 미만 달성 ✅
+## 언어 설정
+- 모든 피드백과 응답은 한국어로 제공
 
-## 📊 현재 상황 (2025-01-15)
-- **원본**: 4756 라인 
-- **현재**: 3998 라인
-- **감소량**: 758 라인 (15.9% 감소)
-- **상태**: ✅ 4000라인 미만 목표 달성
+## 자동화 규칙
+- 필요 시 자동으로 빌드 실행
+- 개발 서버 실행 시 명령어 종료 전에 자동으로 서버 종료
+- 작업 완료 후 관련 프로세스들을 정리하여 시스템 리소스 확보
 
-## ✅ 완료된 작업
+## 명령어
+- 빌드: `npm run build`
+- 개발 서버: `npm run dev`
+- 타입 체크: `npm run typecheck`
+- 린트: `npm run lint`
 
-### 1. 기본 인프라 구축
-- `src/types/withdrawal.ts` - 모든 타입 정의
-- `src/utils/withdrawalHelpers.ts` - 유틸리티 함수들
-- `src/components/withdrawal/StatusBadge.tsx` - 상태 뱃지
-- `src/components/withdrawal/PriorityBadge.tsx` - 우선순위 뱃지
+## 블록체인 주소/해시 표시 규칙
 
-### 2. 테이블 행 컴포넌트 분리 (완료)
-- ✅ `WithdrawalTableRow.tsx` (107라인) - 일반 테이블 행, approval 기능 지원
-- ✅ `ProcessingTableRow.tsx` (133라인) - 처리 상태 전용 (progress bar, queue info)
-- ✅ `RejectedTableRow.tsx` (150라인) - 반려/아카이브 전용 (재신청, 처리완료 버튼)
+### 기본 원칙
+- **모든 블록체인 관련 데이터**(주소, 트랜잭션 해시 등)는 동적 truncate 방식 사용
+- **타입별 구분 없음**: 이더리움, 비트코인, 트랜잭션 해시 모두 동일한 로직 적용
+- **컨테이너 너비에 맞춰 최대한 표시**: 여백 없이 꽉 찬 표시
 
-### 3. 탭 컴포넌트 (진행중)
-- ✅ `SubmittedTab.tsx` (252라인) - 생성완료, **미적용 상태**
+### 구현 방법
 
-## 🚧 다음 단계 계획
-
-### 단계별 탭 분리 (안전한 순서)
-1. **반려/아카이브 탭** → `RejectedTab.tsx` (가장 안전, RejectedTableRow 이미 완성)
-2. **출금 처리 탭** → `ProcessingTab.tsx` (ProcessingTableRow 이미 완성)  
-3. **결재 탭** → `ApprovalTab.tsx` (WithdrawalTableRow 재사용)
-4. **출금 신청 탭** → SubmittedTab.tsx 적용
-
-### 각 단계별 체크포인트
-- [ ] 분리 전 라인 수 확인
-- [ ] 컴포넌트 생성
-- [ ] 메인 컴포넌트에 적용
-- [ ] `npm run build` 테스트
-- [ ] 성공 시 다음 단계, 실패 시 롤백
-
-## 📁 파일 구조
-```
-src/
-├── types/
-│   └── withdrawal.ts
-├── utils/
-│   └── withdrawalHelpers.ts
-└── components/
-    ├── WithdrawalManagement.tsx (3998 라인)
-    └── withdrawal/
-        ├── StatusBadge.tsx
-        ├── PriorityBadge.tsx
-        ├── WithdrawalTableRow.tsx
-        ├── ProcessingTableRow.tsx  
-        ├── RejectedTableRow.tsx
-        └── SubmittedTab.tsx (미적용)
+#### 1. 필수 imports
+```typescript
+import { useState, useRef, useEffect } from "react";
 ```
 
-## 🔧 기술적 고려사항
-- 모든 컴포넌트는 TypeScript로 작성
-- props 인터페이스 명시적 정의
-- 재사용 가능한 구조 유지
-- 빌드 에러 없이 안전한 리팩토링
+#### 2. 상태 및 ref 설정
+```typescript
+// 각 필드별 ref
+const fieldRef = useRef<HTMLDivElement>(null);
 
-## 📝 참고사항
-- 각 탭 컴포넌트는 독립적인 상태 관리와 페이지네이션 로직 포함
-- detail panel과 modal은 아직 분리하지 않음 (향후 과제)
-- 모든 기존 기능 정상 작동 확인됨
+// 동적 문자 수 상태
+const [maxChars, setMaxChars] = useState(45); // 기본값
+```
+
+#### 3. 너비 계산 함수
+```typescript
+const calculateMaxChars = (element: HTMLElement | null) => {
+  if (!element) return 45; // 기본값
+
+  const containerWidth = element.offsetWidth;
+  const fontSize = 0.65; // rem - text-[0.65rem]
+  const basePixelSize = 16; // 1rem = 16px
+  const charWidth = fontSize * basePixelSize * 0.6; // monospace 문자 너비
+  const padding = 16; // px-2 (8px * 2)
+  const buttonWidth = 40; // 복사 버튼 너비
+
+  const availableWidth = containerWidth - padding - buttonWidth;
+  const maxChars = Math.floor(availableWidth / charWidth);
+
+  // 최소 20자, 최대 100자로 제한
+  return Math.max(20, Math.min(100, maxChars));
+};
+```
+
+#### 4. 동적 truncate 함수
+```typescript
+const truncateDynamic = (text: string, maxChars: number) => {
+  if (!text || text.length <= maxChars) {
+    return text;
+  }
+
+  const dotsLength = 3;
+  const availableChars = maxChars - dotsLength;
+
+  // 앞 65%, 뒤 35% 비율로 분배
+  const frontChars = Math.ceil(availableChars * 0.65);
+  const backChars = availableChars - frontChars;
+
+  return `${text.slice(0, frontChars)}...${text.slice(-backChars)}`;
+};
+```
+
+#### 5. ResizeObserver 설정
+```typescript
+useEffect(() => {
+  const updateMaxChars = () => {
+    setMaxChars(calculateMaxChars(fieldRef.current));
+  };
+
+  updateMaxChars(); // 초기 계산
+
+  const observer = new ResizeObserver(() => {
+    updateMaxChars();
+  });
+
+  if (fieldRef.current) {
+    observer.observe(fieldRef.current);
+  }
+
+  window.addEventListener('resize', updateMaxChars);
+
+  return () => {
+    observer.disconnect();
+    window.removeEventListener('resize', updateMaxChars);
+  };
+}, []);
+```
+
+#### 6. JSX 적용
+```typescript
+<div className="space-y-2" ref={fieldRef}>
+  <div className="flex items-center justify-between">
+    <div className="flex items-center">
+      <span className="text-sm font-medium text-gray-700">주소/해시</span>
+    </div>
+    <button onClick={() => copyToClipboard(fullText, 'field')}>
+      복사
+    </button>
+  </div>
+  <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={fullText}>
+    {truncateDynamic(fullText, maxChars)}
+  </div>
+</div>
+```
+
+### CSS 스타일 가이드
+```css
+.blockchain-field {
+  font-family: monospace;
+  font-size: 0.65rem;
+  line-height: 1.25;
+  padding: 6px 8px;
+  word-break: break-all;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+}
+```
+
+### 사용 예시
+- **이더리움 주소**: `0x742d35Cc6634C0532925a3b844Bc9e7595...f0bEb0`
+- **비트코인 주소**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx...x0wlh`
+- **트랜잭션 해시**: `0xabcd12345678901234567890abcdef1234567...cdef01`
+
+### 장점
+1. **반응형**: 화면 크기에 따라 자동 조정
+2. **일관성**: 모든 블록체인 데이터 동일한 방식
+3. **최적화**: 여백 없이 최대한 많은 정보 표시
+4. **사용성**: 복사 기능은 전체 데이터, 표시는 축약
+5. **성능**: ResizeObserver로 효율적인 반응형 처리

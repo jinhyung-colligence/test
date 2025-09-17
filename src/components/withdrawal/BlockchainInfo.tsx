@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { formatDateTime } from "@/utils/withdrawalHelpers";
 
@@ -8,6 +8,37 @@ interface BlockchainInfoProps {
 
 export function BlockchainInfo({ request }: BlockchainInfoProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // 동적 truncate를 위한 ref와 상태
+  const networkRef = useRef<HTMLDivElement>(null);
+  const txHashRef = useRef<HTMLDivElement>(null);
+  const fromAddressRef = useRef<HTMLDivElement>(null);
+  const toAddressRef = useRef<HTMLDivElement>(null);
+
+  const [maxChars, setMaxChars] = useState({
+    network: 20,
+    txHash: 45,
+    fromAddress: 45,
+    toAddress: 45,
+  });
+
+  // 컨테이너 너비를 기반으로 최대 문자 수 계산
+  const calculateMaxChars = (element: HTMLElement | null) => {
+    if (!element) return 45; // 기본값
+
+    const containerWidth = element.offsetWidth;
+    const fontSize = 0.65; // rem - text-[0.65rem]
+    const basePixelSize = 16; // 1rem = 16px (기본)
+    const charWidth = fontSize * basePixelSize * 0.6; // monospace 문자 너비 (대략)
+    const padding = 16; // px-2 (8px * 2)
+    const buttonWidth = 40; // 복사 버튼 너비
+
+    const availableWidth = containerWidth - padding - buttonWidth;
+    const maxChars = Math.floor(availableWidth / charWidth);
+
+    // 최소 20자, 최대 100자로 제한
+    return Math.max(20, Math.min(100, maxChars));
+  };
 
   const copyToClipboard = async (text: string, fieldName: string) => {
     try {
@@ -19,27 +50,57 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
     }
   };
 
-  const truncateMiddle = (text: string, frontLength: number = 8, backLength: number = 8) => {
-    if (!text || text.length <= frontLength + backLength) {
+  // 동적 truncate 함수 - 컨테이너 너비에 맞춰 최대한 표시
+  const truncateDynamic = (text: string, maxChars: number) => {
+    if (!text || text.length <= maxChars) {
       return text;
     }
-    return `${text.slice(0, frontLength)}...${text.slice(-backLength)}`;
+
+    const dotsLength = 3;
+    const availableChars = maxChars - dotsLength;
+
+    // 앞 65%, 뒤 35% 비율로 분배
+    const frontChars = Math.ceil(availableChars * 0.65);
+    const backChars = availableChars - frontChars;
+
+    return `${text.slice(0, frontChars)}...${text.slice(-backChars)}`;
   };
 
-  // 4단 그리드 너비에 최적화된 받은 주소 truncate 함수
-  const truncateToAddress = (address: string) => {
-    if (!address) return '';
+  // 컨테이너 크기 변경 감지 및 문자 수 업데이트
+  useEffect(() => {
+    const updateMaxChars = () => {
+      setMaxChars({
+        network: calculateMaxChars(networkRef.current),
+        txHash: calculateMaxChars(txHashRef.current),
+        fromAddress: calculateMaxChars(fromAddressRef.current),
+        toAddress: calculateMaxChars(toAddressRef.current),
+      });
+    };
 
-    // 작은 글자크기와 4단 그리드 너비를 고려한 최적화
-    if (address.length <= 30) {
-      return address; // 30자 이하는 전체 표시
-    }
+    // 초기 계산
+    updateMaxChars();
 
-    // 4단 그리드 내에서 최대한 표시: 앞 18자, 뒤 10자 (총 28자 + "..." = 31자)
-    // 이더리움 주소 (42자): 0x742d35Cc6634C0532925...9e7595f0bEb0
-    // 비트코인 주소 (62자): bc1qxy2kgdygjrsqtzq2n0y...kjhx0wlh
-    return `${address.slice(0, 18)}...${address.slice(-10)}`;
-  };
+    // ResizeObserver로 크기 변경 감지
+    const observer = new ResizeObserver(() => {
+      updateMaxChars();
+    });
+
+    // 모든 ref 요소 관찰
+    const refs = [networkRef, txHashRef, fromAddressRef, toAddressRef];
+    refs.forEach(ref => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    // 윈도우 리사이즈도 감지
+    window.addEventListener('resize', updateMaxChars);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateMaxChars);
+    };
+  }, []);
 
   const getNetworkInfo = (currency: string) => {
     switch (currency) {
@@ -65,7 +126,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
       <div className="bg-gray-50 p-4 rounded-lg border">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 네트워크 */}
-          <div className="space-y-2">
+          <div className="space-y-2" ref={networkRef}>
             <div className="flex items-center">
               <svg
                 className="w-4 h-4 text-gray-600 mr-2"
@@ -88,7 +149,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
           </div>
 
           {/* 트랜잭션 해시 */}
-          <div className="space-y-2">
+          <div className="space-y-2" ref={txHashRef}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <svg
@@ -116,12 +177,12 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
               )}
             </div>
             <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash || '트랜잭션 실행 전'}>
-              {request.txHash ? truncateMiddle(request.txHash, 18, 10) : '트랜잭션 실행 전'}
+              {request.txHash ? truncateDynamic(request.txHash, maxChars.txHash) : '트랜잭션 실행 전'}
             </div>
           </div>
 
           {/* 보낸 주소 */}
-          <div className="space-y-2">
+          <div className="space-y-2" ref={fromAddressRef}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <svg
@@ -149,11 +210,11 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
               )}
             </div>
             <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash ? request.fromAddress : '트랜잭션 실행 전'}>
-              {request.txHash ? truncateMiddle(request.fromAddress, 18, 10) : '트랜잭션 실행 전'}
+              {request.txHash ? truncateDynamic(request.fromAddress, maxChars.fromAddress) : '트랜잭션 실행 전'}
             </div>
           </div>
           {/* 받은 주소 */}
-          <div className="space-y-2">
+          <div className="space-y-2" ref={toAddressRef}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <svg
@@ -179,7 +240,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
               </button>
             </div>
             <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.toAddress}>
-              {truncateToAddress(request.toAddress)}
+              {truncateDynamic(request.toAddress, maxChars.toAddress)}
             </div>
           </div>
         </div>

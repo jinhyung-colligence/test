@@ -311,10 +311,39 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
   const handleCreateGroup = () => {
     const validApprovers = requiredApprovers.filter(id => id !== "");
 
+    // budgetSetup에서 기존 예산 필드로 데이터 복사
+    const getCurrentMonthBudget = () => {
+      if (newGroup.budgetSetup) {
+        const currentMonth = new Date().getMonth() + 1;
+        const monthBudget = newGroup.budgetSetup.monthlyBudgets.find(mb => mb.month === currentMonth);
+        return { amount: monthBudget?.amount || 0, currency: newGroup.budgetSetup.currency };
+      }
+      return newGroup.monthlyBudget;
+    };
+
+    const getCurrentQuarterBudget = () => {
+      if (newGroup.budgetSetup) {
+        const currentQuarter = Math.floor(new Date().getMonth() / 3) + 1;
+        const quarterBudget = newGroup.budgetSetup.quarterlyBudgets.find(qb => qb.quarter === currentQuarter);
+        return { amount: quarterBudget?.amount || 0, currency: newGroup.budgetSetup.currency };
+      }
+      return newGroup.quarterlyBudget;
+    };
+
+    const getYearlyBudget = () => {
+      if (newGroup.budgetSetup) {
+        return { amount: newGroup.budgetSetup.yearlyBudget || 0, currency: newGroup.budgetSetup.currency };
+      }
+      return newGroup.yearlyBudget;
+    };
+
     // 그룹 생성 요청 생성
     const groupRequest = {
       id: `req-${Date.now()}`,
       ...newGroup,
+      monthlyBudget: getCurrentMonthBudget(),
+      quarterlyBudget: getCurrentQuarterBudget(),
+      yearlyBudget: getYearlyBudget(),
       status: "pending",
       requestedBy: "현재사용자", // TODO: 실제 사용자 정보
       requestedAt: new Date().toISOString(),

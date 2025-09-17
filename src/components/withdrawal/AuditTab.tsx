@@ -199,13 +199,13 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                   return (
                     <div
                       key={request.id}
-                      className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                      className="bg-white p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                     >
-                      {/* 컴팩트한 헤더 */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <span className="text-sm font-medium text-gray-500">
+                      {/* 편안한 레이아웃 */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-sm text-gray-500 font-medium">
                               #{request.id}
                             </span>
                             <span
@@ -216,23 +216,17 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                               {getStatusInfo(request.status).name}
                             </span>
                           </div>
-                          <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                          <h3 className="text-base font-semibold text-gray-900 mb-1">
                             {request.title}
-                          </h4>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>기안자: {request.initiator}</span>
-                            <span>
-                              {formatAmount(request.amount, request.currency)}{" "}
-                              {request.currency}
-                            </span>
-                            <span>{formatDate(request.initiatedAt)}</span>
-                          </div>
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {request.initiator}
+                          </p>
                         </div>
 
-                        {/* 토글 버튼 */}
                         <button
                           onClick={() => toggleItemExpanded(request.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
                         >
                           {isExpanded ? "접기" : "상세보기"}
                           <svg
@@ -253,6 +247,21 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                         </button>
                       </div>
 
+                      {/* 중요 정보 - 자연스럽게 표시 */}
+                      <div className="flex items-center gap-8 pt-2 border-t border-gray-100">
+                        <div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatAmount(request.amount, request.currency)} {request.currency}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">출금 금액</div>
+                        </div>
+                        <div>
+                          <div className="text-base font-semibold text-gray-900">
+                            {formatDate(request.initiatedAt)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">신청 날짜</div>
+                        </div>
+                      </div>
                       {/* 상세보기 펼침/접힘 */}
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t border-gray-100">
@@ -304,7 +313,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                             )}
                                             {entry.userName && (
                                               <p className="text-xs text-gray-600">
-                                                담당자: {entry.userName}
+                                                담당자: {request.initiator}
                                               </p>
                                             )}
                                           </>

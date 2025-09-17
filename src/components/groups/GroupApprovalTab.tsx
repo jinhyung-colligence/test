@@ -11,6 +11,7 @@ import {
 import { GroupCreationRequest } from "@/types/groups";
 import { Modal } from "@/components/common/Modal";
 import { mockGroupRequests } from "@/data/groupMockData";
+import { MOCK_USERS } from "@/data/userMockData";
 import {
   getCryptoIconUrl,
   formatCryptoAmount,
@@ -20,7 +21,14 @@ import {
 } from "@/utils/groupsUtils";
 import GroupApprovalAuthModal from "./GroupApprovalAuthModal";
 
+// User ID로 사용자 이름 가져오기
+const getUserNameById = (userId: string): string => {
+  const user = MOCK_USERS.find(u => u.id === userId);
+  return user ? user.name : userId; // ID를 찾지 못하면 ID 자체를 반환
+};
+
 interface GroupApprovalTabProps {
+  groupRequests?: GroupCreationRequest[];
   onApproveRequest?: (requestId: string) => void;
   onRejectRequest?: (requestId: string, reason: string) => void;
   onReapproveRequest?: (requestId: string) => void;
@@ -55,7 +63,11 @@ const formatCryptoAmountWithIcon = (cryptoAmount: any) => {
 };
 
 export default function GroupApprovalTab(props: GroupApprovalTabProps) {
-  const { onApproveRequest, onRejectRequest, onReapproveRequest } = props;
+  const { groupRequests, onApproveRequest, onRejectRequest, onReapproveRequest } = props;
+
+  // props로 받은 데이터를 우선 사용하고, 없으면 mock 데이터 사용
+  const requests = groupRequests || mockGroupRequests;
+
   const [selectedRequest, setSelectedRequest] =
     useState<GroupCreationRequest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -167,7 +179,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
   // 필터링 및 페이지네이션 로직
   const getFilteredRequests = () => {
     // 반려 및 아카이브된 항목 제외 (pending, approved만 표시)
-    let filtered = mockGroupRequests.filter(
+    let filtered = requests.filter(
       (request) => request.status === "pending" || request.status === "approved"
     );
 
@@ -183,8 +195,8 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
         (request) =>
           request.name.toLowerCase().includes(searchLower) ||
           request.description.toLowerCase().includes(searchLower) ||
-          request.requestedBy.toLowerCase().includes(searchLower) ||
-          request.manager.toLowerCase().includes(searchLower)
+          getUserNameById(request.requestedBy).toLowerCase().includes(searchLower) ||
+          getUserNameById(request.manager).toLowerCase().includes(searchLower)
       );
     }
 
@@ -481,7 +493,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                           {request.description}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          관리자: {request.manager}
+                          관리자: {getUserNameById(request.manager)}
                         </p>
                       </div>
                     </td>
@@ -512,7 +524,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.requestedBy}
+                      {getUserNameById(request.requestedBy)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(request.requestedAt)}
@@ -704,7 +716,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                           관리자
                         </span>
                         <p className="text-sm font-medium text-gray-900 mt-1">
-                          {selectedRequest.manager}
+                          {getUserNameById(selectedRequest.manager)}
                         </p>
                       </div>
                       <div>
@@ -866,7 +878,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                                       {index + 1}.
                                     </span>
                                     <span className="text-sm text-gray-900 font-medium">
-                                      {approver}
+                                      {getUserNameById(approver)}
                                     </span>
                                   </div>
                                 </div>
@@ -1118,7 +1130,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
             </div>
 
             {(() => {
-              const request = mockGroupRequests.find(
+              const request = requests.find(
                 (r) => r.id === showApprovalModal.requestId
               );
               if (!request) return null;
@@ -1153,13 +1165,13 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
                       <div>
                         <span className="text-gray-500">요청자:</span>
                         <span className="ml-1 font-medium">
-                          {request.requestedBy}
+                          {getUserNameById(request.requestedBy)}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-500">관리자:</span>
                         <span className="ml-1 font-medium">
-                          {request.manager}
+                          {getUserNameById(request.manager)}
                         </span>
                       </div>
                       <div>
@@ -1249,7 +1261,7 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
         isOpen={showAuthModal}
         request={
           pendingApprovalRequest
-            ? mockGroupRequests.find((r) => r.id === pendingApprovalRequest) ||
+            ? requests.find((r) => r.id === pendingApprovalRequest) ||
               null
             : null
         }

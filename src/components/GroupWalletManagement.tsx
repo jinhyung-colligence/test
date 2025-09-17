@@ -25,6 +25,7 @@ import {
   CryptoAmount,
   WalletGroup,
   ExpenseRequest,
+  GroupCreationRequest,
 } from "@/types/groups";
 import {
   mockGroups,
@@ -144,12 +145,35 @@ export default function GroupWalletManagement({
     "groups" | "approval" | "budget" | "rejected"
   >(initialTab || "groups");
 
+  // 그룹 생성 요청 상태 관리 (localStorage와 동기화)
+  const [groupRequests, setGroupRequests] = useState<GroupCreationRequest[]>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('groupRequests');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (error) {
+          console.error('Error parsing stored groupRequests:', error);
+        }
+      }
+    }
+    return [...mockGroupRequests];
+  });
+
   // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab);
     }
   }, [initialTab]);
+
+  // groupRequests가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('groupRequests', JSON.stringify(groupRequests));
+      console.log('Saved to localStorage:', groupRequests);
+    }
+  }, [groupRequests]);
 
   // 탭 변경 함수 (URL도 함께 변경)
   const handleTabChange = (
@@ -300,7 +324,10 @@ export default function GroupWalletManagement({
           }}
           onCreateGroupRequest={(request) => {
             console.log("Group creation request submitted:", request);
-            // TODO: 실제 API 호출을 통해 요청 저장
+
+            // 새 요청을 상태에 추가 (최신 요청이 맨 위에 오도록)
+            setGroupRequests(prev => [request, ...prev]);
+
             // 잠시 후 승인 탭으로 이동
             setTimeout(() => {
               handleTabChange("approval");
@@ -312,10 +339,11 @@ export default function GroupWalletManagement({
       {/* 그룹 승인 탭 */}
       {activeTab === "approval" && (
         <GroupApprovalTab
-          onApproveRequest={(requestId) => {
-            console.log("Approving group request:", requestId);
-            // TODO: 실제 승인 처리 로직
-          }}
+            groupRequests={groupRequests}
+            onApproveRequest={(requestId) => {
+              console.log("Approving group request:", requestId);
+              // TODO: 실제 승인 처리 로직
+            }}
           onRejectRequest={(requestId, reason) => {
             console.log(
               "Rejecting group request:",
