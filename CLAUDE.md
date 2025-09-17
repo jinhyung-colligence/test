@@ -9,6 +9,16 @@
 - **이모지 아이콘 사용 금지**: 코드 내에서 이모지 문자(🚀, ⚠️, ✅ 등)를 사용하지 않음
 - 시각적 표현이 필요한 경우 SVG 아이콘이나 CSS 클래스 사용 권장
 
+### 컬러 사용 금지 규칙
+
+- **초록색 계열 컬러 사용 금지**: `bg-green-*`, `text-green-*`, `border-green-*` 등 초록색 계열 클래스 사용 금지
+- **금지 사유**: 시각적 피로감 유발 및 가독성 저하
+- **대체 컬러**:
+  - 성공/안전: `bg-blue-50 border-blue-200 text-blue-800` (파란색 계열)
+  - 정보/알림: `bg-indigo-50 border-indigo-200 text-indigo-800` (인디고 계열)
+  - 중요/강조: `bg-primary-50 border-primary-200 text-primary-800` (프라이머리 컬러)
+  - 긍정적 상태: `bg-sky-50 border-sky-200 text-sky-800` (하늘색 계열)
+
 ## 자동화 규칙
 
 - 필요 시 자동으로 빌드 실행

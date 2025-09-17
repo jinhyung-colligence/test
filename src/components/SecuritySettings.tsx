@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   ShieldCheckIcon,
@@ -39,16 +39,25 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
 
   // 탭 변경 함수 (URL도 함께 변경)
   const handleTabChange = (newTab: "security" | "addresses" | "accounts" | "policies" | "notifications") => {
+    // 상태 업데이트
     setActiveTab(newTab);
-    if (newTab === "notifications") {
-      // 알림 설정의 경우 서브탭을 포함한 URL로 이동
-      router.push(`/security/notifications/logs`);
-    } else if (newTab === "policies") {
-      // 정책 설정의 경우 금액별 정책의 USD로 기본 이동
-      router.push(`/security/policies/amount/USD`);
-    } else {
-      router.push(`/security/${newTab}`);
-    }
+
+    // 타겟 URL 결정
+    const targetUrl = (() => {
+      switch (newTab) {
+        case "notifications":
+          return `/security/notifications/logs`;
+        case "policies":
+          return `/security/policies/amount/USD`;
+        default:
+          return `/security/${newTab}`;
+      }
+    })();
+
+    // startTransition을 사용하여 비동기적으로 라우팅 처리
+    startTransition(() => {
+      router.push(targetUrl);
+    });
   };
 
   return (

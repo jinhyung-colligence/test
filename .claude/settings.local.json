@@ -29,7 +29,10 @@
       "Read(//tmp/**)",
       "Bash(npm run lint)",
       "Bash(rm:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(printf \"\\n\")",
+      "Bash(xargs kill:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []
