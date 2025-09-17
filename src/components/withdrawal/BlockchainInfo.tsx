@@ -19,6 +19,28 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
     }
   };
 
+  const truncateMiddle = (text: string, frontLength: number = 8, backLength: number = 8) => {
+    if (!text || text.length <= frontLength + backLength) {
+      return text;
+    }
+    return `${text.slice(0, frontLength)}...${text.slice(-backLength)}`;
+  };
+
+  // 4단 그리드 너비에 최적화된 받은 주소 truncate 함수
+  const truncateToAddress = (address: string) => {
+    if (!address) return '';
+
+    // 작은 글자크기와 4단 그리드 너비를 고려한 최적화
+    if (address.length <= 30) {
+      return address; // 30자 이하는 전체 표시
+    }
+
+    // 4단 그리드 내에서 최대한 표시: 앞 18자, 뒤 10자 (총 28자 + "..." = 31자)
+    // 이더리움 주소 (42자): 0x742d35Cc6634C0532925...9e7595f0bEb0
+    // 비트코인 주소 (62자): bc1qxy2kgdygjrsqtzq2n0y...kjhx0wlh
+    return `${address.slice(0, 18)}...${address.slice(-10)}`;
+  };
+
   const getNetworkInfo = (currency: string) => {
     switch (currency) {
       case 'BTC':
@@ -93,8 +115,8 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 </button>
               )}
             </div>
-            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-              {request.txHash || '트랜잭션 실행 전'}
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash || '트랜잭션 실행 전'}>
+              {request.txHash ? truncateMiddle(request.txHash, 18, 10) : '트랜잭션 실행 전'}
             </div>
           </div>
 
@@ -126,11 +148,10 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 </button>
               )}
             </div>
-            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-              {request.txHash ? request.fromAddress : '트랜잭션 실행 전'}
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash ? request.fromAddress : '트랜잭션 실행 전'}>
+              {request.txHash ? truncateMiddle(request.fromAddress, 18, 10) : '트랜잭션 실행 전'}
             </div>
           </div>
-
           {/* 받은 주소 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -157,8 +178,8 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 {copiedField === 'toAddress' ? '복사됨' : '복사'}
               </button>
             </div>
-            <div className="font-mono text-xs text-gray-900 bg-white px-3 py-2 rounded border break-all">
-              {request.toAddress}
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.toAddress}>
+              {truncateToAddress(request.toAddress)}
             </div>
           </div>
         </div>
