@@ -18,6 +18,7 @@ import {
   getTypeName,
   formatDate,
 } from "@/utils/groupsUtils";
+import GroupApprovalAuthModal from "./GroupApprovalAuthModal";
 
 interface GroupApprovalTabProps {
   onApproveRequest?: (requestId: string) => void;
@@ -63,12 +64,19 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
 
+  // 승인/반려 팝업 상태
+  const [showApprovalModal, setShowApprovalModal] = useState<{
+    show: boolean;
+    requestId: string | null;
+    action: "approve" | "reject" | null;
+  }>({ show: false, requestId: null, action: null });
+
+  // 인증 모달 상태
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingApprovalRequest, setPendingApprovalRequest] = useState<string | null>(null);
+
   const handleApproveRequest = (requestId: string) => {
-    console.log("Approving group request:", requestId);
-    if (onApproveRequest) {
-      onApproveRequest(requestId);
-    }
-    alert("그룹 생성 요청이 승인되었습니다.");
+    setShowApprovalModal({ show: true, requestId, action: "approve" });
   };
 
   const handleRejectRequest = (requestId: string, reason: string) => {
@@ -93,6 +101,57 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
   const openRejectModal = (requestId: string) => {
     setRejectingRequestId(requestId);
     setShowRejectModal(true);
+  };
+
+  // 승인/반려 확인
+  const confirmApproval = () => {
+    if (!showApprovalModal.requestId || !showApprovalModal.action) return;
+
+    if (showApprovalModal.action === "approve") {
+      // 승인 시 인증 모달 표시
+      setPendingApprovalRequest(showApprovalModal.requestId);
+      setShowApprovalModal({ show: false, requestId: null, action: null });
+      setShowAuthModal(true);
+    } else if (showApprovalModal.action === "reject") {
+      // 반려 처리 (기존 로직 사용)
+      openRejectModal(showApprovalModal.requestId);
+      setShowApprovalModal({ show: false, requestId: null, action: null });
+    }
+  };
+
+  // 팝업 닫기
+  const closeApprovalModal = () => {
+    setShowApprovalModal({ show: false, requestId: null, action: null });
+  };
+
+  // 인증 완료 처리
+  const handleAuthComplete = (sessionId: string) => {
+    if (!pendingApprovalRequest) return;
+
+    console.log(`Group request ${pendingApprovalRequest} approved with auth session ${sessionId}`);
+
+    if (onApproveRequest) {
+      onApproveRequest(pendingApprovalRequest);
+    }
+
+    alert("관리자 인증이 완료되어 그룹 생성 요청이 승인되었습니다.");
+
+    // 상태 초기화
+    setShowAuthModal(false);
+    setPendingApprovalRequest(null);
+  };
+
+  // 인증 실패 처리
+  const handleAuthFailed = (reason: string) => {
+    alert(`관리자 인증에 실패했습니다: ${reason}`);
+    setShowAuthModal(false);
+    setPendingApprovalRequest(null);
+  };
+
+  // 인증 모달 닫기
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+    setPendingApprovalRequest(null);
   };
 
   // 필터링 및 페이지네이션 로직
@@ -832,6 +891,166 @@ export default function GroupApprovalTab(props: GroupApprovalTabProps) {
             </div>
         </div>
       </Modal>
+
+      {/* 승인 확인 모달 */}
+      <Modal isOpen={showApprovalModal.show}>
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {showApprovalModal.action === "approve"
+                  ? "승인 확인"
+                  : "반려 확인"}
+              </h3>
+              <button
+                onClick={closeApprovalModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {(() => {
+              const request = mockGroupRequests.find(
+                (r) => r.id === showApprovalModal.requestId
+              );
+              if (!request) return null;
+
+              const getBudgetDisplay = () => {
+                if (request.budgetSetup?.baseType === 'yearly' && request.yearlyBudget.amount > 0) {
+                  return `연간: ${formatCryptoAmount(request.yearlyBudget)}`;
+                } else if (request.budgetSetup?.baseType === 'quarterly' && request.quarterlyBudget.amount > 0) {
+                  return `분기: ${formatCryptoAmount(request.quarterlyBudget)}`;
+                } else {
+                  return `월간: ${formatCryptoAmount(request.monthlyBudget)}`;
+                }
+              };
+
+              return (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      {request.name} 그룹 생성
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">요청 ID:</span>
+                        <span className="ml-1 font-medium">#{request.id}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">요청자:</span>
+                        <span className="ml-1 font-medium">
+                          {request.requestedBy}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">관리자:</span>
+                        <span className="ml-1 font-medium">
+                          {request.manager}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">예산:</span>
+                        <span className="ml-1 font-medium">
+                          {getBudgetDisplay()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {showApprovalModal.action === "approve" ? (
+                    <div>
+                      <p className="text-gray-700 mb-4">
+                        위 그룹 생성 요청을{" "}
+                        <span className="font-semibold text-green-600">
+                          승인
+                        </span>
+                        하시겠습니까?
+                      </p>
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="flex items-start">
+                          <svg
+                            className="w-5 h-5 text-blue-600 mr-2 mt-0.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <div className="text-sm text-blue-800">
+                            <p className="font-medium mb-1">
+                              승인 후 처리 과정
+                            </p>
+                            <p>
+                              승인 완료 시 자동으로 그룹이 생성되고
+                              설정된 예산이 할당됩니다.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-gray-700 mb-4">
+                        위 그룹 생성 요청을{" "}
+                        <span className="font-semibold text-red-600">반려</span>
+                        하시겠습니까?
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={closeApprovalModal}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={confirmApproval}
+                      className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                        showApprovalModal.action === "approve"
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-red-600 hover:bg-red-700"
+                      }`}
+                    >
+                      {showApprovalModal.action === "approve"
+                        ? "승인하기"
+                        : "반려하기"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </Modal>
+
+      {/* 관리자 인증 모달 */}
+      <GroupApprovalAuthModal
+        isOpen={showAuthModal}
+        request={pendingApprovalRequest ? mockGroupRequests.find(r => r.id === pendingApprovalRequest) || null : null}
+        onClose={closeAuthModal}
+        onAuthComplete={handleAuthComplete}
+        onAuthFailed={handleAuthFailed}
+      />
     </div>
   );
 }
