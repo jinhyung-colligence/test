@@ -14,12 +14,26 @@ export const mockGroups: WalletGroup[] = [
     budgetUsed: { amount: 250, currency: 'USDC' },
     quarterlyBudgetUsed: { amount: 0, currency: 'USDC' },
     yearlyBudgetUsed: { amount: 0, currency: 'USDC' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'monthly',
+      baseAmount: 1500,
+      currency: 'USDC',
+      selectedMonth: 9,
+      quarterlyBudgets: [],
+      monthlyBudgets: [{ month: 9, amount: 1500 }],
+      remainingMonths: [9, 10, 11, 12],
+      remainingQuarters: [3, 4],
+      startDate: '2025-09-01',
+      endDate: '2025-09-30'
+    },
     members: ["조운영", "박조회자", "신신청자"],
-    manager: "김매니저",
-    createdAt: "2024-03-01",
+    manager: "9",
+    createdAt: "2025-08-31",
+    requiredApprovals: ["9", "2"],
   },
   {
-    id: "2", 
+    id: "2",
     name: "NFT 마켓플레이스 프로젝트",
     type: "project",
     description: "월간 + 분기 예산을 활용하는 중기 프로젝트",
@@ -30,14 +44,32 @@ export const mockGroups: WalletGroup[] = [
     budgetUsed: { amount: 18.2, currency: 'ETH' },
     quarterlyBudgetUsed: { amount: 32.5, currency: 'ETH' },
     yearlyBudgetUsed: { amount: 0, currency: 'ETH' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'quarterly',
+      baseAmount: 80.0,
+      currency: 'ETH',
+      selectedQuarter: 4,
+      quarterlyBudgets: [{ quarter: 4, amount: 80.0 }],
+      monthlyBudgets: [
+        { month: 10, amount: 26.0 },
+        { month: 11, amount: 27.0 },
+        { month: 12, amount: 27.0 }
+      ],
+      remainingMonths: [10, 11, 12],
+      remainingQuarters: [4],
+      startDate: '2025-10-01',
+      endDate: '2025-12-31'
+    },
     members: ["이기술", "조운영", "정부관", "오승인자"],
-    manager: "최관리",
-    createdAt: "2024-02-01",
+    manager: "4",
+    createdAt: "2025-08-31",
+    requiredApprovals: ["3", "9", "2"],
   },
   {
     id: "3",
     name: "IT 인프라팀",
-    type: "department", 
+    type: "department",
     description: "월간 + 분기 + 연간 모든 예산을 활용하는 핵심 부서",
     balance: { amount: 2.15, currency: 'BTC' },
     monthlyBudget: { amount: 1.8, currency: 'BTC' },
@@ -46,9 +78,31 @@ export const mockGroups: WalletGroup[] = [
     budgetUsed: { amount: 1.2, currency: 'BTC' },
     quarterlyBudgetUsed: { amount: 3.1, currency: 'BTC' },
     yearlyBudgetUsed: { amount: 8.7, currency: 'BTC' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'yearly',
+      baseAmount: 20.0,
+      currency: 'BTC',
+      yearlyBudget: 20.0,
+      quarterlyBudgets: [
+        { quarter: 3, amount: 5.0 },
+        { quarter: 4, amount: 5.0 }
+      ],
+      monthlyBudgets: [
+        { month: 9, amount: 1.6 },
+        { month: 10, amount: 1.7 },
+        { month: 11, amount: 1.7 },
+        { month: 12, amount: 1.6 },
+      ],
+      remainingMonths: [9, 10, 11, 12],
+      remainingQuarters: [3, 4],
+      startDate: '2025-09-01',
+      endDate: '2025-12-31'
+    },
     members: ["이기술", "최관리", "정부관", "윤보안", "조운영"],
-    manager: "이기술",
-    createdAt: "2024-01-15",
+    manager: "3",
+    createdAt: "2025-08-15",
+    requiredApprovals: ["4", "2"],
   },
   {
     id: "4",
@@ -62,9 +116,31 @@ export const mockGroups: WalletGroup[] = [
     budgetUsed: { amount: 95, currency: 'SOL' },
     quarterlyBudgetUsed: { amount: 285, currency: 'SOL' },
     yearlyBudgetUsed: { amount: 920, currency: 'SOL' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'yearly',
+      baseAmount: 1400,
+      currency: 'SOL',
+      yearlyBudget: 1400,
+      quarterlyBudgets: [
+        { quarter: 3, amount: 350 },
+        { quarter: 4, amount: 350 }
+      ],
+      monthlyBudgets: [
+        { month: 9, amount: 116 },
+        { month: 10, amount: 117 },
+        { month: 11, amount: 117 },
+        { month: 12, amount: 117 },
+      ],
+      remainingMonths: [9, 10, 11, 12],
+      remainingQuarters: [3, 4],
+      startDate: '2025-09-01',
+      endDate: '2025-12-31'
+    },
     members: ["한리스크", "송컴플"],
-    manager: "박재무",
-    createdAt: "2024-01-20",
+    manager: "2",
+    createdAt: "2025-08-20",
+    requiredApprovals: ["2", "3"],
   },
 ];
 
@@ -132,7 +208,7 @@ export const mockExpenses: ExpenseRequest[] = [
       }
     ]
   },
-  
+
   // === 2024년 12월 (작년) ===
   {
     id: "4",
@@ -173,7 +249,7 @@ export const mockExpenses: ExpenseRequest[] = [
     requiredApprovals: ["박재무", "김매니저"],
     approvals: []
   },
-  
+
   // === 2024년 11월 ===
   {
     id: "7",
@@ -200,7 +276,7 @@ export const mockExpenses: ExpenseRequest[] = [
     status: "rejected",
     rejectedReason: "다른 대안 검토 요청",
   },
-  
+
   // === 2024년 10월 ===
   {
     id: "9",
@@ -226,7 +302,7 @@ export const mockExpenses: ExpenseRequest[] = [
     requestedAt: "2024-10-15",
     status: "pending",
   },
-  
+
   // === 2024년 9월 ===
   {
     id: "11",
@@ -264,11 +340,32 @@ export const mockGroupRequests: GroupCreationRequest[] = [
     monthlyBudget: { amount: 2000, currency: 'USDC' },
     quarterlyBudget: { amount: 6000, currency: 'USDC' },
     yearlyBudget: { amount: 24000, currency: 'USDC' },
-    manager: "박신규",
+    budgetSetup: {
+      year: 2025,
+      baseType: 'yearly',
+      baseAmount: 24000,
+      currency: 'USDC',
+      yearlyBudget: 24000,
+      quarterlyBudgets: [
+        { quarter: 3, amount: 6000 },
+        { quarter: 4, amount: 6000 }
+      ],
+      monthlyBudgets: [
+        { month: 9, amount: 2000 },
+        { month: 10, amount: 2000 },
+        { month: 11, amount: 2000 },
+        { month: 12, amount: 2000 }
+      ],
+      remainingMonths: [9, 10, 11, 12],
+      remainingQuarters: [3, 4],
+      startDate: '2025-09-01',
+      endDate: '2025-12-31'
+    },
+    manager: "9",
     status: "pending",
     requestedBy: "박신규",
     requestedAt: "2025-01-15T09:30:00Z",
-    requiredApprovals: ["김매니저", "박재무", "최관리"],
+    requiredApprovals: ["9", "2", "4"],
     approvals: [
       {
         userId: "manager001",

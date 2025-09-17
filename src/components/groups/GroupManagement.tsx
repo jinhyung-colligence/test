@@ -64,7 +64,7 @@ const getCryptoIcon = (currency: CryptoCurrency) => {
 const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => {
   const decimals = getCurrencyDecimals(cryptoAmount.currency);
   const formattedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
-  
+
   return (
     <div className="flex items-center space-x-2">
       {getCryptoIcon(cryptoAmount.currency)}
@@ -73,8 +73,89 @@ const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => 
   );
 };
 
+// 현재 기간의 예산 정보를 가져오는 헬퍼 함수
+const getCurrentPeriodBudget = (group: WalletGroup) => {
+  if (!group.budgetSetup) {
+    return {
+      period: 'monthly',
+      budget: group.monthlyBudget.amount,
+      used: group.budgetUsed.amount,
+      currency: group.monthlyBudget.currency
+    };
+  }
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  // 현재 월에 해당하는 예산 찾기
+  const currentMonthBudget = group.budgetSetup.monthlyBudgets.find(
+    mb => mb.month === currentMonth
+  );
+
+  if (currentMonthBudget) {
+    return {
+      period: 'monthly',
+      budget: currentMonthBudget.amount,
+      used: group.budgetUsed.amount, // 실제로는 해당 월의 사용량이어야 함
+      currency: group.budgetSetup.currency
+    };
+  }
+
+  // 현재 월 예산이 없다면 기존 방식 사용
+  return {
+    period: 'monthly',
+    budget: group.monthlyBudget.amount,
+    used: group.budgetUsed.amount,
+    currency: group.monthlyBudget.currency
+  };
+};
+
+// User ID로 사용자 이름 가져오기
+const getUserNameById = (userId: string): string => {
+  const user = MOCK_USERS.find(u => u.id === userId);
+  return user ? user.name : userId; // ID를 찾지 못하면 ID 자체를 반환
+};
+
+// budgetSetup에서 현재 월 예산 가져오기
+const getCurrentMonthlyBudgetFromSetup = (setup: BudgetSetup): number => {
+  const currentMonth = new Date().getMonth() + 1;
+  const monthBudget = setup.monthlyBudgets.find(mb => mb.month === currentMonth);
+  return monthBudget ? monthBudget.amount : 0;
+};
+
+// budgetSetup에서 현재 분기 예산 가져오기
+const getCurrentQuarterlyBudgetFromSetup = (setup: BudgetSetup): number => {
+  const currentQuarter = Math.floor(new Date().getMonth() / 3) + 1;
+  const quarterBudget = setup.quarterlyBudgets.find(qb => qb.quarter === currentQuarter);
+  return quarterBudget ? quarterBudget.amount : 0;
+};
+
+// budgetSetup에서 연간 예산 가져오기
+const getYearlyBudgetFromSetup = (setup: BudgetSetup): number => {
+  return setup.yearlyBudget || 0;
+};
+
+// 현재 월 이름 가져오기 (예: "9월")
+const getCurrentMonthName = (): string => {
+  const currentMonth = new Date().getMonth() + 1;
+  return `${currentMonth}월`;
+};
+
+// 현재 분기 이름 가져오기 (예: "3분기")
+const getCurrentQuarterName = (): string => {
+  const currentQuarter = Math.floor(new Date().getMonth() / 3) + 1;
+  return `${currentQuarter}분기`;
+};
+
+// 현재 년도 가져오기 (예: "2025년도")
+const getCurrentYearName = (): string => {
+  const currentYear = new Date().getFullYear();
+  return `${currentYear}년도`;
+};
+
 export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal, onCreateGroupRequest }: GroupManagementProps) {
   const [internalShowCreateModal, setInternalShowCreateModal] = useState(false);
+  const [groups, setGroups] = useState<WalletGroup[]>(mockGroups);
 
   const showCreateModal = externalShowCreateModal !== undefined ? externalShowCreateModal : internalShowCreateModal;
 
@@ -228,6 +309,8 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
 
 
   const handleCreateGroup = () => {
+    const validApprovers = requiredApprovers.filter(id => id !== "");
+
     // 그룹 생성 요청 생성
     const groupRequest = {
       id: `req-${Date.now()}`,
@@ -235,12 +318,29 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       status: "pending",
       requestedBy: "현재사용자", // TODO: 실제 사용자 정보
       requestedAt: new Date().toISOString(),
-      requiredApprovals: ["김매니저", "박재무", "최관리"], // TODO: 정책에 따른 결재자 선정
+      requiredApprovals: validApprovers,
       approvals: [],
       rejections: []
     };
 
     console.log("Creating group approval request:", groupRequest);
+
+    // 임시로 새 그룹을 groups 상태에 추가 (실제로는 승인 후 추가되어야 함)
+    const newGroupForList: WalletGroup = {
+      ...groupRequest,
+      id: `group-${Date.now()}`,
+      balance: { amount: 0, currency: newGroup.currency },
+      budgetUsed: { amount: 0, currency: newGroup.currency },
+      quarterlyBudgetUsed: { amount: 0, currency: newGroup.currency },
+      yearlyBudgetUsed: { amount: 0, currency: newGroup.currency },
+      members: [],
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'pending',
+      requiredApprovals: validApprovers,
+      budgetSetup: newGroup.budgetSetup || undefined,
+    };
+
+    setGroups(prevGroups => [...prevGroups, newGroupForList]);
 
     if (onCreateGroupRequest) {
       onCreateGroupRequest(groupRequest);
@@ -282,7 +382,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     <>
       {/* 그룹 카드 목록 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {mockGroups.filter(group => !group.status || group.status === 'active').map((group) => {
+        {groups.filter(group => !group.status || group.status === 'active' || group.status === 'pending').map((group) => {
           const usagePercentage = getBudgetUsagePercentage(group);
           const isOverBudget = usagePercentage > 100;
           const isNearLimit = usagePercentage > 80;
@@ -308,6 +408,11 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                       >
                         {getTypeName(group.type)}
                       </span>
+                      {group.budgetSetup && (
+                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                          {group.budgetSetup.year}년 기준
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600">{group.description}</p>
                   </div>
@@ -329,59 +434,61 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
 
               {/* 잔액 및 예산 정보 */}
               <div className="p-4 space-y-4">
-                {/* 최장 기간 예산 잔액 - 동적 표시 */}
+                {/* 현재 기간 예산 잔액 - 개선된 표시 */}
                 <div className="border border-gray-200 p-3 rounded-lg">
                   <div className="flex justify-between items-center">
-                    {group.yearlyBudget.amount > 0 ? (
-                      <>
-                        <span className="text-sm font-medium text-gray-600">연간 예산 잔액</span>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatCryptoAmountWithIcon({ 
-                            amount: group.yearlyBudget.amount - group.yearlyBudgetUsed.amount, 
-                            currency: group.yearlyBudget.currency 
-                          })}
-                        </div>
-                      </>
-                    ) : group.quarterlyBudget.amount > 0 ? (
-                      <>
-                        <span className="text-sm font-medium text-gray-600">분기 예산 잔액</span>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatCryptoAmountWithIcon({ 
-                            amount: group.quarterlyBudget.amount - group.quarterlyBudgetUsed.amount, 
-                            currency: group.quarterlyBudget.currency 
-                          })}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium text-gray-600">월간 예산 잔액</span>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatCryptoAmountWithIcon({ 
-                            amount: group.monthlyBudget.amount - group.budgetUsed.amount, 
-                            currency: group.monthlyBudget.currency 
-                          })}
-                        </div>
-                      </>
-                    )}
+                    {(() => {
+                      const currentBudget = getCurrentPeriodBudget(group);
+                      const remaining = currentBudget.budget - currentBudget.used;
+
+                      return (
+                        <>
+                          <span className="text-sm font-medium text-gray-600">
+                            {group.budgetSetup ? '현재 월' : '월간'} 예산 잔액
+                          </span>
+                          <div className="text-xl font-bold text-gray-900">
+                            {formatCryptoAmountWithIcon({
+                              amount: remaining,
+                              currency: currentBudget.currency
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
                 {/* 월 예산 사용 현황 - 시각적 개선 */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">월 예산 사용</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {group.budgetSetup ? '현재 월' : '월'} 예산 사용
+                    </span>
                     <div className="text-right">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {formatCryptoAmount(group.budgetUsed)} / {formatCryptoAmount(group.monthlyBudget)}
-                      </div>
-                      <div className={`text-xs ${
-                        isOverBudget ? 'text-red-600 font-bold' : 
-                        isNearLimit ? 'text-orange-600 font-medium' : 
-                        isModerate ? 'text-yellow-600' : 
-                        'text-green-600'
-                      }`}>
-                        {usagePercentage}% 사용
-                      </div>
+                      {(() => {
+                        const currentBudget = getCurrentPeriodBudget(group);
+                        return (
+                          <>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {formatCryptoAmount({
+                                amount: currentBudget.used,
+                                currency: currentBudget.currency
+                              })} / {formatCryptoAmount({
+                                amount: currentBudget.budget,
+                                currency: currentBudget.currency
+                              })}
+                            </div>
+                            <div className={`text-xs ${
+                              isOverBudget ? 'text-red-600 font-bold' :
+                              isNearLimit ? 'text-orange-600 font-medium' :
+                              isModerate ? 'text-yellow-600' :
+                              'text-green-600'
+                            }`}>
+                              {usagePercentage}% 사용
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="relative">
@@ -421,20 +528,59 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 {/* 예산 정보 */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   {group.budgetSetup ? (
-                    <div className="p-3">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">
-                          {group.budgetSetup.baseType === 'yearly' && '연간'}
-                          {group.budgetSetup.baseType === 'quarterly' && '분기'}
-                          {group.budgetSetup.baseType === 'monthly' && '월간'} 기준 예산
-                        </div>
+                    <div className={`grid divide-x divide-gray-200 ${
+                      group.budgetSetup.baseType === 'yearly' ? 'grid-cols-3' :
+                      group.budgetSetup.baseType === 'quarterly' ? 'grid-cols-2' :
+                      'grid-cols-1'
+                    }`}>
+                      {/* 월간 예산 - 항상 표시 */}
+                      <div className="p-3 text-center">
+                        <div className="text-xs text-gray-500 mb-1">{getCurrentMonthName()} 예산</div>
                         <div className="text-sm font-semibold">
-                          {group.budgetSetup.baseAmount.toLocaleString()} {group.budgetSetup.currency}
+                          {formatCryptoAmount({
+                            amount: getCurrentMonthlyBudgetFromSetup(group.budgetSetup),
+                            currency: group.budgetSetup.currency
+                          })}
                         </div>
                         <div className="text-xs text-gray-400">
-                          {new Date(group.budgetSetup.startDate).toLocaleDateString('ko-KR')} ~ {new Date(group.budgetSetup.endDate).toLocaleDateString('ko-KR')}
+                          잔여: {formatCryptoAmount({
+                            amount: getCurrentMonthlyBudgetFromSetup(group.budgetSetup) - group.budgetUsed.amount,
+                            currency: group.budgetSetup.currency
+                          })}
                         </div>
                       </div>
+
+                      {/* 분기 예산 - quarterly와 yearly일 때만 */}
+                      {(group.budgetSetup.baseType === 'quarterly' || group.budgetSetup.baseType === 'yearly') && (
+                        <div className="p-3 text-center">
+                          <div className="text-xs text-gray-500 mb-1">{getCurrentQuarterName()} 예산</div>
+                          <div className="text-sm font-semibold">
+                            {formatCryptoAmount({
+                              amount: getCurrentQuarterlyBudgetFromSetup(group.budgetSetup),
+                              currency: group.budgetSetup.currency
+                            })}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {getQuarterlyBudgetUsagePercentage(group)}% 사용
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 연간 예산 - yearly일 때만 */}
+                      {group.budgetSetup.baseType === 'yearly' && (
+                        <div className="p-3 text-center">
+                          <div className="text-xs text-gray-500 mb-1">{getCurrentYearName()} 예산</div>
+                          <div className="text-sm font-semibold">
+                            {formatCryptoAmount({
+                              amount: getYearlyBudgetFromSetup(group.budgetSetup),
+                              currency: group.budgetSetup.currency
+                            })}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {getYearlyBudgetUsagePercentage(group)}% 사용
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className={`grid divide-x divide-gray-200 ${
@@ -474,20 +620,38 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 </div>
 
                 {/* 그룹 정보 */}
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <UserIcon className="h-4 w-4 mr-1" />
-                      {group.manager}
+                <div className="space-y-2 py-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center text-xs text-gray-500">
+                        <UserIcon className="h-4 w-4 mr-1" />
+                        {getUserNameById(group.manager)}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        결재자 {group.requiredApprovals?.length || 0}명
+                      </div>
                     </div>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <UserGroupIcon className="h-4 w-4 mr-1" />
-                      {group.members.length}명
+                    <div className="text-xs text-gray-400">
+                      {formatDate(group.createdAt)}
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {formatDate(group.createdAt)}
-                  </div>
+
+                  {/* 상태 정보 */}
+                  {group.status && group.status !== 'active' && (
+                    <div className="flex items-center">
+                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                        group.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        group.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {group.status === 'pending' ? '승인 대기' :
+                         group.status === 'approved' ? '승인됨' : '반려됨'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* 액션 버튼 */}
