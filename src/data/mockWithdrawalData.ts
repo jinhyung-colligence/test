@@ -646,7 +646,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     ],
   },
   // === 다양한 금액대별 시나리오 추가 ===
-  
+
   // 소액 거래 (2명 결재)
   {
     id: "2025-09-0012",
@@ -674,7 +674,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 중간 금액 (3명 결재) 
   {
     id: "2025-09-0013",
@@ -693,14 +693,14 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     approvals: [
       {
         userId: "2",
-        userName: "박CFO", 
+        userName: "박CFO",
         role: "required_approver",
         approvedAt: "2025-09-09T15:00:00Z",
       },
       {
         userId: "3",
         userName: "이CISO",
-        role: "required_approver", 
+        role: "required_approver",
         approvedAt: "2025-09-09T15:30:00Z",
       },
       {
@@ -741,12 +741,12 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 고액 거래 (4명 결재)
   {
     id: "2025-09-0014",
     title: "기관 투자자 환급",
-    fromAddress: "0x...inst01", 
+    fromAddress: "0x...inst01",
     toAddress: "0x...refund01",
     amount: 200,
     currency: "ETH",
@@ -765,10 +765,10 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         approvedAt: "2025-09-08T11:00:00Z",
       },
       {
-        userId: "3", 
+        userId: "3",
         userName: "이CISO",
         role: "required_approver",
-        approvedAt: "2025-09-08T11:30:00Z", 
+        approvedAt: "2025-09-08T11:30:00Z",
       },
       {
         userId: "4",
@@ -778,7 +778,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
       {
         userId: "14",
-        userName: "정법무이사", 
+        userName: "정법무이사",
         role: "required_approver",
         approvedAt: "2025-09-08T12:30:00Z",
       },
@@ -792,7 +792,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         timestamp: "2025-09-08T10:00:00Z",
         action: "출금 신청",
         userId: "15",
-        userName: "이법무팀장", 
+        userName: "이법무팀장",
         details: "Series A 투자계약 조건에 따른 부분 환급 처리",
       },
       {
@@ -829,10 +829,10 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 초고액 거래 (5명 결재)
   {
-    id: "2025-09-0015", 
+    id: "2025-09-0015",
     title: "메인넷 런칭 자금",
     fromAddress: "bc1q...mainnet",
     toAddress: "bc1q...launch01",
@@ -849,14 +849,14 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       {
         userId: "2",
         userName: "박CFO",
-        role: "required_approver", 
+        role: "required_approver",
         approvedAt: "2025-09-07T10:00:00Z",
       },
       {
         userId: "3",
         userName: "이CISO",
         role: "required_approver",
-        approvedAt: "2025-09-07T10:30:00Z", 
+        approvedAt: "2025-09-07T10:30:00Z",
       },
     ],
     rejections: [],
@@ -872,13 +872,13 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
   },
 
   // 다양한 상태의 시나리오들
-  
+
   // 반려 케이스 (다중 결재자)
   {
     id: "2025-09-0016",
     title: "해외 거래소 상장 비용",
     fromAddress: "0x...exchange",
-    toAddress: "0x...listing", 
+    toAddress: "0x...listing",
     amount: 75000,
     currency: "USDT",
     groupId: "2",
@@ -891,7 +891,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     approvals: [
       {
         userId: "2",
-        userName: "박CFO", 
+        userName: "박CFO",
         role: "required_approver",
         approvedAt: "2025-09-06T16:30:00Z",
       },
@@ -907,7 +907,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     auditTrail: [
       {
         timestamp: "2025-09-06T16:00:00Z",
-        action: "출금 신청", 
+        action: "출금 신청",
         userId: "17",
         userName: "한비즈데브이사",
         details: "Binance 상장을 위한 리스팅 비용 지급 요청",
@@ -926,7 +926,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 완료된 소액 케이스 (2명 결재)
   {
     id: "2025-09-0017",
@@ -934,7 +934,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     fromAddress: "0x...bounty",
     toAddress: "0x...researcher",
     amount: 1500,
-    currency: "USDC", 
+    currency: "USDC",
     groupId: "3",
     initiator: "김보안담당자",
     initiatedAt: "2025-09-05T11:00:00Z",
@@ -951,7 +951,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
       {
         userId: "3",
-        userName: "이CISO", 
+        userName: "이CISO",
         role: "required_approver",
         approvedAt: "2025-09-05T12:00:00Z",
       },
@@ -992,22 +992,22 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 아카이브된 케이스 (다중 결재자)
   {
-    id: "2025-09-0018", 
+    id: "2025-09-0018",
     title: "커뮤니티 에어드랍 준비금",
-    fromAddress: "0x...airdrop", 
+    fromAddress: "0x...airdrop",
     toAddress: "0x...community",
     amount: 1000000,
     currency: "USDT",
-    groupId: "1", 
+    groupId: "1",
     initiator: "박커뮤니티팀장",
     initiatedAt: "2025-09-04T09:00:00Z",
     status: "archived",
     priority: "medium",
     description: "토큰 보유자 대상 에어드랍 이벤트 준비금",
-    requiredApprovals: ["박CFO", "이CISO", "김CTO"], 
+    requiredApprovals: ["박CFO", "이CISO", "김CTO"],
     approvals: [
       {
         userId: "2",
@@ -1028,7 +1028,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     archivedBy: "박커뮤니티팀장",
     auditTrail: [
       {
-        timestamp: "2025-09-04T09:00:00Z", 
+        timestamp: "2025-09-04T09:00:00Z",
         action: "출금 신청",
         userId: "19",
         userName: "박커뮤니티팀장",
@@ -1055,13 +1055,13 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
     ],
   },
-  
+
   // 승인과 반려가 섞인 케이스 (명확한 예시용)
   {
     id: "2025-09-0019",
     title: "벤처 펀드 투자금 반환",
     fromAddress: "0x...fund01",
-    toAddress: "0x...venture01", 
+    toAddress: "0x...venture01",
     amount: 15.5,
     currency: "BTC",
     groupId: "1",
@@ -1079,14 +1079,14 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         approvedAt: "2025-09-03T14:30:00Z",
       },
       {
-        userId: "3", 
+        userId: "3",
         userName: "이CISO",
         role: "required_approver",
         approvedAt: "2025-09-03T15:00:00Z",
       },
       {
         userId: "4",
-        userName: "김CTO", 
+        userName: "김CTO",
         role: "required_approver",
         approvedAt: "2025-09-03T15:30:00Z",
       },
@@ -1114,7 +1114,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
       {
         timestamp: "2025-09-03T15:00:00Z",
-        action: "이CISO 결재 완료", 
+        action: "이CISO 결재 완료",
         userId: "3",
       },
       {
@@ -1134,7 +1134,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     id: "2024-12-0021",
     title: "마케팅 캠페인 예산 - 긴급 중지",
     fromAddress: "bc1q...8m9n",
-    toAddress: "bc1q...3k4l", 
+    toAddress: "bc1q...3k4l",
     amount: 2.1,
     currency: "BTC",
     groupId: "3",
@@ -1147,14 +1147,14 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     approvals: [
       {
         userId: "2",
-        userName: "박CFO", 
+        userName: "박CFO",
         role: "required_approver",
         approvedAt: "2024-12-11T14:30:00Z",
       },
       {
         userId: "3",
         userName: "이CISO",
-        role: "required_approver", 
+        role: "required_approver",
         approvedAt: "2024-12-11T15:15:00Z",
       },
     ],
@@ -1175,7 +1175,7 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
         details: "마케팅 예산 승인",
       },
       {
-        timestamp: "2024-12-11T15:15:00Z", 
+        timestamp: "2024-12-11T15:15:00Z",
         action: "이CISO 결재 완료",
         userId: "3",
         userName: "이CISO",
@@ -1183,10 +1183,10 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
       },
       {
         timestamp: "2024-12-11T16:45:00Z",
-        action: "출금 대기중(출금 중지)",
+        action: "출금 대기중(출금 정지)",
         userId: "8",
-        userName: "최마케팅이사", 
-        details: "캠페인 전략 변경으로 인한 긴급 출금 중지 요청",
+        userName: "최마케팅이사",
+        details: "캠페인 전략 변경으로 인한 긴급 출금 정지 요청",
       },
     ],
   }

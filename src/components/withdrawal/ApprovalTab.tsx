@@ -34,7 +34,7 @@ export default function ApprovalTab({
       const statusMatch = request.status === "submitted";
 
       // 검색어 필터
-      const searchMatch = 
+      const searchMatch =
         searchTerm === "" ||
         request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -222,24 +222,36 @@ export default function ApprovalTab({
                     <div className="text-sm text-gray-700 mb-4 sm:mb-0">
                       총 {paginatedData.totalItems}개 중{" "}
                       {Math.min(
-                        (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                        (paginatedData.currentPage - 1) *
+                          paginatedData.itemsPerPage +
+                          1,
                         paginatedData.totalItems
                       )}
-                      -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
+                      -
+                      {Math.min(
+                        paginatedData.currentPage * paginatedData.itemsPerPage,
+                        paginatedData.totalItems
+                      )}
+                      개 표시
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
+                        onClick={() =>
+                          setCurrentPage(
+                            Math.max(1, paginatedData.currentPage - 1)
+                          )
+                        }
                         disabled={paginatedData.currentPage === 1}
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         이전
                       </button>
-                      
+
                       {[...Array(paginatedData.totalPages)].map((_, index) => {
                         const pageNumber = index + 1;
-                        const isCurrentPage = pageNumber === paginatedData.currentPage;
-                        
+                        const isCurrentPage =
+                          pageNumber === paginatedData.currentPage;
+
                         return (
                           <button
                             key={pageNumber}
@@ -254,10 +266,19 @@ export default function ApprovalTab({
                           </button>
                         );
                       })}
-                      
+
                       <button
-                        onClick={() => setCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
-                        disabled={paginatedData.currentPage === paginatedData.totalPages}
+                        onClick={() =>
+                          setCurrentPage(
+                            Math.min(
+                              paginatedData.totalPages,
+                              paginatedData.currentPage + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          paginatedData.currentPage === paginatedData.totalPages
+                        }
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         다음
@@ -355,12 +376,22 @@ export default function ApprovalTab({
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* 상세 설명 */}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <h6 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg
+                              className="w-4 h-4 mr-2 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
                             </svg>
                             출금 상세 설명
                           </h6>
@@ -368,7 +399,7 @@ export default function ApprovalTab({
                             {request.description}
                           </p>
                         </div>
-                        
+
                         <div className="space-y-3">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-500">신청 시간</span>
@@ -402,8 +433,8 @@ export default function ApprovalTab({
                         결재 정보
                       </h5>
                       <div className="space-y-4">
-                        <ApprovalStatus 
-                          request={request} 
+                        <ApprovalStatus
+                          request={request}
                           showDetailedStatus={true}
                           showProgressSummary={true}
                         />
@@ -413,7 +444,7 @@ export default function ApprovalTab({
                             onClick={() => onApproval(request.id, "approve")}
                             className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                           >
-                            승인 (OTP + SMS 인증)
+                            승인
                           </button>
                           <button
                             onClick={() => onApproval(request.id, "reject")}

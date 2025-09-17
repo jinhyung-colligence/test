@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { WithdrawalRequest } from "@/types/withdrawal";
-import { getStatusInfo, getPriorityInfo, formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
+import {
+  getStatusInfo,
+  getPriorityInfo,
+  formatAmount,
+  formatDateTime,
+} from "@/utils/withdrawalHelpers";
 import { ProcessingTableRow } from "./ProcessingTableRow";
 import { WithdrawalStopModal } from "./WithdrawalStopModal";
 import { BlockchainInfo } from "./BlockchainInfo";
@@ -12,32 +17,49 @@ interface AirgapTabProps {
 
 export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
   const [processingSearchTerm, setProcessingSearchTerm] = useState("");
-  const [processingStatusFilter, setProcessingStatusFilter] = useState<string>("all");
-  const [processingDateFilter, setProcessingDateFilter] = useState<string>("all");
+  const [processingStatusFilter, setProcessingStatusFilter] =
+    useState<string>("all");
+  const [processingDateFilter, setProcessingDateFilter] =
+    useState<string>("all");
   const [processingCurrentPage, setProcessingCurrentPage] = useState(1);
   const [processingItemsPerPage] = useState(10);
-  const [selectedProcessingRequest, setSelectedProcessingRequest] = useState<string | null>(null);
-  const [stopModalRequest, setStopModalRequest] = useState<WithdrawalRequest | null>(null);
+  const [selectedProcessingRequest, setSelectedProcessingRequest] = useState<
+    string | null
+  >(null);
+  const [stopModalRequest, setStopModalRequest] =
+    useState<WithdrawalRequest | null>(null);
 
   // 출금 처리 필터링 로직
   const getFilteredProcessingRequests = () => {
     return withdrawalRequests.filter((request) => {
       // 상태 필터
-      const statusMatch = 
-        processingStatusFilter === "all" || 
-        (processingStatusFilter === "pending" && request.status === "pending") ||
-        (processingStatusFilter === "processing" && request.status === "processing") ||
-        (processingStatusFilter === "security_verification" && request.status === "processing") ||
-        (processingStatusFilter === "completed" && request.status === "completed");
+      const statusMatch =
+        processingStatusFilter === "all" ||
+        (processingStatusFilter === "pending" &&
+          request.status === "pending") ||
+        (processingStatusFilter === "processing" &&
+          request.status === "processing") ||
+        (processingStatusFilter === "security_verification" &&
+          request.status === "processing") ||
+        (processingStatusFilter === "completed" &&
+          request.status === "completed");
 
       // 검색어 필터
-      const searchMatch = 
+      const searchMatch =
         processingSearchTerm === "" ||
         request.id.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.title.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.initiator.toLowerCase().includes(processingSearchTerm.toLowerCase()) ||
-        request.amount.toString().includes(processingSearchTerm.toLowerCase()) ||
-        request.currency.toLowerCase().includes(processingSearchTerm.toLowerCase());
+        request.title
+          .toLowerCase()
+          .includes(processingSearchTerm.toLowerCase()) ||
+        request.initiator
+          .toLowerCase()
+          .includes(processingSearchTerm.toLowerCase()) ||
+        request.amount
+          .toString()
+          .includes(processingSearchTerm.toLowerCase()) ||
+        request.currency
+          .toLowerCase()
+          .includes(processingSearchTerm.toLowerCase());
 
       // 기간 필터
       let dateMatch = true;
@@ -65,8 +87,12 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
         }
       }
 
-      return statusMatch && searchMatch && dateMatch && 
-        ["pending", "processing", "completed"].includes(request.status);
+      return (
+        statusMatch &&
+        searchMatch &&
+        dateMatch &&
+        ["pending", "processing", "completed"].includes(request.status)
+      );
     });
   };
 
@@ -86,8 +112,8 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
   const paginatedData = getPaginatedProcessingRequests();
 
   const handleStopWithdrawal = (requestId: string, reason: string) => {
-    // 실제로는 API 호출하여 출금 중지 처리
-    console.log('출금 중지:', requestId, '사유:', reason);
+    // 실제로는 API 호출하여 출금 정지 처리
+    console.log("출금 정지:", requestId, "사유:", reason);
     // 상태 업데이트 로직 (실제로는 상위 컴포넌트에서 처리)
     alert(`출금이 중지되었습니다.\n사유: ${reason}`);
   };
@@ -216,7 +242,9 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                         request={request}
                         onToggleDetails={(requestId) =>
                           setSelectedProcessingRequest(
-                            selectedProcessingRequest === requestId ? null : requestId
+                            selectedProcessingRequest === requestId
+                              ? null
+                              : requestId
                           )
                         }
                       />
@@ -232,24 +260,36 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                     <div className="text-sm text-gray-700 mb-4 sm:mb-0">
                       총 {paginatedData.totalItems}개 중{" "}
                       {Math.min(
-                        (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                        (paginatedData.currentPage - 1) *
+                          paginatedData.itemsPerPage +
+                          1,
                         paginatedData.totalItems
                       )}
-                      -{Math.min(paginatedData.currentPage * paginatedData.itemsPerPage, paginatedData.totalItems)}개 표시
+                      -
+                      {Math.min(
+                        paginatedData.currentPage * paginatedData.itemsPerPage,
+                        paginatedData.totalItems
+                      )}
+                      개 표시
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setProcessingCurrentPage(Math.max(1, paginatedData.currentPage - 1))}
+                        onClick={() =>
+                          setProcessingCurrentPage(
+                            Math.max(1, paginatedData.currentPage - 1)
+                          )
+                        }
                         disabled={paginatedData.currentPage === 1}
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         이전
                       </button>
-                      
+
                       {[...Array(paginatedData.totalPages)].map((_, index) => {
                         const pageNumber = index + 1;
-                        const isCurrentPage = pageNumber === paginatedData.currentPage;
-                        
+                        const isCurrentPage =
+                          pageNumber === paginatedData.currentPage;
+
                         return (
                           <button
                             key={pageNumber}
@@ -264,10 +304,19 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                           </button>
                         );
                       })}
-                      
+
                       <button
-                        onClick={() => setProcessingCurrentPage(Math.min(paginatedData.totalPages, paginatedData.currentPage + 1))}
-                        disabled={paginatedData.currentPage === paginatedData.totalPages}
+                        onClick={() =>
+                          setProcessingCurrentPage(
+                            Math.min(
+                              paginatedData.totalPages,
+                              paginatedData.currentPage + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          paginatedData.currentPage === paginatedData.totalPages
+                        }
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         다음
@@ -343,10 +392,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-center">
                             <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {formatAmount(
-                                request.amount,
-                                request.currency
-                              )}
+                              {formatAmount(request.amount, request.currency)}
                             </div>
                             <div className="text-sm text-gray-500 mb-2">
                               {request.currency}
@@ -368,12 +414,22 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* 상세 설명 */}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <h6 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg
+                              className="w-4 h-4 mr-2 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
                             </svg>
                             출금 상세 설명
                           </h6>
@@ -381,28 +437,22 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                             {request.description}
                           </p>
                         </div>
-                        
+
                         <div className="space-y-3">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">
-                              신청 시간
-                            </span>
+                            <span className="text-gray-500">신청 시간</span>
                             <span className="font-medium">
                               {formatDateTime(request.initiatedAt)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">
-                              기안자
-                            </span>
+                            <span className="text-gray-500">기안자</span>
                             <span className="font-medium">
                               {request.initiator}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">
-                              우선순위
-                            </span>
+                            <span className="text-gray-500">우선순위</span>
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded ${
                                 getPriorityInfo(request.priority).color
@@ -427,53 +477,51 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                             필수 결재자 승인 현황
                           </h6>
                           <div className="space-y-2">
-                            {request.requiredApprovals.map(
-                              (approver) => {
-                                const approval = request.approvals.find(
-                                  (a) => a.userName === approver
-                                );
-                                return (
-                                  <div
-                                    key={approver}
-                                    className="flex items-center justify-between p-3 bg-white rounded border"
-                                  >
-                                    <div className="flex items-center">
-                                      {approval ? (
-                                        <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
-                                      ) : (
-                                        <ClockIcon className="h-5 w-5 text-yellow-500 mr-3" />
-                                      )}
-                                      <span className="font-medium text-gray-900">
-                                        {approver}
-                                      </span>
-                                    </div>
-                                    <div className="text-right">
-                                      {approval ? (
-                                        <div>
-                                          <span className="text-sm font-medium text-green-700">
-                                            승인 완료
-                                          </span>
-                                          <div className="text-xs text-gray-500">
-                                            {new Date(
-                                              approval.approvedAt
-                                            ).toLocaleString("ko-KR")}
-                                          </div>
-                                          {approval.signature && (
-                                            <div className="text-xs text-green-600 mt-1">
-                                              디지털 서명 완료
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <span className="text-sm font-medium text-yellow-700">
-                                          승인 대기
-                                        </span>
-                                      )}
-                                    </div>
+                            {request.requiredApprovals.map((approver) => {
+                              const approval = request.approvals.find(
+                                (a) => a.userName === approver
+                              );
+                              return (
+                                <div
+                                  key={approver}
+                                  className="flex items-center justify-between p-3 bg-white rounded border"
+                                >
+                                  <div className="flex items-center">
+                                    {approval ? (
+                                      <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
+                                    ) : (
+                                      <ClockIcon className="h-5 w-5 text-yellow-500 mr-3" />
+                                    )}
+                                    <span className="font-medium text-gray-900">
+                                      {approver}
+                                    </span>
                                   </div>
-                                );
-                              }
-                            )}
+                                  <div className="text-right">
+                                    {approval ? (
+                                      <div>
+                                        <span className="text-sm font-medium text-green-700">
+                                          승인 완료
+                                        </span>
+                                        <div className="text-xs text-gray-500">
+                                          {new Date(
+                                            approval.approvedAt
+                                          ).toLocaleString("ko-KR")}
+                                        </div>
+                                        {approval.signature && (
+                                          <div className="text-xs text-green-600 mt-1">
+                                            디지털 서명 완료
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm font-medium text-yellow-700">
+                                        승인 대기
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
 
@@ -491,7 +539,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* 출금 대기 상태 표시 - pending 상태일 때만 표시 */}
                         {request.status === "pending" && (
                           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -518,7 +566,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                                 onClick={() => setStopModalRequest(request)}
                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                               >
-                                출금 중지
+                                출금 정지
                               </button>
                             </div>
                             <div className="mt-2 text-xs text-gray-600">
@@ -528,10 +576,11 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                                   // ID별 남은 시간 매핑
                                   const etaMap: { [key: string]: string } = {
                                     "2025-09-0005": "17분",
-                                    "2025-09-0006": "12시간 35분", 
+                                    "2025-09-0006": "12시간 35분",
                                     "2025-09-0007": "24시간",
                                   };
-                                  const remainingTime = etaMap[request.id] || "24시간";
+                                  const remainingTime =
+                                    etaMap[request.id] || "24시간";
                                   return `남은 시간: ${remainingTime}`;
                                 })()}
                               </div>
@@ -551,7 +600,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
         </div>
       )}
 
-      {/* 출금 중지 모달 */}
+      {/* 출금 정지 모달 */}
       {stopModalRequest && (
         <WithdrawalStopModal
           request={stopModalRequest}

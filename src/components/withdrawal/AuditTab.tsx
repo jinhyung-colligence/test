@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { WithdrawalRequest } from "@/types/withdrawal";
-import { formatAmount, formatDate, formatDateTime, getStatusInfo } from "@/utils/withdrawalHelpers";
+import {
+  formatAmount,
+  formatDate,
+  formatDateTime,
+  getStatusInfo,
+} from "@/utils/withdrawalHelpers";
 import { BlockchainInfo } from "./BlockchainInfo";
 
 interface AuditTabProps {
@@ -14,7 +19,6 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
   const [auditCurrentPage, setAuditCurrentPage] = useState(1);
   const [auditItemsPerPage] = useState(10);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-
 
   const toggleItemExpanded = (requestId: string) => {
     const newExpanded = new Set(expandedItems);
@@ -36,14 +40,19 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
         request.initiator.toLowerCase().includes(auditSearchTerm.toLowerCase());
 
       // 상태 필터 - 명시적으로 처리
-      const matchesStatus = auditStatusFilter === "all" || request.status === auditStatusFilter;
+      const matchesStatus =
+        auditStatusFilter === "all" || request.status === auditStatusFilter;
 
       // 날짜 필터
       let matchesDate = true;
       if (auditDateFilter !== "all") {
         const requestDate = new Date(request.initiatedAt);
         const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
 
         switch (auditDateFilter) {
           case "today":
@@ -54,11 +63,15 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
             matchesDate = requestDate >= weekAgo;
             break;
           case "month":
-            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            const monthAgo = new Date(
+              today.getTime() - 30 * 24 * 60 * 60 * 1000
+            );
             matchesDate = requestDate >= monthAgo;
             break;
           case "quarter":
-            const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+            const quarterAgo = new Date(
+              today.getTime() - 90 * 24 * 60 * 60 * 1000
+            );
             matchesDate = requestDate >= quarterAgo;
             break;
           default:
@@ -130,7 +143,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                 <option value="completed">출금 완료</option>
                 <option value="rejected">반려</option>
                 <option value="archived">처리 완료</option>
-                <option value="stopped">출금 중지</option>
+                <option value="stopped">출금 정지</option>
               </select>
 
               {/* 기간 필터 */}
@@ -147,7 +160,6 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
               </select>
             </div>
           </div>
-
         </div>
 
         {/* 데이터 표시 영역 */}
@@ -180,86 +192,80 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
             </div>
           ) : (
             <>
-              <div className="space-y-4">{
-              paginatedData.items.map((request) => {
-                const isExpanded = expandedItems.has(request.id);
+              <div className="space-y-4">
+                {paginatedData.items.map((request) => {
+                  const isExpanded = expandedItems.has(request.id);
 
-                return (
-                  <div
-                    key={request.id}
-                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-                  >
-                    {/* 컴팩트한 헤더 */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <span className="text-sm font-medium text-gray-500">
-                            #{request.id}
-                          </span>
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded ${
-                              getStatusInfo(request.status).color
+                  return (
+                    <div
+                      key={request.id}
+                      className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                    >
+                      {/* 컴팩트한 헤더 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="text-sm font-medium text-gray-500">
+                              #{request.id}
+                            </span>
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded ${
+                                getStatusInfo(request.status).color
+                              }`}
+                            >
+                              {getStatusInfo(request.status).name}
+                            </span>
+                          </div>
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                            {request.title}
+                          </h4>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>기안자: {request.initiator}</span>
+                            <span>
+                              {formatAmount(request.amount, request.currency)}{" "}
+                              {request.currency}
+                            </span>
+                            <span>{formatDate(request.initiatedAt)}</span>
+                          </div>
+                        </div>
+
+                        {/* 토글 버튼 */}
+                        <button
+                          onClick={() => toggleItemExpanded(request.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          {isExpanded ? "접기" : "상세보기"}
+                          <svg
+                            className={`w-4 h-4 transition-transform ${
+                              isExpanded ? "rotate-180" : ""
                             }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            {getStatusInfo(request.status).name}
-                          </span>
-                        </div>
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1">
-                          {request.title}
-                        </h4>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>기안자: {request.initiator}</span>
-                          <span>
-                            {formatAmount(
-                              request.amount,
-                              request.currency
-                            )}{" "}
-                            {request.currency}
-                          </span>
-                          <span>
-                            {formatDate(request.initiatedAt)}
-                          </span>
-                        </div>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
                       </div>
 
-                      {/* 토글 버튼 */}
-                      <button
-                        onClick={() => toggleItemExpanded(request.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors"
-                      >
-                        {isExpanded ? "접기" : "상세보기"}
-                        <svg
-                          className={`w-4 h-4 transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* 상세보기 펼침/접힘 */}
-                    {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        {/* 감사 추적 히스토리 */}
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 mb-3">
-                            감사 추적 히스토리
-                          </h5>
-                          <div className="space-y-2">
-                            {request.auditTrail.map(
-                              (entry, index) => {
+                      {/* 상세보기 펼침/접힘 */}
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          {/* 감사 추적 히스토리 */}
+                          <div className="mb-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3">
+                              감사 추적 히스토리
+                            </h5>
+                            <div className="space-y-2">
+                              {request.auditTrail.map((entry, index) => {
                                 const isApprovalAction =
                                   entry.action.endsWith("승인");
-                                const isFutureAction = 
+                                const isFutureAction =
                                   entry.action.endsWith("전");
 
                                 return (
@@ -282,134 +288,143 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                           {entry.action}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                          {formatDateTime(
-                                            entry.timestamp
-                                          )}
+                                          {formatDateTime(entry.timestamp)}
                                         </p>
                                       </div>
-                                      {!isApprovalAction && entry.action !== "보안 검증 진행중" && entry.action !== "보안 검증 완료" && entry.action !== "블록체인 전송 완료" && entry.action !== "출금 대기 진행중" && (
-                                        <>
-                                          {entry.details && (
-                                            <p className="text-sm text-gray-600 mb-1">
-                                              {entry.details}
-                                            </p>
-                                          )}
-                                          {entry.userName && (
-                                            <p className="text-xs text-gray-600">
-                                              담당자: {entry.userName}
-                                            </p>
-                                          )}
-                                        </>
-                                      )}
+                                      {!isApprovalAction &&
+                                        entry.action !== "보안 검증 진행중" &&
+                                        entry.action !== "보안 검증 완료" &&
+                                        entry.action !== "블록체인 전송 완료" &&
+                                        entry.action !== "출금 대기 진행중" && (
+                                          <>
+                                            {entry.details && (
+                                              <p className="text-sm text-gray-600 mb-1">
+                                                {entry.details}
+                                              </p>
+                                            )}
+                                            {entry.userName && (
+                                              <p className="text-xs text-gray-600">
+                                                담당자: {entry.userName}
+                                              </p>
+                                            )}
+                                          </>
+                                        )}
                                     </div>
                                   </div>
                                 );
-                              }
-                            )}
-                            
-                            {/* 결재 승인 대기 상태일 때 대기중인 결재자들과 다음 단계 표시 */}
-                            {request.status === "submitted" && (
-                              <>
-                                {/* 대기중인 결재자들 */}
-                                {request.requiredApprovals
-                                  .filter(approver => !request.approvals.some(approval => approval.userName === approver))
-                                  .map((pendingApprover, index) => (
-                                    <div key={`pending-${index}`} className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                      <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-orange-400"></div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1">
-                                          <p className="text-sm font-medium text-gray-900">
-                                            {pendingApprover} 결재 대기중
-                                          </p>
+                              })}
+
+                              {/* 결재 승인 대기 상태일 때 대기중인 결재자들과 다음 단계 표시 */}
+                              {request.status === "submitted" && (
+                                <>
+                                  {/* 대기중인 결재자들 */}
+                                  {request.requiredApprovals
+                                    .filter(
+                                      (approver) =>
+                                        !request.approvals.some(
+                                          (approval) =>
+                                            approval.userName === approver
+                                        )
+                                    )
+                                    .map((pendingApprover, index) => (
+                                      <div
+                                        key={`pending-${index}`}
+                                        className="flex items-start bg-gray-50 p-3 rounded-lg"
+                                      >
+                                        <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-orange-400"></div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <p className="text-sm font-medium text-gray-900">
+                                              {pendingApprover} 결재 대기중
+                                            </p>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                
-                                {/* 향후 단계들 */}
-                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        출금 대기 전
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        보안 검증 전
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        블록체인 전송 전
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                            
-                            {/* 출금 대기 상태일 때 다음 단계 표시 */}
-                            {request.status === "pending" && (
-                              <>
-                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        보안 검증 전
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        블록체인 전송 전
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </>
-                            )}
-                            
-                            {/* 보안 검증 상태일 때 블록체인 전송 전 표시 */}
-                            {request.status === "processing" && (
-                              <div className="flex items-start bg-gray-50 p-3 rounded-lg">
-                                <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <p className="text-sm font-medium text-gray-900">
-                                      블록체인 전송 전
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                                    ))}
 
-                        {/* 블록체인 상세 정보 */}
-                        <BlockchainInfo request={request} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-              }
+                                  {/* 향후 단계들 */}
+                                  <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          출금 대기 전
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          보안 검증 전
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          블록체인 전송 전
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+
+                              {/* 출금 대기 상태일 때 다음 단계 표시 */}
+                              {request.status === "pending" && (
+                                <>
+                                  <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          보안 검증 전
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          블록체인 전송 전
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+
+                              {/* 보안 검증 상태일 때 블록체인 전송 전 표시 */}
+                              {request.status === "processing" && (
+                                <div className="flex items-start bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-gray-400"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        블록체인 전송 전
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 블록체인 상세 정보 */}
+                          <BlockchainInfo request={request} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* 페이지네이션 */}
@@ -422,21 +437,28 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                         (auditCurrentPage - 1) * auditItemsPerPage + 1,
                         paginatedData.totalItems
                       )}
-                      -{Math.min(auditCurrentPage * auditItemsPerPage, paginatedData.totalItems)}개 표시
+                      -
+                      {Math.min(
+                        auditCurrentPage * auditItemsPerPage,
+                        paginatedData.totalItems
+                      )}
+                      개 표시
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setAuditCurrentPage(Math.max(1, auditCurrentPage - 1))}
+                        onClick={() =>
+                          setAuditCurrentPage(Math.max(1, auditCurrentPage - 1))
+                        }
                         disabled={auditCurrentPage === 1}
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         이전
                       </button>
-                      
+
                       {[...Array(paginatedData.totalPages)].map((_, index) => {
                         const pageNumber = index + 1;
                         const isCurrentPage = pageNumber === auditCurrentPage;
-                        
+
                         return (
                           <button
                             key={pageNumber}
@@ -451,9 +473,16 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                           </button>
                         );
                       })}
-                      
+
                       <button
-                        onClick={() => setAuditCurrentPage(Math.min(paginatedData.totalPages, auditCurrentPage + 1))}
+                        onClick={() =>
+                          setAuditCurrentPage(
+                            Math.min(
+                              paginatedData.totalPages,
+                              auditCurrentPage + 1
+                            )
+                          )
+                        }
                         disabled={auditCurrentPage === paginatedData.totalPages}
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >

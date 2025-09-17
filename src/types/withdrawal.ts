@@ -8,7 +8,7 @@ export type WithdrawalStatus =
   | "rejected" // 반료
   | "archived" // 처리 완료 (반료 후 아카이브)
   | "cancelled" // 취소
-  | "stopped"; // 출금 중지
+  | "stopped"; // 출금 정지
 
 export type UserRole =
   | "initiator"
