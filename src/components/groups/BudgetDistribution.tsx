@@ -6,6 +6,7 @@ import { adjustMonthlyBudget, validateBudgetSum, getMonthsInQuarter } from "@/ut
 interface BudgetDistributionProps {
   budgetSetup: BudgetSetup;
   onChange: (updatedSetup: BudgetSetup) => void;
+  onError?: (message: string) => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ interface EditingState {
 export default function BudgetDistribution({
   budgetSetup,
   onChange,
+  onError,
   className = ""
 }: BudgetDistributionProps) {
   const [editing, setEditing] = useState<EditingState>({ isEditing: false, monthIndex: -1, tempValue: "" });
@@ -53,17 +55,25 @@ export default function BudgetDistribution({
     const newAmount = editing.tempValue === '' ? 0 : parseInt(editing.tempValue);
 
     if (isNaN(newAmount) || newAmount < 0) {
-      alert("올바른 금액을 입력해주세요.");
+      if (onError) {
+        onError("올바른 금액을 입력해주세요.");
+      }
       return;
     }
 
     const result = adjustMonthlyBudget(budgetSetup, editing.monthIndex, newAmount);
 
     if (result.success && result.updatedSetup) {
+      // 성공 시 에러 메시지 클리어
+      if (onError) {
+        onError("");
+      }
       onChange(result.updatedSetup);
       setEditing({ isEditing: false, monthIndex: -1, tempValue: "" });
     } else {
-      alert(result.message);
+      if (onError) {
+        onError(result.message);
+      }
     }
   };
 
@@ -98,14 +108,13 @@ export default function BudgetDistribution({
       </div>
 
       {/* 검증 상태 표시 */}
-      <div className={`p-3 rounded-lg ${validation.valid ? 'bg-green-50' : 'bg-red-50'}`}>
-        <div className={`text-sm font-medium ${validation.valid ? 'text-green-700' : 'text-red-700'}`}>
-          {validation.valid ? '✅ 예산 배분이 올바릅니다' : '❌ 예산 초과'}
+      {validation.message && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+          <div className="text-sm font-medium text-red-700">
+            {validation.message}
+          </div>
         </div>
-        <div className={`text-xs ${validation.valid ? 'text-green-600' : 'text-red-600'}`}>
-          {validation.message || (validation.remaining > 0 ? `남은 예산: ${formatAmount(validation.remaining)} ${budgetSetup.currency}` : '')}
-        </div>
-      </div>
+      )}
 
       {/* 분기별 예산 (연간 예산인 경우만) */}
       {budgetSetup.baseType === 'yearly' && budgetSetup.quarterlyBudgets.length > 0 && (
@@ -151,13 +160,21 @@ export default function BudgetDistribution({
                     />
                     <span className="text-xs text-gray-500">{budgetSetup.currency}</span>
                     <button
-                      onClick={handleEditSave}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleEditSave();
+                      }}
                       className="p-1 text-green-600 hover:text-green-700"
                     >
                       <CheckIcon className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={handleEditCancel}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleEditCancel();
+                      }}
                       className="p-1 text-red-600 hover:text-red-700"
                     >
                       <XMarkIcon className="h-4 w-4" />
@@ -169,7 +186,11 @@ export default function BudgetDistribution({
                       {formatAmount(mb.amount)} {budgetSetup.currency}
                     </span>
                     <button
-                      onClick={() => handleEditStart(index)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleEditStart(index);
+                      }}
                       className="p-1 text-gray-400 hover:text-gray-600"
                     >
                       <PencilIcon className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   WalletIcon,
   PlusIcon,
@@ -14,8 +14,10 @@ import {
   WalletGroup,
   BudgetSetup
 } from "@/types/groups";
+import { User, ROLE_NAMES } from "@/types/user";
 import { Modal } from "@/components/common/Modal";
 import { mockGroups } from "@/data/groupMockData";
+import { MOCK_USERS } from "@/data/userMockData";
 import BudgetSetupForm from "./BudgetSetupForm";
 import BudgetDistribution from "./BudgetDistribution";
 import {
@@ -79,6 +81,52 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
   // 새로운 그룹 상태
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // 사용자 선택 관련 상태 (더 이상 필요하지 않음 - select 드롭다운 사용)
+
+  // 필수 결재자 관련 상태
+  const [requiredApprovers, setRequiredApprovers] = useState<string[]>(['']);
+
+  // 관리자로 선택 가능한 사용자 필터링 (활성 상태이고 admin, manager, required_approver 역할)
+  const getEligibleUsers = () => {
+    return MOCK_USERS.filter(user =>
+      user.status === 'active' &&
+      ['admin', 'manager', 'required_approver'].includes(user.role)
+    );
+  };
+
+
+  // 결재자로 선택 가능한 사용자 필터링 (활성 상태이고 결재 권한이 있는 역할)
+  const getEligibleApprovers = (excludeCurrentSelection: boolean = true) => {
+    const selectedUserIds = excludeCurrentSelection ? requiredApprovers.filter(id => id !== '') : [];
+    const managerUserId = newGroup.manager;
+
+    return MOCK_USERS.filter(user =>
+      user.status === 'active' &&
+      ['required_approver', 'approver', 'admin'].includes(user.role) &&
+      !selectedUserIds.includes(user.id) &&
+      user.id !== managerUserId
+    );
+  };
+
+  // 필수 결재자 관리 함수들
+  const handleApproverChange = (index: number, userId: string) => {
+    const updated = [...requiredApprovers];
+    updated[index] = userId;
+    setRequiredApprovers(updated);
+  };
+
+  const handleAddApprover = () => {
+    setRequiredApprovers([...requiredApprovers, '']);
+  };
+
+  const handleRemoveApprover = (index: number) => {
+    if (requiredApprovers.length > 1) {
+      const updated = requiredApprovers.filter((_, i) => i !== index);
+      setRequiredApprovers(updated);
+    }
+  };
 
   const [newGroup, setNewGroup] = useState({
     name: "",
@@ -121,6 +169,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     selectedMonth?: number
   ) => {
     try {
+      setErrorMessage(null); // 에러 메시지 초기화
       const budgetSetup = distributeBudget(
         baseAmount,
         newGroup.currency,
@@ -135,7 +184,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
         budgetSetup
       });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "예산 생성 중 오류가 발생했습니다.");
+      setErrorMessage(error instanceof Error ? error.message : "예산 생성 중 오류가 발생했습니다.");
     }
   };
 
@@ -145,6 +194,36 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       ...newGroup,
       budgetSetup: updatedSetup
     });
+  };
+
+  // 에러 메시지 핸들러 (빈 문자열을 null로 변환)
+  const handleError = (message: string) => {
+    setErrorMessage(message === "" ? null : message);
+  };
+
+  // 예산 검증 함수
+  const isBudgetValid = (): boolean => {
+    if (!newGroup.budgetSetup) return false;
+
+    const totalDistributed = newGroup.budgetSetup.monthlyBudgets.reduce(
+      (sum, budget) => sum + budget.amount,
+      0
+    );
+    const baseAmount = newGroup.budgetSetup.baseAmount;
+
+    return totalDistributed === baseAmount;
+  };
+
+  // 전체 폼 유효성 검사
+  const isFormValid = (): boolean => {
+    const validApprovers = requiredApprovers.filter(id => id !== "");
+    return (
+      newGroup.name.trim() !== "" &&
+      newGroup.description.trim() !== "" &&
+      newGroup.manager !== "" &&
+      validApprovers.length > 0 &&
+      isBudgetValid()
+    );
   };
 
 
@@ -184,11 +263,14 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       budgetSetup: null,
       manager: "",
     });
+    // 필수 결재자 상태 초기화
+    setRequiredApprovers(['']);
 
     alert("그룹 생성 요청이 승인 대기 상태로 등록되었습니다.");
   };
 
   const handleCloseModal = () => {
+    setErrorMessage(null); // 에러 메시지 초기화
     if (onCloseCreateModal) {
       onCloseCreateModal();
     } else {
@@ -556,17 +638,75 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   관리자 *
                 </label>
-                <input
-                  type="text"
-                  required
+                <select
                   value={newGroup.manager}
-                  onChange={(e) =>
-                    setNewGroup({ ...newGroup, manager: e.target.value })
-                  }
+                  onChange={(e) => setNewGroup({ ...newGroup, manager: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="관리자명을 입력하세요"
-                />
+                >
+                  <option value="">관리자 선택</option>
+                  {getEligibleUsers().map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.department} - {user.position}) - {ROLE_NAMES[user.role]}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* 필수 결재자 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  필수 결재자 *
+                </label>
+                <div className="space-y-2">
+                  {requiredApprovers.map((approverId, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-500 w-6">{index + 1}.</span>
+                      <select
+                        value={approverId}
+                        onChange={(e) => handleApproverChange(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="">결재자 선택</option>
+                        {getEligibleApprovers(false).filter(user =>
+                          !requiredApprovers.includes(user.id) || user.id === approverId
+                        ).map(user => (
+                          <option key={user.id} value={user.id}>
+                            {user.name} ({user.department} - {user.position}) - {ROLE_NAMES[user.role]}
+                          </option>
+                        ))}
+                      </select>
+                      {requiredApprovers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveApprover(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="결재자 제거"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={handleAddApprover}
+                    className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    + 결재자 추가
+                  </button>
+                </div>
+              </div>
+
+              {/* 에러 메시지 */}
+              {errorMessage && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                  <div className="text-sm text-red-700 font-medium">
+                    {errorMessage}
+                  </div>
+                </div>
+              )}
 
               {/* 예산 설정 */}
               <div className="pt-4 border-t border-gray-200">
@@ -587,11 +727,15 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                       <BudgetDistribution
                         budgetSetup={newGroup.budgetSetup}
                         onChange={handleBudgetSetupChange}
+                        onError={handleError}
                         className="mb-4"
                       />
                       <button
                         type="button"
-                        onClick={() => setNewGroup({ ...newGroup, budgetSetup: null })}
+                        onClick={() => {
+                          setErrorMessage(null);
+                          setNewGroup({ ...newGroup, budgetSetup: null });
+                        }}
                         className="text-sm text-red-600 hover:text-red-700"
                       >
                         예산 설정 다시하기
@@ -618,9 +762,22 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleCreateGroup();
+                    if (isFormValid()) {
+                      handleCreateGroup();
+                    }
                   }}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  disabled={!isFormValid()}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    isFormValid()
+                      ? 'bg-primary-600 text-white hover:bg-primary-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  title={!isFormValid() ? (
+                    !newGroup.manager ? '관리자를 선택해주세요' :
+                    requiredApprovers.filter(id => id !== "").length === 0 ? '필수 결재자를 선택해주세요' :
+                    !isBudgetValid() ? '예산 배분을 정확히 맞춰주세요' :
+                    '모든 필수 항목을 입력해주세요'
+                  ) : ''}
                 >
                   승인 요청
                 </button>

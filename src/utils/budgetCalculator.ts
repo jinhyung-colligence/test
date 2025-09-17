@@ -286,7 +286,11 @@ export const validateBudgetSum = (
   return {
     valid: sum <= maxAmount,
     remaining,
-    message: sum > maxAmount ? `상한 초과 (${sum - maxAmount} 초과)` : null
+    message: sum > maxAmount
+      ? `총 예산을 초과할 수 없습니다. (초과 예산: ${sum - maxAmount})`
+      : sum < maxAmount
+      ? `총 예산보다 적습니다. (잔여 예산: ${remaining})`
+      : null
   };
 };
 

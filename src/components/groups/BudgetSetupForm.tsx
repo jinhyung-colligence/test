@@ -28,15 +28,19 @@ export default function BudgetSetupForm({
   const currentQuarter = Math.floor(currentDate.getMonth() / 3) + 1;
   const currentMonth = currentDate.getMonth() + 1;
 
-  // 남은 분기 계산
+  // 남은 분기 계산 - 현재 연도일 때 현재 분기부터, 미래 연도일 때 전체
   const availableQuarters = year === currentYear
     ? Array.from({ length: 4 - currentQuarter + 1 }, (_, i) => currentQuarter + i)
-    : [1, 2, 3, 4];
+    : year > currentYear
+      ? [1, 2, 3, 4]
+      : []; // 과거 연도는 선택 불가
 
-  // 남은 월 계산
+  // 남은 월 계산 - 현재 연도일 때 현재 월부터, 미래 연도일 때 전체
   const availableMonths = year === currentYear
     ? Array.from({ length: 12 - currentMonth + 1 }, (_, i) => currentMonth + i)
-    : Array.from({ length: 12 }, (_, i) => i + 1);
+    : year > currentYear
+      ? Array.from({ length: 12 }, (_, i) => i + 1)
+      : []; // 과거 연도는 선택 불가
 
   const [selectedQuarter, setSelectedQuarter] = useState<number>(currentQuarter);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
@@ -45,9 +49,13 @@ export default function BudgetSetupForm({
 
   // year가 변경될 때만 선택된 분기와 월을 첫 번째 가능한 값으로 리셋
   useEffect(() => {
-    setSelectedQuarter(availableQuarters[0] || currentQuarter);
-    setSelectedMonth(availableMonths[0] || currentMonth);
-  }, [year]);
+    if (availableQuarters.length > 0) {
+      setSelectedQuarter(availableQuarters[0]);
+    }
+    if (availableMonths.length > 0) {
+      setSelectedMonth(availableMonths[0]);
+    }
+  }, [year, availableQuarters, availableMonths]);
 
   const handleAmountChange = (value: string) => {
     // 숫자와 빈 문자열만 허용
@@ -62,12 +70,31 @@ export default function BudgetSetupForm({
       return;
     }
 
+    // 선택 가능한 기간이 있는지 확인
+    if (baseType === 'quarterly' && availableQuarters.length === 0) {
+      alert("선택 가능한 분기가 없습니다.");
+      return;
+    }
+
+    if (baseType === 'monthly' && availableMonths.length === 0) {
+      alert("선택 가능한 월이 없습니다.");
+      return;
+    }
+
     onCreateBudgetSetup(
       baseType,
       baseAmount,
       baseType === 'quarterly' ? selectedQuarter : undefined,
       baseType === 'monthly' ? selectedMonth : undefined
     );
+  };
+
+  // 버튼 활성화 조건
+  const isButtonDisabled = () => {
+    if (baseAmount <= 0) return true;
+    if (baseType === 'quarterly' && availableQuarters.length === 0) return true;
+    if (baseType === 'monthly' && availableMonths.length === 0) return true;
+    return false;
   };
 
   const getQuarterName = (quarter: number) => `${quarter}분기`;
@@ -112,17 +139,23 @@ export default function BudgetSetupForm({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             분기 선택 *
           </label>
-          <select
-            value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            {availableQuarters.map((quarter) => (
-              <option key={quarter} value={quarter}>
-                {getQuarterName(quarter)}
-              </option>
-            ))}
-          </select>
+          {availableQuarters.length > 0 ? (
+            <select
+              value={selectedQuarter}
+              onChange={(e) => setSelectedQuarter(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              {availableQuarters.map((quarter) => (
+                <option key={quarter} value={quarter}>
+                  {getQuarterName(quarter)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+              선택 가능한 분기가 없습니다.
+            </div>
+          )}
         </div>
       )}
 
@@ -131,17 +164,23 @@ export default function BudgetSetupForm({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             월 선택 *
           </label>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            {availableMonths.map((month) => (
-              <option key={month} value={month}>
-                {getMonthName(month)}
-              </option>
-            ))}
-          </select>
+          {availableMonths.length > 0 ? (
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              {availableMonths.map((month) => (
+                <option key={month} value={month}>
+                  {getMonthName(month)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+              선택 가능한 월이 없습니다.
+            </div>
+          )}
         </div>
       )}
 
@@ -168,7 +207,6 @@ export default function BudgetSetupForm({
       {/* 설명 */}
       <div className="bg-blue-50 p-3 rounded-lg">
         <div className="text-sm text-blue-700">
-          <div className="font-medium mb-1">📅 기준 년도: {year}년</div>
           {baseType === 'yearly' && `${year}년 연간 예산을 설정하면 현재 시점부터 남은 분기와 월별로 자동 분배됩니다.`}
           {baseType === 'quarterly' && `${year}년 분기 예산을 설정하면 해당 분기의 남은 월별로 자동 분배됩니다.`}
           {baseType === 'monthly' && `${year}년 선택한 월의 예산만 설정됩니다.`}
@@ -179,9 +217,14 @@ export default function BudgetSetupForm({
       <button
         type="button"
         onClick={handleSubmit}
-        className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        disabled={isButtonDisabled()}
+        className={`w-full px-4 py-2 rounded-lg transition-colors ${
+          isButtonDisabled()
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-primary-600 text-white hover:bg-primary-700'
+        }`}
       >
-        예산 자동 분배 생성
+        예산 생성
       </button>
     </div>
   );
