@@ -143,7 +143,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
               </svg>
               <span className="text-sm font-medium text-gray-700">네트워크</span>
             </div>
-            <div className={`text-sm font-medium ${networkInfo.color} bg-white px-3 py-2 rounded border`}>
+            <div className={`font-mono text-[0.65rem] leading-tight font-medium ${networkInfo.color} bg-white px-3 py-2 rounded border`}>
               {networkInfo.name}
             </div>
           </div>
@@ -176,7 +176,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 </button>
               )}
             </div>
-            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash || '트랜잭션 실행 전'}>
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-3 py-2 rounded border break-all" title={request.txHash || '트랜잭션 실행 전'}>
               {request.txHash ? truncateDynamic(request.txHash, maxChars.txHash) : '트랜잭션 실행 전'}
             </div>
           </div>
@@ -209,7 +209,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 </button>
               )}
             </div>
-            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.txHash ? request.fromAddress : '트랜잭션 실행 전'}>
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-3 py-2 rounded border break-all" title={request.txHash ? request.fromAddress : '트랜잭션 실행 전'}>
               {request.txHash ? truncateDynamic(request.fromAddress, maxChars.fromAddress) : '트랜잭션 실행 전'}
             </div>
           </div>
@@ -239,7 +239,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
                 {copiedField === 'toAddress' ? '복사됨' : '복사'}
               </button>
             </div>
-            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={request.toAddress}>
+            <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-3 py-2 rounded border break-all" title={request.toAddress}>
               {truncateDynamic(request.toAddress, maxChars.toAddress)}
             </div>
           </div>

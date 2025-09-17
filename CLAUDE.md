@@ -1,14 +1,22 @@
 # Claude 설정
 
 ## 언어 설정
+
 - 모든 피드백과 응답은 한국어로 제공
 
+## UI/UX 스타일 가이드
+
+- **이모지 아이콘 사용 금지**: 코드 내에서 이모지 문자(🚀, ⚠️, ✅ 등)를 사용하지 않음
+- 시각적 표현이 필요한 경우 SVG 아이콘이나 CSS 클래스 사용 권장
+
 ## 자동화 규칙
+
 - 필요 시 자동으로 빌드 실행
 - 개발 서버 실행 시 명령어 종료 전에 자동으로 서버 종료
 - 작업 완료 후 관련 프로세스들을 정리하여 시스템 리소스 확보
 
 ## 명령어
+
 - 빌드: `npm run build`
 - 개발 서버: `npm run dev`
 - 타입 체크: `npm run typecheck`
@@ -17,6 +25,7 @@
 ## 블록체인 주소/해시 표시 규칙
 
 ### 기본 원칙
+
 - **모든 블록체인 관련 데이터**(주소, 트랜잭션 해시 등)는 동적 truncate 방식 사용
 - **타입별 구분 없음**: 이더리움, 비트코인, 트랜잭션 해시 모두 동일한 로직 적용
 - **컨테이너 너비에 맞춰 최대한 표시**: 여백 없이 꽉 찬 표시
@@ -24,11 +33,13 @@
 ### 구현 방법
 
 #### 1. 필수 imports
+
 ```typescript
 import { useState, useRef, useEffect } from "react";
 ```
 
 #### 2. 상태 및 ref 설정
+
 ```typescript
 // 각 필드별 ref
 const fieldRef = useRef<HTMLDivElement>(null);
@@ -38,6 +49,7 @@ const [maxChars, setMaxChars] = useState(45); // 기본값
 ```
 
 #### 3. 너비 계산 함수
+
 ```typescript
 const calculateMaxChars = (element: HTMLElement | null) => {
   if (!element) return 45; // 기본값
@@ -58,6 +70,7 @@ const calculateMaxChars = (element: HTMLElement | null) => {
 ```
 
 #### 4. 동적 truncate 함수
+
 ```typescript
 const truncateDynamic = (text: string, maxChars: number) => {
   if (!text || text.length <= maxChars) {
@@ -76,6 +89,7 @@ const truncateDynamic = (text: string, maxChars: number) => {
 ```
 
 #### 5. ResizeObserver 설정
+
 ```typescript
 useEffect(() => {
   const updateMaxChars = () => {
@@ -92,52 +106,42 @@ useEffect(() => {
     observer.observe(fieldRef.current);
   }
 
-  window.addEventListener('resize', updateMaxChars);
+  window.addEventListener("resize", updateMaxChars);
 
   return () => {
     observer.disconnect();
-    window.removeEventListener('resize', updateMaxChars);
+    window.removeEventListener("resize", updateMaxChars);
   };
 }, []);
 ```
 
 #### 6. JSX 적용
+
 ```typescript
 <div className="space-y-2" ref={fieldRef}>
   <div className="flex items-center justify-between">
     <div className="flex items-center">
       <span className="text-sm font-medium text-gray-700">주소/해시</span>
     </div>
-    <button onClick={() => copyToClipboard(fullText, 'field')}>
-      복사
-    </button>
+    <button onClick={() => copyToClipboard(fullText, "field")}>복사</button>
   </div>
-  <div className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all" title={fullText}>
+  <div
+    className="font-mono text-[0.65rem] leading-tight text-gray-900 bg-white px-2 py-1.5 rounded border break-all"
+    title={fullText}
+  >
     {truncateDynamic(fullText, maxChars)}
   </div>
 </div>
 ```
 
-### CSS 스타일 가이드
-```css
-.blockchain-field {
-  font-family: monospace;
-  font-size: 0.65rem;
-  line-height: 1.25;
-  padding: 6px 8px;
-  word-break: break-all;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-}
-```
-
 ### 사용 예시
+
 - **이더리움 주소**: `0x742d35Cc6634C0532925a3b844Bc9e7595...f0bEb0`
 - **비트코인 주소**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx...x0wlh`
 - **트랜잭션 해시**: `0xabcd12345678901234567890abcdef1234567...cdef01`
 
 ### 장점
+
 1. **반응형**: 화면 크기에 따라 자동 조정
 2. **일관성**: 모든 블록체인 데이터 동일한 방식
 3. **최적화**: 여백 없이 최대한 많은 정보 표시
