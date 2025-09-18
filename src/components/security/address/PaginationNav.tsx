@@ -6,8 +6,8 @@ interface PaginationNavProps {
     currentPage: number,
     itemsPerPage: number
   };
-  tabKey: "deposit" | "withdrawal" | "limits" | "history";
-  onPageChange: (tabKey: "deposit" | "withdrawal" | "limits" | "history", page: number) => void;
+  tabKey: "personal" | "vasp" | "limits" | "history";
+  onPageChange: (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => void;
 }
 
 export default function PaginationNav({ paginatedData, tabKey, onPageChange }: PaginationNavProps) {

@@ -4,7 +4,10 @@ export interface WhitelistedAddress {
   address: string;
   coin: string;
   type: "personal" | "vasp";
-  direction: "withdrawal" | "deposit";
+  permissions: {
+    canDeposit: boolean;
+    canWithdraw: boolean;
+  };
   addedAt: string;
   lastUsed?: string;
   txCount: number;
@@ -53,9 +56,10 @@ export interface AddressFormData {
   address: string;
   coin: string;
   type: "personal" | "vasp" | "";
-  direction: "withdrawal" | "deposit";
-
-
+  permissions: {
+    canDeposit: boolean;
+    canWithdraw: boolean;
+  };
 
   // VASP 정보 (type이 "vasp"일 때 필요)
   selectedVaspId?: string;
@@ -87,4 +91,4 @@ export interface DailyLimitStatus {
   nextResetAt: string; // 다음 리셋 시간
 }
 
-export type AddressDirection = "withdrawal" | "deposit";
+export type AddressPermission = "deposit" | "withdrawal" | "both";

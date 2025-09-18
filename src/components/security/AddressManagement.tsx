@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { WhitelistedAddress, AddressFormData, AddressDirection } from "@/types/address";
+import { WhitelistedAddress, AddressFormData } from "@/types/address";
 import AddressModal from "./address/AddressModal";
 import AddressTable from "./address/AddressTable";
 import DailyLimitStatus from "./address/DailyLimitStatus";
@@ -25,16 +25,15 @@ import {
 export default function AddressManagement() {
   const [addresses, setAddresses] = useState<WhitelistedAddress[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalDirection, setModalDirection] = useState<AddressDirection>("deposit");
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "personal" | "vasp">("all");
+  const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
-  const [activeTab, setActiveTab] = useState<"deposit" | "withdrawal" | "limits" | "history">("deposit");
+  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "limits" | "history">("personal");
 
   // 페이징 상태 (각 탭별로 독립적)
   const [currentPage, setCurrentPage] = useState({
-    deposit: 1,
-    withdrawal: 1,
+    personal: 1,
+    vasp: 1,
     limits: 1,
     history: 1
   });
@@ -46,7 +45,7 @@ export default function AddressManagement() {
       ...prev,
       [activeTab]: 1
     }));
-  }, [searchTerm, typeFilter, statusFilter, activeTab]);
+  }, [searchTerm, permissionFilter, statusFilter, activeTab]);
 
   // 탭 변경 시 상태 필터 초기화 (limits 탭이 아닐 때)
   useEffect(() => {
@@ -59,8 +58,8 @@ export default function AddressManagement() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    if (tabParam && ['deposit', 'withdrawal', 'limits', 'history'].includes(tabParam)) {
-      setActiveTab(tabParam as "deposit" | "withdrawal" | "limits" | "history");
+    if (tabParam && ['personal', 'vasp', 'limits', 'history'].includes(tabParam)) {
+      setActiveTab(tabParam as "personal" | "vasp" | "limits" | "history");
     }
   }, []);
 
@@ -140,7 +139,7 @@ export default function AddressManagement() {
         address: formData.address,
         coin: formData.coin,
         type: formData.type as "personal" | "vasp",
-        direction: formData.direction,
+        permissions: formData.permissions,
         addedAt: new Date().toISOString(),
         txCount: 0,
         ...(formData.type === "personal" && createPersonalWalletDefaults()),
@@ -167,30 +166,41 @@ export default function AddressManagement() {
     }
   };
 
-  const handleDeleteAddress = (id: string, direction: AddressDirection) => {
+  const handleDeleteAddress = (id: string) => {
     if (confirm("정말로 이 주소를 삭제하시겠습니까?")) {
       const updatedAddresses = addresses.filter(addr => addr.id !== id);
       saveAddresses(updatedAddresses);
     }
   };
 
-  const openModal = (direction: AddressDirection) => {
-    setModalDirection(direction);
+  const openModal = () => {
     setIsModalOpen(true);
   };
 
 
   // 필터링된 주소 목록
-  const getFilteredAddresses = (direction?: "deposit" | "withdrawal") => {
+  const getFilteredAddresses = (type?: "personal" | "vasp") => {
     return addresses.filter(addr => {
-      const matchesTab = direction ? addr.direction === direction : true;
+      const matchesType = type ? addr.type === type : true;
       const matchesSearch = searchTerm === "" ||
         addr.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
         addr.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
         addr.coin.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = typeFilter === "all" || addr.type === typeFilter;
 
-      return matchesTab && matchesSearch && matchesType;
+      const matchesPermission = (() => {
+        switch (permissionFilter) {
+          case "deposit":
+            return addr.permissions.canDeposit;
+          case "withdrawal":
+            return addr.permissions.canWithdraw;
+          case "both":
+            return addr.permissions.canDeposit && addr.permissions.canWithdraw;
+          default:
+            return true;
+        }
+      })();
+
+      return matchesType && matchesSearch && matchesPermission;
     });
   };
 
@@ -226,7 +236,7 @@ export default function AddressManagement() {
   };
 
   // 페이징된 데이터 가져오기
-  const getPaginatedData = (data: WhitelistedAddress[], tabKey: "deposit" | "withdrawal" | "limits") => {
+  const getPaginatedData = (data: WhitelistedAddress[], tabKey: "personal" | "vasp" | "limits") => {
     const startIndex = (currentPage[tabKey] - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return {
@@ -239,7 +249,7 @@ export default function AddressManagement() {
   };
 
   // 페이지 변경 함수
-  const handlePageChange = (tabKey: "deposit" | "withdrawal" | "limits" | "history", page: number) => {
+  const handlePageChange = (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => {
     setCurrentPage(prev => ({
       ...prev,
       [tabKey]: page
@@ -249,10 +259,10 @@ export default function AddressManagement() {
   const personalAddresses = getFilteredPersonalAddresses();
 
   // 각 탭별 데이터
-  const filteredDepositAddresses = getFilteredAddresses("deposit");
-  const filteredWithdrawalAddresses = getFilteredAddresses("withdrawal");
-  const paginatedDepositData = getPaginatedData(filteredDepositAddresses, "deposit");
-  const paginatedWithdrawalData = getPaginatedData(filteredWithdrawalAddresses, "withdrawal");
+  const filteredPersonalAddresses = getFilteredAddresses("personal");
+  const filteredVaspAddresses = getFilteredAddresses("vasp");
+  const paginatedPersonalData = getPaginatedData(filteredPersonalAddresses, "personal");
+  const paginatedVaspData = getPaginatedData(filteredVaspAddresses, "vasp");
   const paginatedLimitsData = getPaginatedData(personalAddresses, "limits");
 
   const getAssetColor = (asset: string) => {
@@ -283,24 +293,24 @@ export default function AddressManagement() {
         <div className="border-b border-gray-200">
           <nav className="flex">
             <button
-              onClick={() => setActiveTab("deposit")}
+              onClick={() => setActiveTab("personal")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "deposit"
+                activeTab === "personal"
                   ? "border-primary-500 text-primary-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              입금 주소 ({filteredDepositAddresses.length})
+              개인 지갑 ({filteredPersonalAddresses.length})
             </button>
             <button
-              onClick={() => setActiveTab("withdrawal")}
+              onClick={() => setActiveTab("vasp")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "withdrawal"
+                activeTab === "vasp"
                   ? "border-primary-500 text-primary-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              출금 주소 ({filteredWithdrawalAddresses.length})
+              거래소/VASP ({filteredVaspAddresses.length})
             </button>
             <button
               onClick={() => setActiveTab("limits")}
@@ -310,7 +320,7 @@ export default function AddressManagement() {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              개인지갑 일일한도 ({personalAddresses.length})
+              일일한도 ({personalAddresses.length})
             </button>
             <button
               onClick={() => setActiveTab("history")}
@@ -325,18 +335,18 @@ export default function AddressManagement() {
           </nav>
         </div>
 
-        {/* 입금/출금 주소 탭 컨텐츠 */}
-        {(activeTab === "deposit" || activeTab === "withdrawal") && (
+        {/* 개인/VASP 지갑 탭 컨텐츠 */}
+        {(activeTab === "personal" || activeTab === "vasp") && (
           <>
             <div className="p-6 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* 주소 추가 버튼 (왼쪽) */}
                 <button
-                  onClick={() => openModal(activeTab as AddressDirection)}
+                  onClick={openModal}
                   className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  {activeTab === "deposit" ? "입금" : "출금"} 주소 추가
+                  {activeTab === "personal" ? "개인 지갑" : "거래소/VASP"} 주소 추가
                 </button>
 
                 {/* 검색 및 필터 (오른쪽) */}
@@ -367,15 +377,16 @@ export default function AddressManagement() {
                     </div>
                   </div>
 
-                  {/* 타입 필터 */}
+                  {/* 권한 필터 */}
                   <select
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value as "all" | "personal" | "vasp")}
+                    value={permissionFilter}
+                    onChange={(e) => setPermissionFilter(e.target.value as "all" | "deposit" | "withdrawal" | "both")}
                     className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <option value="all">모든 타입</option>
-                    <option value="personal">개인 지갑</option>
-                    <option value="vasp">거래소/VASP</option>
+                    <option value="all">모든 권한</option>
+                    <option value="deposit">입금만</option>
+                    <option value="withdrawal">출금만</option>
+                    <option value="both">입출금 모두</option>
                   </select>
                 </div>
               </div>
@@ -384,8 +395,7 @@ export default function AddressManagement() {
             {/* 주소 테이블 */}
             <div className="p-6">
               <AddressTable
-                addresses={activeTab === "deposit" ? paginatedDepositData.items : paginatedWithdrawalData.items}
-                direction={activeTab as AddressDirection}
+                addresses={activeTab === "personal" ? paginatedPersonalData.items : paginatedVaspData.items}
                 onDelete={handleDeleteAddress}
                 getAssetColor={getAssetColor}
               />
@@ -393,8 +403,8 @@ export default function AddressManagement() {
 
             {/* 페이징 네비게이션 */}
             <PaginationNav
-              paginatedData={activeTab === "deposit" ? paginatedDepositData : paginatedWithdrawalData}
-              tabKey={activeTab as "deposit" | "withdrawal"}
+              paginatedData={activeTab === "personal" ? paginatedPersonalData : paginatedVaspData}
+              tabKey={activeTab as "personal" | "vasp"}
               onPageChange={handlePageChange}
             />
           </>
@@ -511,7 +521,7 @@ export default function AddressManagement() {
                                     {addr.label}
                                   </div>
                                   <div className="text-sm text-gray-500">
-                                    {addr.coin} • {addr.direction === "deposit" ? "입금" : "출금"}
+                                    {addr.coin} • {addr.permissions.canDeposit && addr.permissions.canWithdraw ? "입출금" : addr.permissions.canDeposit ? "입금" : "출금"}
                                   </div>
                                 </div>
                               </td>
@@ -628,7 +638,6 @@ export default function AddressManagement() {
       {/* 주소 추가 모달 */}
       <AddressModal
         isOpen={isModalOpen}
-        direction={modalDirection}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddAddress}
       />

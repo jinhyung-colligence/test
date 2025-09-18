@@ -3,23 +3,25 @@
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Modal } from "@/components/common/Modal";
-import { AddressFormData, AddressDirection } from "@/types/address";
+import { AddressFormData } from "@/types/address";
 import { getKnownVASPs, getVASPById } from "@/utils/addressHelpers";
 
 interface AddressModalProps {
   isOpen: boolean;
-  direction: AddressDirection;
   onClose: () => void;
   onSubmit: (formData: AddressFormData) => void;
 }
 
-export default function AddressModal({ isOpen, direction, onClose, onSubmit }: AddressModalProps) {
+export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModalProps) {
   const [formData, setFormData] = useState<AddressFormData>({
     label: "",
     address: "",
     coin: "BTC",
     type: "",
-    direction,
+    permissions: {
+      canDeposit: true,
+      canWithdraw: true
+    },
     selectedVaspId: "",
   });
 
@@ -38,6 +40,12 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
       return;
     }
 
+    // 권한 검증
+    if (!formData.permissions.canDeposit && !formData.permissions.canWithdraw) {
+      alert("최소 하나의 권한을 선택해야 합니다.");
+      return;
+    }
+
     onSubmit(formData);
     handleClose();
   };
@@ -48,7 +56,10 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
       address: "",
       coin: "BTC",
       type: "",
-      direction,
+      permissions: {
+        canDeposit: true,
+        canWithdraw: true
+      },
       selectedVaspId: "",
     });
     onClose();
@@ -63,7 +74,7 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
       <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
-            {direction === "withdrawal" ? "출금" : "입금"} 주소 추가
+            지갑 주소 추가
           </h3>
           <button
             onClick={handleClose}
@@ -102,7 +113,7 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
               value={formData.label}
               onChange={(e) => updateFormData({ label: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder={`예: 메인 ${direction === "withdrawal" ? "출금" : "입금"} 지갑`}
+              placeholder="예: 메인 비트코인 지갑"
             />
           </div>
 
@@ -116,7 +127,7 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
               value={formData.address}
               onChange={(e) => updateFormData({ address: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder={`${direction === "withdrawal" ? "출금할" : "입금받을"} 주소를 입력하세요`}
+              placeholder="지갑 주소를 입력하세요"
             />
           </div>
 
@@ -215,7 +226,58 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
             </div>
           )}
 
+          {/* 권한 설정 */}
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              사용 권한 *
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.permissions.canDeposit}
+                  onChange={(e) => updateFormData({
+                    permissions: {
+                      ...formData.permissions,
+                      canDeposit: e.target.checked
+                    }
+                  })}
+                  className="mr-3 text-primary-600 focus:ring-primary-500"
+                />
+                <div>
+                  <span className="text-sm font-medium">입금 허용</span>
+                  <p className="text-xs text-gray-500">이 주소로 자산을 입금할 수 있습니다</p>
+                </div>
+              </label>
 
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.permissions.canWithdraw}
+                  onChange={(e) => updateFormData({
+                    permissions: {
+                      ...formData.permissions,
+                      canWithdraw: e.target.checked
+                    }
+                  })}
+                  className="mr-3 text-primary-600 focus:ring-primary-500"
+                />
+                <div>
+                  <span className="text-sm font-medium">출금 허용</span>
+                  <p className="text-xs text-gray-500">이 주소로 자산을 출금할 수 있습니다</p>
+                </div>
+              </label>
+            </div>
+
+            {/* 권한 검증 경고 */}
+            {!formData.permissions.canDeposit && !formData.permissions.canWithdraw && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  최소 하나의 권한을 선택해야 합니다.
+                </p>
+              </div>
+            )}
+          </div>
 
           </form>
         </div>

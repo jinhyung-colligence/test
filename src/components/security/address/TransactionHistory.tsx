@@ -11,7 +11,7 @@ interface TransactionHistoryProps {
   getAssetColor: (asset: string) => string;
   currentPage: number;
   itemsPerPage: number;
-  onPageChange: (tabKey: "deposit" | "withdrawal" | "limits" | "history", page: number) => void;
+  onPageChange: (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => void;
 }
 
 export default function TransactionHistory({ transactions, getAssetColor, currentPage, itemsPerPage, onPageChange }: TransactionHistoryProps) {

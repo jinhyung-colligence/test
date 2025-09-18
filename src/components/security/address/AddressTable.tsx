@@ -2,17 +2,16 @@
 
 import { useState, useRef, useEffect } from "react";
 import { TrashIcon, WalletIcon, BuildingOfficeIcon, UserIcon } from "@heroicons/react/24/outline";
-import { WhitelistedAddress, AddressDirection } from "@/types/address";
+import { WhitelistedAddress } from "@/types/address";
 import { getDailyLimitStatus, formatKRW, getProgressPercentage } from "@/utils/addressHelpers";
 
 interface AddressTableProps {
   addresses: WhitelistedAddress[];
-  direction: AddressDirection;
-  onDelete: (id: string, direction: AddressDirection) => void;
+  onDelete: (id: string) => void;
   getAssetColor: (asset: string) => string;
 }
 
-export default function AddressTable({ addresses, direction, onDelete, getAssetColor }: AddressTableProps) {
+export default function AddressTable({ addresses, onDelete, getAssetColor }: AddressTableProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const [maxChars, setMaxChars] = useState(45);
 
@@ -81,7 +80,7 @@ export default function AddressTable({ addresses, direction, onDelete, getAssetC
       <div className="text-center py-8">
         <WalletIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-500">
-          등록된 {direction === "withdrawal" ? "출금" : "입금"} 주소가 없습니다.
+          등록된 주소가 없습니다.
         </p>
       </div>
     );
@@ -100,6 +99,9 @@ export default function AddressTable({ addresses, direction, onDelete, getAssetC
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               타입
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              권한
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               등록일
@@ -164,6 +166,25 @@ export default function AddressTable({ addresses, direction, onDelete, getAssetC
                   )}
                 </div>
               </td>
+              <td className="px-6 py-4">
+                <div className="space-y-1">
+                  {addr.permissions.canDeposit && (
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-sky-100 text-sky-800 mr-1">
+                      입금
+                    </span>
+                  )}
+                  {addr.permissions.canWithdraw && (
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                      출금
+                    </span>
+                  )}
+                  {!addr.permissions.canDeposit && !addr.permissions.canWithdraw && (
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                      권한 없음
+                    </span>
+                  )}
+                </div>
+              </td>
               <td className="px-6 py-4 text-sm text-gray-900">
                 {new Date(addr.addedAt).toLocaleDateString("ko-KR")}
               </td>
@@ -222,7 +243,7 @@ export default function AddressTable({ addresses, direction, onDelete, getAssetC
               </td>
               <td className="px-6 py-4">
                 <button
-                  onClick={() => onDelete(addr.id, direction)}
+                  onClick={() => onDelete(addr.id)}
                   className="text-red-600 hover:text-red-900 transition-colors"
                 >
                   <TrashIcon className="h-5 w-5" />
