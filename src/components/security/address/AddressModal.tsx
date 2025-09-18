@@ -4,6 +4,7 @@ import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Modal } from "@/components/common/Modal";
 import { AddressFormData, AddressDirection } from "@/types/address";
+import { getKnownVASPs, getVASPById } from "@/utils/addressHelpers";
 
 interface AddressModalProps {
   isOpen: boolean;
@@ -19,20 +20,26 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
     coin: "BTC",
     type: "",
     direction,
-    autoProcess: false,
-    minAmount: undefined,
-    notificationEnabled: true,
-    trusted: false,
-    dailyLimit: undefined,
-    requiresApproval: false,
+    selectedVaspId: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.label && formData.address && formData.type) {
-      onSubmit(formData);
-      handleClose();
+
+    // 필수 필드 검증
+    if (!formData.label || !formData.address || !formData.type) {
+      alert("필수 항목을 모두 입력해주세요.");
+      return;
     }
+
+    // VASP 타입일 때 VASP 선택 필수 검증
+    if (formData.type === "vasp" && !formData.selectedVaspId) {
+      alert("VASP/거래소를 선택해주세요.");
+      return;
+    }
+
+    onSubmit(formData);
+    handleClose();
   };
 
   const handleClose = () => {
@@ -42,12 +49,7 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
       coin: "BTC",
       type: "",
       direction,
-      autoProcess: false,
-      minAmount: undefined,
-      notificationEnabled: true,
-      trusted: false,
-      dailyLimit: undefined,
-      requiresApproval: false,
+      selectedVaspId: "",
     });
     onClose();
   };
@@ -58,7 +60,7 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
 
   return (
     <Modal isOpen={isOpen}>
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
             {direction === "withdrawal" ? "출금" : "입금"} 주소 추가
@@ -71,7 +73,25 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="max-h-[70vh] overflow-y-auto pr-2">
+          <form id="address-form" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              자산 *
+            </label>
+            <select
+              value={formData.coin}
+              onChange={(e) => updateFormData({ coin: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="BTC">Bitcoin (BTC)</option>
+              <option value="ETH">Ethereum (ETH)</option>
+              <option value="SOL">Solana (SOL)</option>
+              <option value="USDT">Tether (USDT)</option>
+              <option value="USDC">USD Coin (USDC)</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               라벨 *
@@ -90,31 +110,14 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
             <label className="block text-sm font-medium text-gray-700 mb-2">
               주소 *
             </label>
-            <textarea
+            <input
+              type="text"
               required
               value={formData.address}
               onChange={(e) => updateFormData({ address: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder={`${direction === "withdrawal" ? "출금할" : "입금받을"} 주소를 입력하세요`}
-              rows={3}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              코인 *
-            </label>
-            <select
-              value={formData.coin}
-              onChange={(e) => updateFormData({ coin: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="BTC">Bitcoin (BTC)</option>
-              <option value="ETH">Ethereum (ETH)</option>
-              <option value="SOL">Solana (SOL)</option>
-              <option value="USDT">Tether (USDT)</option>
-              <option value="USDC">USD Coin (USDC)</option>
-            </select>
           </div>
 
           <div>
@@ -131,7 +134,10 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
                   onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
                   className="mr-2 text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-sm">개인 지갑</span>
+                <div>
+                  <span className="text-sm">개인 지갑</span>
+                  <p className="text-xs text-gray-500">일일 입/출금 한도: 100만원 미만</p>
+                </div>
               </label>
               <label className="flex items-center">
                 <input
@@ -142,114 +148,94 @@ export default function AddressModal({ isOpen, direction, onClose, onSubmit }: A
                   onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
                   className="mr-2 text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-sm">거래소/VASP</span>
+                <div>
+                  <span className="text-sm">거래소/VASP</span>
+                  <p className="text-xs text-gray-500">한도 제한 없음, 트래블룰 적용</p>
+                </div>
               </label>
             </div>
           </div>
 
-          {direction === "deposit" && (
-            <>
-              <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-900 mb-3">입금 설정</h4>
+          {/* VASP 선택 (거래소/VASP 선택 시) */}
+          {formData.type === "vasp" && (
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-gray-900 mb-3">VASP 선택</h4>
 
-                <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.autoProcess}
-                      onChange={(e) => updateFormData({ autoProcess: e.target.checked })}
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">자동 처리 활성화</span>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    거래소/VASP *
                   </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.trusted}
-                      onChange={(e) => updateFormData({ trusted: e.target.checked })}
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">신뢰 주소로 등록</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.notificationEnabled}
-                      onChange={(e) => updateFormData({ notificationEnabled: e.target.checked })}
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">입금 알림 활성화</span>
-                  </label>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      최소 입금액
-                    </label>
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={formData.minAmount || ""}
-                      onChange={(e) => updateFormData({ minAmount: e.target.value ? Number(e.target.value) : undefined })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="0.001"
-                    />
-                  </div>
+                  <select
+                    required
+                    value={formData.selectedVaspId || ""}
+                    onChange={(e) => updateFormData({ selectedVaspId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">VASP를 선택해주세요</option>
+                    {getKnownVASPs().map((vasp) => (
+                      <option key={vasp.id} value={vasp.id}>
+                        {vasp.name} ({vasp.businessName})
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* 선택된 VASP 정보 표시 */}
+                {formData.selectedVaspId && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    {(() => {
+                      const selectedVasp = getVASPById(formData.selectedVaspId);
+                      if (!selectedVasp) return null;
+
+                      return (
+                        <div className="text-sm">
+                          <h5 className="font-medium text-blue-800 mb-2">선택된 VASP 정보</h5>
+                          <div className="space-y-1 text-blue-700">
+                            <div><span className="font-medium">사업자명:</span> {selectedVasp.businessName}</div>
+                            <div><span className="font-medium">등록번호:</span> {selectedVasp.registrationNumber}</div>
+                            <div><span className="font-medium">국가:</span> {selectedVasp.countryCode}</div>
+                            <div className="flex items-center">
+                              <span className="font-medium mr-2">트래블룰 연동:</span>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                selectedVasp.travelRuleConnected
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}>
+                                {selectedVasp.travelRuleConnected ? "연동 가능" : "연동 불가"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
-            </>
+            </div>
           )}
 
-          {direction === "withdrawal" && (
-            <>
-              <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-900 mb-3">출금 설정</h4>
 
-                <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.requiresApproval}
-                      onChange={(e) => updateFormData({ requiresApproval: e.target.checked })}
-                      className="mr-2 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm">승인 필요</span>
-                  </label>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      일일 출금 한도 (KRW)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.dailyLimit || ""}
-                      onChange={(e) => updateFormData({ dailyLimit: e.target.value ? Number(e.target.value) : undefined })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="1000000"
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+          </form>
+        </div>
 
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              추가
-            </button>
-          </div>
-        </form>
+        <div className="flex space-x-3 pt-4 border-t border-gray-200 mt-4">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            form="address-form"
+            className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            추가
+          </button>
+        </div>
       </div>
     </Modal>
   );

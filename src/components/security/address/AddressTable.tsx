@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { TrashIcon, WalletIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, WalletIcon, BuildingOfficeIcon, UserIcon } from "@heroicons/react/24/outline";
 import { WhitelistedAddress, AddressDirection } from "@/types/address";
+import { getDailyLimitStatus, formatKRW, getProgressPercentage } from "@/utils/addressHelpers";
 
 interface AddressTableProps {
   addresses: WhitelistedAddress[];
   direction: AddressDirection;
   onDelete: (id: string, direction: AddressDirection) => void;
-  getCoinColor: (coin: string) => string;
+  getAssetColor: (asset: string) => string;
 }
 
-export default function AddressTable({ addresses, direction, onDelete, getCoinColor }: AddressTableProps) {
+export default function AddressTable({ addresses, direction, onDelete, getAssetColor }: AddressTableProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const [maxChars, setMaxChars] = useState(45);
 
@@ -95,7 +96,7 @@ export default function AddressTable({ addresses, direction, onDelete, getCoinCo
               라벨/주소
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              코인
+              자산
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               타입
@@ -106,11 +107,9 @@ export default function AddressTable({ addresses, direction, onDelete, getCoinCo
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               거래수
             </th>
-            {direction === "deposit" && (
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                설정
-              </th>
-            )}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              한도 상태
+            </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               작업
             </th>
@@ -135,7 +134,7 @@ export default function AddressTable({ addresses, direction, onDelete, getCoinCo
               </td>
               <td className="px-6 py-4">
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCoinColor(
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAssetColor(
                     addr.coin
                   )}`}
                 >
@@ -143,15 +142,27 @@ export default function AddressTable({ addresses, direction, onDelete, getCoinCo
                 </span>
               </td>
               <td className="px-6 py-4">
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    addr.type === "personal"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-purple-100 text-purple-800"
-                  }`}
-                >
-                  {addr.type === "personal" ? "개인" : "거래소"}
-                </span>
+                <div className="flex items-center space-x-2">
+                  {addr.type === "personal" ? (
+                    <UserIcon className="h-4 w-4 text-blue-600" />
+                  ) : (
+                    <BuildingOfficeIcon className="h-4 w-4 text-purple-600" />
+                  )}
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      addr.type === "personal"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-purple-100 text-purple-800"
+                    }`}
+                  >
+                    {addr.type === "personal" ? "개인" : "거래소"}
+                  </span>
+                  {addr.vaspInfo && (
+                    <span className="text-xs text-gray-500">
+                      ({addr.vaspInfo.businessName})
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
                 {new Date(addr.addedAt).toLocaleDateString("ko-KR")}
@@ -159,22 +170,56 @@ export default function AddressTable({ addresses, direction, onDelete, getCoinCo
               <td className="px-6 py-4 text-sm text-gray-900">
                 {addr.txCount}회
               </td>
-              {direction === "deposit" && (
-                <td className="px-6 py-4">
-                  <div className="flex flex-col space-y-1">
-                    {addr.depositSettings?.autoProcess && (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        자동처리
-                      </span>
-                    )}
-                    {addr.depositSettings?.trusted && (
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        신뢰주소
-                      </span>
-                    )}
+              <td className="px-6 py-4">
+                {addr.type === "personal" ? (
+                  (() => {
+                    const limitStatus = getDailyLimitStatus(addr);
+                    if (!limitStatus) {
+                      return <span className="text-xs text-gray-500">한도 없음</span>;
+                    }
+
+                    const depositProgress = getProgressPercentage(limitStatus.depositUsed, limitStatus.depositLimit);
+                    const withdrawalProgress = getProgressPercentage(limitStatus.withdrawalUsed, limitStatus.withdrawalLimit);
+                    const maxProgress = Math.max(depositProgress, withdrawalProgress);
+
+                    const getStatusColor = (progress: number) => {
+                      if (progress >= 90) return "text-red-600 bg-red-100";
+                      if (progress >= 70) return "text-amber-600 bg-amber-100";
+                      return "text-blue-600 bg-blue-100";
+                    };
+
+                    const getStatusText = (progress: number) => {
+                      if (progress >= 90) return "거의 소진";
+                      if (progress >= 70) return "주의";
+                      return "정상";
+                    };
+
+                    return (
+                      <div className="space-y-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(maxProgress)}`}>
+                          {getStatusText(maxProgress)}
+                        </span>
+                        <div className="text-xs text-gray-600">
+                          <div>입금: {formatKRW(limitStatus.depositUsed)} / {formatKRW(limitStatus.depositLimit)}</div>
+                          <div>출금: {formatKRW(limitStatus.withdrawalUsed)} / {formatKRW(limitStatus.withdrawalLimit)}</div>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="space-y-1">
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                      제한 없음
+                    </span>
+                    <div className="text-xs text-gray-600">
+                      VASP 지갑
+                      {addr.vaspInfo?.travelRuleConnected && (
+                        <div className="text-xs text-indigo-600">트래블룰 연동</div>
+                      )}
+                    </div>
                   </div>
-                </td>
-              )}
+                )}
+              </td>
               <td className="px-6 py-4">
                 <button
                   onClick={() => onDelete(addr.id, direction)}
