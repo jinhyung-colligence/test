@@ -1,35 +1,36 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import { ServicePlanProvider } from '@/contexts/ServicePlanContext'
-import { SidebarProvider } from '@/contexts/SidebarContext'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import ErrorGuard from '@/components/ErrorGuard'
-import MetaMaskErrorHandler from '@/components/MetaMaskErrorHandler'
-import Script from 'next/script'
-import dynamic from 'next/dynamic'
+import type { Metadata } from "next";
+import "./globals.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ServicePlanProvider } from "@/contexts/ServicePlanContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorGuard from "@/components/ErrorGuard";
+import MetaMaskErrorHandler from "@/components/MetaMaskErrorHandler";
+import Script from "next/script";
+import dynamic from "next/dynamic";
 
 // 클라이언트에서만 실행되는 에러 억제 컴포넌트
 const UltimateErrorSuppression = dynamic(
-  () => import('@/utils/ultimateErrorSuppression').then(() => {
-    // 컴포넌트 대신 즉시 실행하는 더미 컴포넌트 반환
-    return () => null
-  }),
+  () =>
+    import("@/utils/ultimateErrorSuppression").then(() => {
+      // 컴포넌트 대신 즉시 실행하는 더미 컴포넌트 반환
+      return () => null;
+    }),
   { ssr: false }
-)
+);
 
 export const metadata: Metadata = {
-  title: 'Custody Dashboard - 커스터디 서비스',
-  description: '기업용/개인용 디지털 자산 커스터디 플랫폼',
+  title: "ABC Custody - 커스터디 서비스",
+  description: "기업용/개인용 디지털 자산 커스터디 플랫폼",
   icons: {
-    icon: '/icon.svg',
+    icon: "/icon.svg",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="ko">
@@ -122,14 +123,12 @@ export default function RootLayout({
             <MetaMaskErrorHandler />
             <LanguageProvider>
               <ServicePlanProvider>
-                <SidebarProvider>
-                  {children}
-                </SidebarProvider>
+                <SidebarProvider>{children}</SidebarProvider>
               </ServicePlanProvider>
             </LanguageProvider>
           </ErrorGuard>
         </ErrorBoundary>
       </body>
     </html>
-  )
+  );
 }

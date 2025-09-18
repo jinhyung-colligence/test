@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShieldCheckIcon, UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { useLanguage } from '@/contexts/LanguageContext'
 import LanguageToggle from './LanguageToggle'
+import Logo from './Logo'
 
 export default function Header() {
   const { t } = useLanguage()
@@ -54,13 +55,7 @@ export default function Header() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <ShieldCheckIcon className="h-8 w-8 text-primary-600" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
-                <p className="text-sm text-gray-600">{t('header.subtitle')}</p>
-              </div>
-            </div>
+            <Logo />
             
             <div className="flex items-center space-x-4">
               {/* 세션 타이머 */}
