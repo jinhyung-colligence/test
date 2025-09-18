@@ -32,7 +32,11 @@
       "Bash(grep:*)",
       "Bash(printf \"\\n\")",
       "Bash(xargs kill:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(npm run:*)",
+      "Bash(printf \"1\\n\")",
+      "Bash(timeout 10s npm run lint)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
