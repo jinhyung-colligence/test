@@ -13,9 +13,9 @@ import {
 
 export default function LoginPage() {
   const { authStep, login, verifyOtp, verifySms, sendSms, resetAuth } = useAuth()
-  const [email, setEmail] = useState('')
-  const [otpCode, setOtpCode] = useState('')
-  const [smsCode, setSmsCode] = useState('')
+  const [email, setEmail] = useState('ceo@company.com')
+  const [otpCode, setOtpCode] = useState('123456')
+  const [smsCode, setSmsCode] = useState('987654')
   const [loading, setLoading] = useState(false)
   const [smsLoading, setSmsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -173,9 +173,10 @@ export default function LoginPage() {
         {renderMessage()}
 
         {/* 로그인 폼 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          {/* 이메일 단계 */}
-          {authStep.step === 'email' && (
+        {authStep.step !== 'completed' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            {/* 이메일 단계 */}
+            {authStep.step === 'email' && (
             <>
               <div className="text-center mb-6">
                 <div className="mx-auto w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
@@ -337,7 +338,20 @@ export default function LoginPage() {
               </form>
             </>
           )}
-        </div>
+          </div>
+        )}
+
+        {/* 로그인 완료 상태 */}
+        {authStep.step === 'completed' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div className="mx-auto w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircleIcon className="w-6 h-6 text-primary-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">로그인 완료</h2>
+            <p className="text-gray-600 mb-4">잠시만 기다려주세요...</p>
+            <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        )}
 
         {/* 도움말 */}
         <div className="text-center mt-6">

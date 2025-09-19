@@ -9,19 +9,41 @@ import {
 import { Modal } from "@/components/common/Modal";
 import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
 import { formatUserDisplay } from '@/utils/userHelpers';
+import {
+  createPolicyLog,
+  savePolicyLog,
+  comparePolicy,
+  initializeMockData
+} from '@/utils/policyLogUtils';
+import PolicyLogViewer from './PolicyLogViewer';
 
 interface PolicyManagementProps {
   onPolicyChange?: (policies: ApprovalPolicy[]) => void;
 }
 
 export default function PolicyManagement({ onPolicyChange }: PolicyManagementProps) {
+  // 현재 사용자 정보 (실제 구현에서는 인증 컨텍스트에서 가져올 것)
+  const currentUser = {
+    id: '2', // 박재무
+    name: '박재무'
+  };
+
   const [isEditing] = useState(true); // 항상 편집 모드
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null);
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
+  const [showLogViewer, setShowLogViewer] = useState(false);
+  const [showSuspendConfirm, setShowSuspendConfirm] = useState(false);
+  const [suspendPolicyId, setSuspendPolicyId] = useState<string | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
   const [editingApprovers, setEditingApprovers] = useState<{[key: string]: string[]}>({});
   const [editingPolicyData, setEditingPolicyData] = useState<{[key: string]: {description: string, minAmount: number, maxAmount: number}}>({});
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
   const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
+
+  // 새 정책 생성을 위한 state
+  const [newPolicyDescription, setNewPolicyDescription] = useState<string>('');
+  const [newPolicyMinAmount, setNewPolicyMinAmount] = useState<number>(0);
+  const [newPolicyMaxAmount, setNewPolicyMaxAmount] = useState<number>(Infinity);
 
   const filteredPolicies = APPROVAL_POLICIES.filter(
     policy => policy.currency === 'KRW'
@@ -65,16 +87,48 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
     const policyIndex = parseInt(policyId.split('-')[1]);
     const policy = filteredPolicies[policyIndex];
     if (policy) {
+      // 변경 전 정책 상태 저장 (로깅용)
+      const oldPolicy = {
+        description: policy.description,
+        minAmount: policy.minAmount,
+        maxAmount: policy.maxAmount,
+        requiredApprovers: [...policy.requiredApprovers]
+      };
+
+      // 새로운 정책 상태 준비
+      const newPolicy = { ...oldPolicy };
+
       // 결재자 정보 저장
       if (editingApprovers[policyId]) {
         policy.requiredApprovers = [...editingApprovers[policyId]];
+        newPolicy.requiredApprovers = [...editingApprovers[policyId]];
       }
       // 정책 데이터 저장
       if (editingPolicyData[policyId]) {
         policy.description = editingPolicyData[policyId].description;
         policy.minAmount = editingPolicyData[policyId].minAmount;
         policy.maxAmount = editingPolicyData[policyId].maxAmount;
+
+        newPolicy.description = editingPolicyData[policyId].description;
+        newPolicy.minAmount = editingPolicyData[policyId].minAmount;
+        newPolicy.maxAmount = editingPolicyData[policyId].maxAmount;
       }
+
+      // 변경사항 비교 및 로그 생성
+      const changes = comparePolicy(oldPolicy, newPolicy);
+      if (changes.length > 0) {
+        const log = createPolicyLog(
+          'UPDATE',
+          policyId,
+          policy.description,
+          currentUser.id,
+          currentUser.name,
+          changes
+        );
+        savePolicyLog(log);
+        console.log('정책 수정 로그 저장:', log);
+      }
+
       if (onPolicyChange) {
         onPolicyChange(APPROVAL_POLICIES);
       }
@@ -93,9 +147,56 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   };
 
   const handleSaveNewPolicy = () => {
-    // 새 정책 저장 로직 (구현 필요)
-    console.log('새 정책 저장');
+    // 입력값 검증
+    if (!newPolicyDescription.trim()) {
+      alert('정책 설명을 입력해주세요.');
+      return;
+    }
+
+    // 새 정책 생성 (실제 구현에서는 서버에 저장)
+    const newPolicyId = `KRW-${Date.now()}`;
+    const filteredApprovers = modalApprovers.filter(a => a.length > 0);
+
+    // 정책 생성 로그 저장 - 모든 필드 포함
+    const log = createPolicyLog(
+      'CREATE',
+      newPolicyId,
+      newPolicyDescription,
+      currentUser.id,
+      currentUser.name,
+      [
+        {
+          field: 'description',
+          oldValue: null,
+          newValue: newPolicyDescription
+        },
+        {
+          field: 'minAmount',
+          oldValue: null,
+          newValue: newPolicyMinAmount
+        },
+        {
+          field: 'maxAmount',
+          oldValue: null,
+          newValue: newPolicyMaxAmount
+        },
+        {
+          field: 'requiredApprovers',
+          oldValue: [],
+          newValue: filteredApprovers
+        }
+      ]
+    );
+    savePolicyLog(log);
+    console.log('새 정책 생성 로그 저장:', log);
+
+    // TODO: 실제 정책을 APPROVAL_POLICIES에 추가하는 로직 구현
+
+    // 모달 닫기 및 입력값 초기화
     setShowAddPolicyModal(false);
+    setNewPolicyDescription('');
+    setNewPolicyMinAmount(0);
+    setNewPolicyMaxAmount(Infinity);
     setSelectedRiskLevel('');
     setModalApprovers(['']);
   };
@@ -193,14 +294,89 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
     }));
   };
 
+  // 정책 정지 시작 (모달 열기)
+  const handleSuspendPolicy = (policyId: string) => {
+    setSuspendPolicyId(policyId);
+    setShowSuspendConfirm(true);
+    setSuspendReason('');
+  };
+
+  // 실제 정책 정지 실행
+  const confirmSuspendPolicy = () => {
+    if (!suspendPolicyId || !suspendReason.trim()) return;
+
+    const policyIndex = parseInt(suspendPolicyId.split('-')[1]);
+    const policy = filteredPolicies[policyIndex];
+    if (policy) {
+      // 정책 정지 로그 저장
+      const log = createPolicyLog(
+        'SUSPEND',
+        suspendPolicyId,
+        policy.description,
+        currentUser.id,
+        currentUser.name,
+        [
+          {
+            field: 'status',
+            oldValue: 'ACTIVE',
+            newValue: 'SUSPENDED'
+          }
+        ],
+        { reason: suspendReason }
+      );
+      savePolicyLog(log);
+      console.log('정책 정지 로그 저장:', log);
+
+      // TODO: 실제 정책 정지 로직 구현 (현재는 모킹 데이터이므로 생략)
+      alert(`정책 "${policy.description}"이 정지되었습니다.`);
+    }
+
+    // 모달 닫기
+    setShowSuspendConfirm(false);
+    setSuspendPolicyId(null);
+    setSuspendReason('');
+  };
+
+  // 정지 취소
+  const cancelSuspendPolicy = () => {
+    setShowSuspendConfirm(false);
+    setSuspendPolicyId(null);
+    setSuspendReason('');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header - Outside the box */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          결재 정책 관리
-        </h2>
-        <p className="text-gray-600 mt-1">거래 금액에 따른 결재 정책을 관리합니다</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            결재 정책 관리
+          </h2>
+          <p className="text-gray-600 mt-1">거래 금액에 따른 결재 정책을 관리합니다</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              initializeMockData();
+              alert('목업 데이터가 초기화되었습니다. 변경 이력을 확인해보세요!');
+            }}
+            className="px-3 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>목업 데이터</span>
+          </button>
+          <button
+            onClick={() => setShowLogViewer(true)}
+            className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>변경 이력</span>
+          </button>
+        </div>
       </div>
 
       {/* Content - Inside the box */}
@@ -256,12 +432,20 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                           </button>
                         </>
                       ) : (
-                        <button
-                          onClick={() => handleEditPolicy(policyId)}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200 transition-colors"
-                        >
-                          편집
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleEditPolicy(policyId)}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200 transition-colors"
+                          >
+                            편집
+                          </button>
+                          <button
+                            onClick={() => handleSuspendPolicy(policyId)}
+                            className="px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200 transition-colors"
+                          >
+                            정지
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -380,6 +564,9 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
             <button
               onClick={() => {
                 setShowAddPolicyModal(false);
+                setNewPolicyDescription('');
+                setNewPolicyMinAmount(0);
+                setNewPolicyMaxAmount(Infinity);
                 setSelectedRiskLevel('');
                 setModalApprovers(['']);
               }}
@@ -408,6 +595,8 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                 <input
                   type="number"
                   placeholder="0"
+                  value={newPolicyMinAmount === 0 ? '' : newPolicyMinAmount}
+                  onChange={(e) => setNewPolicyMinAmount(Number(e.target.value) || 0)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -416,6 +605,8 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                 <input
                   type="number"
                   placeholder="무제한"
+                  value={newPolicyMaxAmount === Infinity ? '' : newPolicyMaxAmount}
+                  onChange={(e) => setNewPolicyMaxAmount(e.target.value === '' ? Infinity : Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -426,6 +617,8 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
               <input
                 type="text"
                 placeholder="예: 소액 거래"
+                value={newPolicyDescription}
+                onChange={(e) => setNewPolicyDescription(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -517,6 +710,9 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
               <button
                 onClick={() => {
                   setShowAddPolicyModal(false);
+                  setNewPolicyDescription('');
+                  setNewPolicyMinAmount(0);
+                  setNewPolicyMaxAmount(Infinity);
                   setSelectedRiskLevel('');
                   setModalApprovers(['']);
                 }}
@@ -534,6 +730,63 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
           </div>
         </div>
       </Modal>
+
+      {/* Suspend Confirmation Modal */}
+      <Modal isOpen={showSuspendConfirm} onClose={cancelSuspendPolicy}>
+        <div className="w-full max-w-md">
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">정책 정지 확인</h3>
+              <p className="text-gray-600">
+                정말로 이 정책을 정지하시겠습니까?<br />
+                정지된 정책은 더 이상 사용할 수 없습니다.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  정지 사유 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={suspendReason}
+                  onChange={(e) => setSuspendReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="정지 사유를 입력해주세요"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={cancelSuspendPolicy}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmSuspendPolicy}
+                disabled={!suspendReason.trim()}
+                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                정지
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Policy Log Viewer */}
+      <PolicyLogViewer
+        isOpen={showLogViewer}
+        onClose={() => setShowLogViewer(false)}
+      />
     </div>
   );
 }
