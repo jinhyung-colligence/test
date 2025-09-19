@@ -19,6 +19,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null);
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
   const [editingApprovers, setEditingApprovers] = useState<{[key: string]: string[]}>({});
+  const [editingPolicyData, setEditingPolicyData] = useState<{[key: string]: {description: string, minAmount: number, maxAmount: number}}>({});
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
   const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
 
@@ -40,13 +41,40 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   };
 
   const handleEditPolicy = (policyId: string) => {
+    const policy = APPROVAL_POLICIES.find(p => `${p.currency}-${filteredPolicies.indexOf(p)}` === policyId);
+    if (policy) {
+      // 결재자 정보 초기화
+      setEditingApprovers(prev => ({
+        ...prev,
+        [policyId]: [...policy.requiredApprovers]
+      }));
+      // 정책 데이터 초기화
+      setEditingPolicyData(prev => ({
+        ...prev,
+        [policyId]: {
+          description: policy.description,
+          minAmount: policy.minAmount,
+          maxAmount: policy.maxAmount
+        }
+      }));
+    }
     setEditingPolicy(policyId);
   };
 
   const handleSavePolicy = (policyId: string) => {
-    const policy = APPROVAL_POLICIES.find(p => `${p.currency}-${p.minAmount}-${p.maxAmount}` === policyId);
-    if (policy && editingApprovers[policyId]) {
-      policy.requiredApprovers = [...editingApprovers[policyId]];
+    const policyIndex = parseInt(policyId.split('-')[1]);
+    const policy = filteredPolicies[policyIndex];
+    if (policy) {
+      // 결재자 정보 저장
+      if (editingApprovers[policyId]) {
+        policy.requiredApprovers = [...editingApprovers[policyId]];
+      }
+      // 정책 데이터 저장
+      if (editingPolicyData[policyId]) {
+        policy.description = editingPolicyData[policyId].description;
+        policy.minAmount = editingPolicyData[policyId].minAmount;
+        policy.maxAmount = editingPolicyData[policyId].maxAmount;
+      }
       if (onPolicyChange) {
         onPolicyChange(APPROVAL_POLICIES);
       }
@@ -57,6 +85,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   const handleCancelEdit = () => {
     setEditingPolicy(null);
     setEditingApprovers({});
+    setEditingPolicyData({});
   };
 
   const handleAddPolicy = () => {
@@ -153,6 +182,17 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
     }
   };
 
+  // 정책 데이터 변경 핸들러
+  const handlePolicyDataChange = (policyId: string, field: 'description' | 'minAmount' | 'maxAmount', value: string | number) => {
+    setEditingPolicyData(prev => ({
+      ...prev,
+      [policyId]: {
+        ...prev[policyId],
+        [field]: value
+      }
+    }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Header - Outside the box */}
@@ -227,8 +267,47 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                   </div>
 
                   {isEditingThis ? (
-                    <div className="space-y-3">
-                      <h5 className="font-medium text-gray-900">필요 결재자 편집</h5>
+                    <div className="space-y-4">
+                      {/* 정책 정보 편집 */}
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-gray-900">정책 정보 편집</h5>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">정책 설명</label>
+                          <input
+                            type="text"
+                            value={editingPolicyData[policyId]?.description || policy.description}
+                            onChange={(e) => handlePolicyDataChange(policyId, 'description', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="정책 설명을 입력하세요"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">최소 금액 (원)</label>
+                            <input
+                              type="number"
+                              value={editingPolicyData[policyId]?.minAmount ?? policy.minAmount}
+                              onChange={(e) => handlePolicyDataChange(policyId, 'minAmount', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">최대 금액 (원)</label>
+                            <input
+                              type="number"
+                              value={editingPolicyData[policyId]?.maxAmount === Infinity ? '' : editingPolicyData[policyId]?.maxAmount ?? policy.maxAmount}
+                              onChange={(e) => handlePolicyDataChange(policyId, 'maxAmount', e.target.value === '' ? Infinity : parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="무제한"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 결재자 편집 */}
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-gray-900">필요 결재자 편집</h5>
                       <div className="space-y-2">
                         {(() => {
                           const currentApprovers = getApproversForPolicy(policyId, policy.requiredApprovers);
@@ -270,6 +349,7 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
                             <span>결재자 추가</span>
                           </button>
                         </div>
+                      </div>
                       </div>
                     </div>
                   ) : (
