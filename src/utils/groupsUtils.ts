@@ -3,11 +3,8 @@ import { CryptoCurrency, CryptoAmount, ExpenseStatus, ExpenseRequest, GroupType,
 // 가상자산별 소수점 자리수 정의
 export const getCurrencyDecimals = (currency: CryptoCurrency): number => {
   const decimals = {
-    'BTC': 8,
-    'ETH': 6, 
-    'SOL': 4,
-    'USDC': 2,
-    'USDT': 2
+    'KRW': 0,
+    'SOL': 4
   };
   return decimals[currency];
 };
@@ -15,13 +12,10 @@ export const getCurrencyDecimals = (currency: CryptoCurrency): number => {
 // 가상자산 아이콘 URL 매핑
 export const getCryptoIconUrl = (currency: CryptoCurrency): string => {
   const iconMap: { [key: string]: string } = {
-    'BTC': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/btc.png',
-    'ETH': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/eth.png',
+    'KRW': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/krw.png',
     'SOL': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/sol.png',
-    'USDC': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/usdc.png',
-    'USDT': 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/usdt.png',
   };
-  
+
   return iconMap[currency] || 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/generic.png';
 };
 

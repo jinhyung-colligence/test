@@ -2,7 +2,7 @@ export interface Transaction {
   id: string;
   txHash: string; // 트랜잭션 해시
   direction: "deposit" | "withdrawal"; // 입금/출금 구분
-  assetType: string; // 자산 종류 (BTC, ETH, USDT 등)
+  assetType: string; // 자산 종류 (BTC, ETH 등)
   amount: number; // 수량
   krwValue: number; // 원화 환산 가치
   timestamp: string; // 거래 시간 (ISO 8601)

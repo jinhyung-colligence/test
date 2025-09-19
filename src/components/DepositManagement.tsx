@@ -74,8 +74,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
   const [assets, setAssets] = useState<Asset[]>([
     {
       id: "1",
-      symbol: "BTC",
-      name: "Bitcoin",
+      symbol: "KRW",
+      name: "Tether",
       network: "Bitcoin",
       icon: "https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/btc.png",
       depositAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
@@ -84,8 +84,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     },
     {
       id: "2",
-      symbol: "ETH",
-      name: "Ethereum",
+      symbol: "KRW",
+      name: "Korean Won",
       network: "Ethereum",
       icon: "https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/eth.png",
       depositAddress: "0x742d35cc6ad4cfc7cc5a0e0e68b4b55a2c7e9f3a",
@@ -104,7 +104,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     },
     {
       id: "4",
-      symbol: "USDT",
+      symbol: "KRW",
       name: "Tether",
       network: "Ethereum (ERC-20)",
       icon: "https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/usdt.png",
@@ -114,8 +114,8 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     },
     {
       id: "5",
-      symbol: "USDC",
-      name: "USD Coin",
+      symbol: "KRW",
+      name: "Tether",
       network: "Ethereum (ERC-20)",
       icon: "https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/usdc.png",
       depositAddress: "0x742d35cc6ad4cfc7cc5a0e0e68b4b55a2c7e9f3a",
@@ -158,11 +158,10 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
   const [isClient, setIsClient] = useState(false);
 
   const availableAssets = [
-    { symbol: "BTC", name: "Bitcoin", network: "Bitcoin" },
-    { symbol: "ETH", name: "Ethereum", network: "Ethereum" },
+    { symbol: "KRW", name: "Tether", network: "Bitcoin" },
+    { symbol: "KRW", name: "Korean Won", network: "Ethereum" },
     { symbol: "SOL", name: "Solana", network: "Solana" },
-    { symbol: "USDT", name: "Tether", network: "Ethereum (ERC-20)" },
-    { symbol: "USDC", name: "USD Coin", network: "Ethereum (ERC-20)" },
+    { symbol: "KRW", name: "Tether", network: "Ethereum (ERC-20)" },
     {
       symbol: "CUSTOM_ERC20",
       name: "Custom ERC-20 Token",
@@ -206,13 +205,10 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
     };
 
     switch (symbol) {
-      case "BTC":
-        return "bc1q" + generateRandomHex(32);
-      case "ETH":
-      case "USDT":
-      case "USDC":
-      case "MATIC":
+      case "KRW":
         return "0x" + generateRandomHex(40);
+      case "KRW":
+        return "KRW" + generateRandomHex(20);
       case "SOL":
         return generateRandomBase58(44);
       case "ADA":
@@ -228,20 +224,11 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
 
   const generateMockPrice = (symbol: string): { krw: number; usd: number } => {
     const mockPrices: { [key: string]: { krw: number; usd: number } } = {
-      BTC: {
-        krw: Math.floor(Math.random() * 10000000 + 60000000),
-        usd: Math.floor(Math.random() * 5000 + 45000),
-      },
-      ETH: {
-        krw: Math.floor(Math.random() * 1000000 + 3000000),
-        usd: Math.floor(Math.random() * 500 + 2300),
-      },
+      KRW: { krw: 1, usd: 0.00075 },
       SOL: {
         krw: Math.floor(Math.random() * 50000 + 100000),
         usd: Math.floor(Math.random() * 50 + 75),
       },
-      USDT: { krw: Math.floor(Math.random() * 50 + 1300), usd: 1 },
-      USDC: { krw: Math.floor(Math.random() * 50 + 1300), usd: 1 },
       MATIC: {
         krw: Math.floor(Math.random() * 200 + 800),
         usd: Math.floor(Math.random() * 20 + 60) / 100,
@@ -845,7 +832,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                       >
                         <div className="text-xs font-semibold">
                           {asset.symbol}
-                          {(asset.symbol === "USDT" ||
+                          {(asset.symbol === "KRW" ||
                             asset.symbol === "USDC") && (
                             <span className="ml-1 text-xs text-blue-600 font-normal">
                               ERC20
@@ -885,7 +872,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           symbol: e.target.value.toUpperCase(),
                         })
                       }
-                      placeholder="예: USDT"
+                      placeholder="예: KRW"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>

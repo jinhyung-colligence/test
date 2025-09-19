@@ -74,7 +74,6 @@ export const formatAmount = (amount: string, asset: string) => {
       return num.toFixed(8);
     case "ETH":
       return num.toFixed(6);
-    case "USDT":
     case "USDC":
       return num.toFixed(2);
     case "SOL":
@@ -131,7 +130,7 @@ export const getNetworkInfo = (network: string) => {
 };
 
 export const generateMockDeposits = (count: number = 5): DepositTransaction[] => {
-  const assets = ["BTC", "ETH", "SOL", "USDT", "USDC"];
+  const assets = ["BTC", "ETH", "SOL", "USDC"];
   const networks = ["Bitcoin", "Ethereum", "Solana", "Ethereum", "Ethereum"];
   const statuses: DepositStatus[] = ["detected", "confirming", "confirmed", "credited"];
   
@@ -219,7 +218,6 @@ const generateAmount = (asset: string): string => {
       return (Math.random() * 0.5 + 0.01).toFixed(8);
     case "ETH":
       return (Math.random() * 5 + 0.1).toFixed(6);
-    case "USDT":
     case "USDC":
       return (Math.random() * 10000 + 100).toFixed(2);
     case "SOL":
@@ -261,7 +259,6 @@ const calculateKRWValue = (amount: string, asset: string): number => {
     BTC: 95000000,
     ETH: 4200000,
     SOL: 150000,
-    USDT: 1340,
     USDC: 1340
   };
   
@@ -273,7 +270,6 @@ const calculateUSDValue = (amount: string, asset: string): number => {
     BTC: 70000,
     ETH: 3100,
     SOL: 110,
-    USDT: 1,
     USDC: 1
   };
   

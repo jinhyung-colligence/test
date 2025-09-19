@@ -270,7 +270,7 @@ export default function AddressManagement() {
       BTC: "bg-orange-100 text-orange-800",
       ETH: "bg-blue-100 text-blue-800",
       SOL: "bg-purple-100 text-purple-800",
-      USDT: "bg-indigo-100 text-indigo-800",
+      KRW: "bg-indigo-100 text-indigo-800",
       USDC: "bg-sky-100 text-sky-800"
     };
     return colors[asset] || "bg-gray-100 text-gray-800";

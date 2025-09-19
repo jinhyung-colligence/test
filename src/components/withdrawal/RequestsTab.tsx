@@ -207,15 +207,11 @@ export default function RequestsTab({ withdrawalRequests }: RequestsTabProps) {
                               ₩
                               {(
                                 request.amount *
-                                (request.currency === "BTC"
-                                  ? 95000000
-                                  : request.currency === "ETH"
-                                  ? 4200000
-                                  : request.currency === "USDC"
+                                (request.currency === "KRW"
                                   ? 1340
-                                  : request.currency === "USDT"
-                                  ? 1340
-                                  : 70000000)
+                                  : request.currency === "KRW"
+                                  ? 1
+                                  : 1340)
                               ).toLocaleString()}
                             </div>
                           </div>

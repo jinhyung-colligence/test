@@ -73,7 +73,7 @@ export default function BudgetPeriodSelector({
               <option value="ETH">ETH</option>
               <option value="SOL">SOL</option>
               <option value="USDC">USDC</option>
-              <option value="USDT">USDT</option>
+              <option value="KRW">KRW</option>
             </select>
           )}
         </div>

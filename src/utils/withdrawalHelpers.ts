@@ -80,18 +80,12 @@ export const getPriorityInfo = (priority: string) => {
 };
 
 export const formatCurrency = (amount: number, currency: string) => {
-  if (currency === "BTC") return `₿${amount.toFixed(8)}`;
-  if (currency === "ETH") return `Ξ${amount.toFixed(6)}`;
-  if (currency === "USDC") return `${amount.toLocaleString()} USDC`;
-  if (currency === "USDT") return `${amount.toLocaleString()} USDT`;
+  if (currency === "KRW") return `${amount.toLocaleString()} KRW`;
   return `${amount.toLocaleString()} ${currency}`;
 };
 
 export const formatAmount = (amount: number, currency: string) => {
-  if (currency === "BTC") return parseFloat(amount.toFixed(8)).toString();
-  if (currency === "ETH") return parseFloat(amount.toFixed(6)).toString();
-  if (currency === "USDC") return amount.toLocaleString();
-  if (currency === "USDT") return amount.toLocaleString();
+  if (currency === "KRW") return amount.toLocaleString();
   return amount.toLocaleString();
 };
 

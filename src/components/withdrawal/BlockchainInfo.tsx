@@ -109,7 +109,7 @@ export function BlockchainInfo({ request }: BlockchainInfoProps) {
       case 'ETH':
         return { name: 'Ethereum', color: 'text-blue-600' };
       case 'USDC':
-      case 'USDT':
+      case 'KRW':
         return { name: 'Ethereum (ERC-20)', color: 'text-blue-600' };
       default:
         return { name: 'Unknown Network', color: 'text-gray-600' };

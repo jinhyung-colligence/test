@@ -79,7 +79,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
     {
       id: "4",
       type: "borrow",
-      asset: "USDT",
+      asset: "KRW",
       amount: "5000",
       value: 5000000,
       status: "completed",

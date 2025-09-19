@@ -16,125 +16,6 @@ export interface ApprovalPolicy {
 export const APPROVAL_POLICIES: ApprovalPolicy[] = [
   {
     minAmount: 0,
-    maxAmount: 10000,
-    currency: "USD",
-    requiredApprovers: ["박CFO", "이CISO"],
-    description: "USD 일반 거래 (1만 달러 미만)"
-  },
-  {
-    minAmount: 10000,
-    maxAmount: 100000,
-    currency: "USD",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "USD 중액 거래 (1만 달러 이상 10만 달러 미만)"
-  },
-  {
-    minAmount: 100000,
-    maxAmount: 1000000,
-    currency: "USD",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
-    description: "USD 고액 거래 (10만 달러 이상 100만 달러 미만)"
-  },
-  {
-    minAmount: 1000000,
-    maxAmount: Infinity,
-    currency: "USD",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "USD 초고액 거래 (100만 달러 이상)"
-  },
-  {
-    minAmount: 0,
-    maxAmount: 0.1,
-    currency: "BTC",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "BTC 소액 거래 (0.1 BTC 미만)"
-  },
-  {
-    minAmount: 0.1,
-    maxAmount: 0.2,
-    currency: "BTC",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
-    description: "BTC 중액 거래 (0.1 BTC 이상 0.2 BTC 미만)"
-  },
-  {
-    minAmount: 0.2,
-    maxAmount: Infinity,
-    currency: "BTC",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "BTC 고액 거래 (0.2 BTC 이상)"
-  },
-  {
-    minAmount: 0,
-    maxAmount: 1,
-    currency: "ETH",
-    requiredApprovers: ["박CFO", "이CISO"],
-    description: "ETH 소액 거래 (1 ETH 미만)"
-  },
-  {
-    minAmount: 1,
-    maxAmount: 5,
-    currency: "ETH",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "ETH 중액 거래 (1 ETH 이상 5 ETH 미만)"
-  },
-  {
-    minAmount: 5,
-    maxAmount: 10,
-    currency: "ETH",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
-    description: "ETH 고액 거래 (5 ETH 이상 10 ETH 미만)"
-  },
-  {
-    minAmount: 10,
-    maxAmount: Infinity,
-    currency: "ETH",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "ETH 초고액 거래 (10 ETH 이상)"
-  },
-  {
-    minAmount: 0,
-    maxAmount: 10000,
-    currency: "USDC",
-    requiredApprovers: ["박CFO", "이CISO"],
-    description: "USDC 일반 거래 (1만 USDC 미만)"
-  },
-  {
-    minAmount: 10000,
-    maxAmount: 100000,
-    currency: "USDC",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "USDC 중액 거래 (1만 USDC 이상 10만 USDC 미만)"
-  },
-  {
-    minAmount: 100000,
-    maxAmount: Infinity,
-    currency: "USDC",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "USDC 고액 거래 (10만 USDC 이상)"
-  },
-  {
-    minAmount: 0,
-    maxAmount: 10000,
-    currency: "USDT",
-    requiredApprovers: ["박CFO", "이CISO"],
-    description: "USDT 일반 거래 (1만 USDT 미만)"
-  },
-  {
-    minAmount: 10000,
-    maxAmount: 100000,
-    currency: "USDT",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
-    description: "USDT 중액 거래 (1만 USDT 이상 10만 USDT 미만)"
-  },
-  {
-    minAmount: 100000,
-    maxAmount: Infinity,
-    currency: "USDT",
-    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
-    description: "USDT 고액 거래 (10만 USDT 이상)"
-  },
-  {
-    minAmount: 0,
     maxAmount: 1000000,
     currency: "KRW",
     requiredApprovers: ["박CFO", "이CISO"],
@@ -174,11 +55,6 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
  * 환율 정보 (실제로는 외부 API에서 가져와야 함)
  */
 const EXCHANGE_RATES = {
-  USD: 1300,
-  BTC: 65000000,
-  ETH: 3500000,
-  USDC: 1340,
-  USDT: 1340,
   KRW: 1
 };
 

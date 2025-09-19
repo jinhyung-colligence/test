@@ -98,7 +98,7 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModal
               <option value="BTC">Bitcoin (BTC)</option>
               <option value="ETH">Ethereum (ETH)</option>
               <option value="SOL">Solana (SOL)</option>
-              <option value="USDT">Tether (USDT)</option>
+              <option value="KRW">Tether (KRW)</option>
               <option value="USDC">USD Coin (USDC)</option>
             </select>
           </div>

@@ -6,7 +6,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_1",
     label: "메인 비트코인 지갑",
     address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0eshre9jqsh4k5drjqqq4u8x",
-    coin: "BTC",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -30,7 +30,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_2",
     label: "이더리움 DeFi 지갑",
     address: "0x742d35Cc6634C0532925a3b844Bc454Bb54dEF0bEb0",
-    coin: "ETH",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -52,9 +52,9 @@ export const mockAddresses: WhitelistedAddress[] = [
   },
   {
     id: "addr_personal_3",
-    label: "USDT 스테이블코인 지갑",
+    label: "KRW 스테이블코인 지갑",
     address: "0xa1b2c3d4e5f6789012345678901234567890abcd",
-    coin: "USDT",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -78,7 +78,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_4",
     label: "하드웨어 월렛 (Ledger)",
     address: "bc1q9x8y7z6w5v4u3t2s1r0p9o8n7m6l5k4j3h2g1f0",
-    coin: "BTC",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: false,
@@ -102,7 +102,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_5",
     label: "메타마스크 지갑",
     address: "0x9876543210fedcba0987654321fedcba09876543",
-    coin: "ETH",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -150,7 +150,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_7",
     label: "트레저 하드웨어 월렛",
     address: "0x1234567890abcdef1234567890abcdef12345678",
-    coin: "ETH",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: false,
@@ -174,7 +174,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_8",
     label: "개인 냉동 지갑",
     address: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
-    coin: "BTC",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: false,
@@ -198,7 +198,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_9",
     label: "DeFi 유동성 풀",
     address: "0xdef1c0de5555555666666777777888888999999a",
-    coin: "USDT",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -222,7 +222,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_personal_10",
     label: "모바일 지갑 (Trust Wallet)",
     address: "0xabcdef0123456789abcdef0123456789abcdef01",
-    coin: "USDC",
+    coin: "KRW",
     type: "personal",
     permissions: {
       canDeposit: true,
@@ -272,7 +272,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_1",
     label: "업비트",
     address: "3FKjZPmL8Jk9QqW8eRtYu7Vn2Xs4Hm1cBp6Nd5Av9r",
-    coin: "BTC",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: true,
@@ -293,7 +293,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_2",
     label: "바이낸스",
     address: "1A9B8C7D6E5F4G3H2I1J0K9L8M7N6O5P4Q3R2S1T",
-    coin: "BTC",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: false,
@@ -314,7 +314,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_3",
     label: "코인베이스 Pro",
     address: "0xabcdef1234567890abcdef1234567890abcdef12",
-    coin: "USDC",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: true,
@@ -335,7 +335,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_4",
     label: "빗썸",
     address: "bc1qabcdef1234567890abcdef1234567890abcdef",
-    coin: "BTC",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: true,
@@ -356,7 +356,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_5",
     label: "코인원",
     address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    coin: "BTC",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: false,
@@ -377,7 +377,7 @@ export const mockAddresses: WhitelistedAddress[] = [
     id: "addr_vasp_6",
     label: "크라켄",
     address: "0x1a2b3c4d5e6f789012345678901234567890abcd",
-    coin: "ETH",
+    coin: "KRW",
     type: "vasp",
     permissions: {
       canDeposit: true,

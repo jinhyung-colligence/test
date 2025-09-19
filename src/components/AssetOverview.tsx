@@ -34,10 +34,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   const router = useRouter()
 
   const mockAssets = [
-    { symbol: 'BTC', name: 'Bitcoin', balance: '2.45678', value: 125000000, change: 5.67, currentPrice: 50800000 },
-    { symbol: 'ETH', name: 'Ethereum', balance: '45.234', value: 75000000, change: -2.34, currentPrice: 1658000 },
-    { symbol: 'USDC', name: 'USD Coin', balance: '50000', value: 50000000, change: 0.01, currentPrice: 1000 },
-    { symbol: 'USDT', name: 'Tether', balance: '25000', value: 25000000, change: -0.02, currentPrice: 1000 }
+    { symbol: 'KRW', name: 'Korean Won', balance: '75000000', value: 75000000, change: -2.34, currentPrice: 1 }
   ]
 
   // Filter actual withdrawal requests with submitted status (pending approval)
@@ -161,9 +158,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   const highUrgencyApprovals = mockWithdrawalApprovals.filter(request => request.priority === 'high' || request.priority === 'critical')
   const totalPendingValue = mockWithdrawalApprovals.reduce((sum, request) => {
     // Convert amount to KRW for total calculation
-    const krwValue = request.currency === 'BTC' ? request.amount * 85000000 :
-                    request.currency === 'USDT' || request.currency === 'USDC' ? request.amount * 1000 :
-                    request.amount * 1000; // Default conversion
+    const krwValue = request.currency === 'KRW' ? request.amount : request.amount;
     return sum + krwValue;
   }, 0)
 

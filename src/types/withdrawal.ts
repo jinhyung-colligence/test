@@ -17,13 +17,7 @@ export type UserRole =
   | "operator"
   | "admin";
 
-export type Currency =
-  | "USD"
-  | "BTC"
-  | "ETH"
-  | "USDC"
-  | "USDT"
-  | "KRW";
+export type Currency = "KRW";
 
 export interface WithdrawalRequest {
   id: string;

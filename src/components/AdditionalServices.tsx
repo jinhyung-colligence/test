@@ -95,7 +95,7 @@ export default function AdditionalServices({
     },
     {
       id: "2",
-      asset: "USDT",
+      asset: "KRW",
       amount: "25000",
       apy: 7.2,
       earned: "1800",
@@ -414,7 +414,7 @@ export default function AdditionalServices({
                 <option>BTC</option>
                 <option>ETH</option>
                 <option>USDC</option>
-                <option>USDT</option>
+                <option>KRW</option>
               </select>
               <input
                 type="number"
@@ -437,7 +437,7 @@ export default function AdditionalServices({
                 <option>ETH</option>
                 <option>BTC</option>
                 <option>USDC</option>
-                <option>USDT</option>
+                <option>KRW</option>
               </select>
               <input
                 type="number"
@@ -569,7 +569,7 @@ export default function AdditionalServices({
                   <option>BTC - Bitcoin</option>
                   <option>ETH - Ethereum</option>
                   <option>SOL - Solana</option>
-                  <option>USDT - Tether</option>
+                  <option>KRW - Tether</option>
                   <option>USDC - USD Coin</option>
                 </select>
               </div>
@@ -626,7 +626,7 @@ export default function AdditionalServices({
                   <option>BTC - Bitcoin</option>
                   <option>ETH - Ethereum</option>
                   <option>SOL - Solana</option>
-                  <option>USDT - Tether</option>
+                  <option>KRW - Tether</option>
                   <option>USDC - USD Coin</option>
                 </select>
               </div>
@@ -714,7 +714,7 @@ export default function AdditionalServices({
                   sellPrice: 149000,
                 },
                 {
-                  symbol: "USDT",
+                  symbol: "KRW",
                   name: "Tether",
                   buyPrice: 1320,
                   sellPrice: 1310,

@@ -20,11 +20,10 @@ interface SecuritySettingsProps {
   plan: ServicePlan;
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
-  policyCurrency?: "USD" | "BTC" | "ETH" | "USDC" | "USDT" | "KRW";
   policySubtab?: "amount" | "type";
 }
 
-export default function SecuritySettings({ plan, initialTab, notificationSubtab, policyCurrency, policySubtab }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab }: SecuritySettingsProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 탭 관리 상태
@@ -48,7 +47,7 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
         case "notifications":
           return `/security/notifications/logs`;
         case "policies":
-          return `/security/policies/amount/USD`;
+          return `/security/policies/amount`;
         default:
           return `/security/${newTab}`;
       }
@@ -99,7 +98,7 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
       {activeTab === "security" && <SecurityTab plan={plan} />}
       {activeTab === "addresses" && <AddressManagement />}
       {activeTab === "accounts" && <AccountManagement plan={plan} />}
-      {activeTab === "policies" && <PolicyManagement initialCurrency={policyCurrency} />}
+      {activeTab === "policies" && <PolicyManagement />}
       {activeTab === "notifications" && <NotificationCenter initialSubtab={notificationSubtab} />}
     </div>
   );

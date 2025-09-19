@@ -19,7 +19,6 @@ export const validateBlockchainAddress = (address: string, asset: string): boole
       return validateEthereumAddress(address);
     case "SOL":
       return validateSolanaAddress(address);
-    case "USDT":
     case "USDC":
       return validateEthereumAddress(address);
     default:

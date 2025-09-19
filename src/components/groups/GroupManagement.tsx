@@ -211,10 +211,10 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     name: "",
     type: "department" as GroupType,
     description: "",
-    currency: 'USDC' as CryptoCurrency, // 그룹 전체 자산 설정
-    monthlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
-    quarterlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
-    yearlyBudget: { amount: 0, currency: 'USDC' as CryptoCurrency },
+    currency: 'KRW' as CryptoCurrency, // 그룹 전체 자산 설정
+    monthlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
+    quarterlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
+    yearlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
     budgetSetup: null as BudgetSetup | null, // 새로운 예산 설정
     manager: "",
   });
@@ -383,10 +383,10 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       name: "",
       type: "department",
       description: "",
-      currency: 'USDC' as CryptoCurrency,
-      monthlyBudget: { amount: 0, currency: 'USDC' },
-      quarterlyBudget: { amount: 0, currency: 'USDC' },
-      yearlyBudget: { amount: 0, currency: 'USDC' },
+      currency: 'KRW' as CryptoCurrency,
+      monthlyBudget: { amount: 0, currency: 'KRW' },
+      quarterlyBudget: { amount: 0, currency: 'KRW' },
+      yearlyBudget: { amount: 0, currency: 'KRW' },
       budgetSetup: null,
       manager: "",
     });
@@ -789,7 +789,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   <option value="ETH">Ethereum (ETH)</option>
                   <option value="SOL">Solana (SOL)</option>
                   <option value="USDC">USD Coin (USDC)</option>
-                  <option value="USDT">Tether (USDT)</option>
+                  <option value="KRW">Tether (KRW)</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
                   이 그룹의 모든 예산은 선택한 자산으로 설정됩니다.

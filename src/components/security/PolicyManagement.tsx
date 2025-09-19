@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import { Currency } from "@/types/withdrawal";
 import {
   APPROVAL_POLICIES,
@@ -12,12 +11,9 @@ import { formatUserDisplay } from '@/utils/userHelpers';
 
 interface PolicyManagementProps {
   onPolicyChange?: (policies: ApprovalPolicy[]) => void;
-  initialCurrency?: Currency;
 }
 
-export default function PolicyManagement({ onPolicyChange, initialCurrency }: PolicyManagementProps) {
-  const router = useRouter();
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(initialCurrency || 'USD');
+export default function PolicyManagement({ onPolicyChange }: PolicyManagementProps) {
   const [isEditing] = useState(true); // 항상 편집 모드
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null);
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
@@ -25,30 +21,16 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
   const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
 
-  const currencies: Currency[] = ['USD', 'BTC', 'ETH', 'USDC', 'USDT', 'KRW'];
-
-  // initialCurrency가 변경되면 selectedCurrency 업데이트
-  useEffect(() => {
-    if (initialCurrency) {
-      setSelectedCurrency(initialCurrency);
-    }
-  }, [initialCurrency]);
-
-  // 통화 변경 함수 (URL도 함께 변경)
-  const handleCurrencyChange = (newCurrency: Currency) => {
-    setSelectedCurrency(newCurrency);
-    router.push(`/security/policies/amount/${newCurrency}`);
-  };
 
   const filteredPolicies = APPROVAL_POLICIES.filter(
-    policy => policy.currency === selectedCurrency
+    policy => policy.currency === 'KRW'
   );
 
   const formatAmount = (amount: number, currency: Currency) => {
     if (amount === 0) return '0';
     if (amount === Infinity) return '∞';
 
-    if (currency === 'USD' || currency === 'KRW') {
+    if (currency === 'KRW' || currency === 'KRW') {
       return amount.toLocaleString();
     }
 
@@ -186,23 +168,8 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
             </h3>
             <p className="text-sm text-gray-600 mt-1">거래 금액에 따른 결재 정책을 관리합니다</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-gray-700">통화:</span>
-            <div className="flex flex-wrap gap-2">
-              {currencies.map(currency => (
-                <button
-                  key={currency}
-                  onClick={() => handleCurrencyChange(currency)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    selectedCurrency === currency
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {currency}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center">
+            <span className="text-sm font-medium text-gray-600">통화: KRW</span>
           </div>
         </div>
       </div>
@@ -382,14 +349,12 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">통화</label>
-                <select
-                  defaultValue={selectedCurrency}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {currencies.map(currency => (
-                    <option key={currency} value={currency}>{currency}</option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  value="KRW"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">

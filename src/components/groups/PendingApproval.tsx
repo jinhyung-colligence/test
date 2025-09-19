@@ -426,12 +426,7 @@ export default function PendingApproval(props: PendingApprovalProps) {
                         {selectedExpense.amount.currency}
                       </div>
                       <div className="text-lg font-semibold text-primary-600">
-                        ₩{(selectedExpense.amount.amount *
-                          (selectedExpense.amount.currency === "BTC" ? 95000000 :
-                           selectedExpense.amount.currency === "ETH" ? 4200000 :
-                           selectedExpense.amount.currency === "USDC" ? 1340 :
-                           selectedExpense.amount.currency === "USDT" ? 1340 : 70000000)
-                        ).toLocaleString()}
+                        ₩{selectedExpense.amount.amount.toLocaleString()}
                       </div>
                     </div>
                   </div>

@@ -1,15 +1,19 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import PageLayout from '@/components/PageLayout'
+import SecuritySettings from '@/components/SecuritySettings'
+import { useServicePlan } from '@/contexts/ServicePlanContext'
 
 export default function PolicyAmountPage() {
-  const router = useRouter()
+  const { selectedPlan } = useServicePlan()
 
-  useEffect(() => {
-    // 기본 통화(USD)로 리다이렉트
-    router.replace('/security/policies/amount/USD')
-  }, [router])
-
-  return null
+  return (
+    <PageLayout activeTab="security">
+      <SecuritySettings
+        plan={selectedPlan}
+        initialTab="policies"
+        policySubtab="amount"
+      />
+    </PageLayout>
+  )
 }
