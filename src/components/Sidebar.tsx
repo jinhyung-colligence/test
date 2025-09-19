@@ -208,7 +208,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
       {/* Toggle Button */}
-      <div className="absolute -right-3 top-6 z-50">
+      <div className="absolute -right-3 top-10 z-50">
         <button
           onClick={toggleSidebar}
           className="bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:bg-gray-50 transition-colors"
@@ -221,7 +221,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         </button>
       </div>
 
-      <div className={`p-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
+      <div className={`pt-10 px-6 pb-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
         <button
           onClick={() => !isCollapsed && setShowPlanDropdown(!showPlanDropdown)}
           className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
