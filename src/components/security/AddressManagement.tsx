@@ -9,8 +9,11 @@ import DailyLimitStatus from "./address/DailyLimitStatus";
 import PaginationNav from "./address/PaginationNav";
 import RemainingTime from "./address/RemainingTime";
 import TransactionHistory from "./address/TransactionHistory";
+import TabHeader from "./address/TabHeader";
+import SearchInput from "./address/SearchInput";
 import { mockAddresses } from "@/data/mockAddresses";
 import { mockTransactions } from "@/data/mockTransactions";
+import { TransactionFilters } from "@/types/transaction";
 import {
   validateBlockchainAddress,
   checkDuplicateAddress,
@@ -29,6 +32,14 @@ export default function AddressManagement() {
   const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
   const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "limits" | "history">("personal");
+
+  // 내역 탭 필터 상태
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
+  const [historyFilters, setHistoryFilters] = useState<TransactionFilters>({
+    direction: "all",
+    assetType: "all",
+    status: "all"
+  });
 
   // 페이징 상태 (각 탭별로 독립적)
   const [currentPage, setCurrentPage] = useState({
@@ -282,9 +293,6 @@ export default function AddressManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">주소 관리</h2>
-          <p className="text-gray-600 mt-1">
-            입금 및 출금 주소를 관리하고 일일 한도를 확인하세요
-          </p>
         </div>
       </div>
 
@@ -335,49 +343,28 @@ export default function AddressManagement() {
           </nav>
         </div>
 
-        {/* 개인/VASP 지갑 탭 컨텐츠 */}
-        {(activeTab === "personal" || activeTab === "vasp") && (
+        {/* 개인 지갑 탭 컨텐츠 */}
+        {activeTab === "personal" && (
           <>
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* 주소 추가 버튼 (왼쪽) */}
+            <TabHeader
+              title="개인 지갑 주소"
+              description="개인 지갑 주소를 등록하고 입출금 권한을 관리합니다"
+              leftSection={
                 <button
                   onClick={openModal}
                   className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  {activeTab === "personal" ? "개인 지갑" : "거래소/VASP"} 주소 추가
+                  개인 지갑 주소 추가
                 </button>
-
-                {/* 검색 및 필터 (오른쪽) */}
-                <div className="flex items-center space-x-3">
-                  {/* 검색 입력 */}
-                  <div className="relative w-full sm:w-64">
-                    <input
-                      type="text"
-                      placeholder="주소, 라벨, 자산 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
-                    <div className="absolute left-3 top-2.5">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* 권한 필터 */}
+              }
+              rightSection={
+                <>
+                  <SearchInput
+                    placeholder="주소, 라벨, 자산 검색..."
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                  />
                   <select
                     value={permissionFilter}
                     onChange={(e) => setPermissionFilter(e.target.value as "all" | "deposit" | "withdrawal" | "both")}
@@ -388,14 +375,14 @@ export default function AddressManagement() {
                     <option value="withdrawal">출금만</option>
                     <option value="both">입출금 모두</option>
                   </select>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+            />
 
             {/* 주소 테이블 */}
             <div className="p-6">
               <AddressTable
-                addresses={activeTab === "personal" ? paginatedPersonalData.items : paginatedVaspData.items}
+                addresses={paginatedPersonalData.items}
                 onDelete={handleDeleteAddress}
                 getAssetColor={getAssetColor}
               />
@@ -403,8 +390,62 @@ export default function AddressManagement() {
 
             {/* 페이징 네비게이션 */}
             <PaginationNav
-              paginatedData={activeTab === "personal" ? paginatedPersonalData : paginatedVaspData}
-              tabKey={activeTab as "personal" | "vasp"}
+              paginatedData={paginatedPersonalData}
+              tabKey="personal"
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
+
+        {/* VASP 지갑 탭 컨텐츠 */}
+        {activeTab === "vasp" && (
+          <>
+            <TabHeader
+              title="거래소 및 VASP 주소"
+              description="거래소 및 가상자산 사업자(VASP) 주소를 관리합니다"
+              leftSection={
+                <button
+                  onClick={openModal}
+                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  거래소/VASP 주소 추가
+                </button>
+              }
+              rightSection={
+                <>
+                  <SearchInput
+                    placeholder="주소, 라벨, 자산 검색..."
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                  />
+                  <select
+                    value={permissionFilter}
+                    onChange={(e) => setPermissionFilter(e.target.value as "all" | "deposit" | "withdrawal" | "both")}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">모든 권한</option>
+                    <option value="deposit">입금만</option>
+                    <option value="withdrawal">출금만</option>
+                    <option value="both">입출금 모두</option>
+                  </select>
+                </>
+              }
+            />
+
+            {/* 주소 테이블 */}
+            <div className="p-6">
+              <AddressTable
+                addresses={paginatedVaspData.items}
+                onDelete={handleDeleteAddress}
+                getAssetColor={getAssetColor}
+              />
+            </div>
+
+            {/* 페이징 네비게이션 */}
+            <PaginationNav
+              paginatedData={paginatedVaspData}
+              tabKey="vasp"
               onPageChange={handlePageChange}
             />
           </>
@@ -412,52 +453,102 @@ export default function AddressManagement() {
 
         {/* 내역 탭 컨텐츠 */}
         {activeTab === "history" && (
-          <div className="p-6">
-            <TransactionHistory
-              transactions={mockTransactions}
-              getAssetColor={getAssetColor}
-              currentPage={currentPage.history}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
+          <>
+            <TabHeader
+              title="거래 내역"
+              description="모든 입출금 거래 내역을 조회하고 분석합니다"
+              leftSection={
+                <div className="flex items-center space-x-6 text-sm">
+                  <div className="text-gray-500">
+                    총 <span className="font-medium text-gray-900">{mockTransactions.length}</span>건
+                  </div>
+                  <div className="text-blue-600">
+                    입금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "deposit").length}</span>건
+                  </div>
+                  <div className="text-amber-600">
+                    출금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "withdrawal").length}</span>건
+                  </div>
+                </div>
+              }
+              rightSection={
+                <>
+                  <div className="relative w-64">
+                    <input
+                      type="text"
+                      placeholder="해시, 자산, 라벨 검색..."
+                      value={historySearchTerm}
+                      onChange={(e) => setHistorySearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <div className="absolute left-3 top-2.5">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <select
+                    value={historyFilters.direction}
+                    onChange={(e) => setHistoryFilters({ ...historyFilters, direction: e.target.value as any })}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">모든 방향</option>
+                    <option value="deposit">입금</option>
+                    <option value="withdrawal">출금</option>
+                  </select>
+                  <select
+                    value={historyFilters.assetType}
+                    onChange={(e) => setHistoryFilters({ ...historyFilters, assetType: e.target.value })}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">모든 자산</option>
+                    {Array.from(new Set(mockTransactions.map(tx => tx.assetType))).sort().map(asset => (
+                      <option key={asset} value={asset}>{asset}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={historyFilters.status}
+                    onChange={(e) => setHistoryFilters({ ...historyFilters, status: e.target.value as any })}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">모든 상태</option>
+                    <option value="completed">완료</option>
+                    <option value="pending">대기</option>
+                    <option value="failed">실패</option>
+                  </select>
+                </>
+              }
             />
-          </div>
+
+            <div className="p-6">
+              <TransactionHistory
+                transactions={mockTransactions}
+                getAssetColor={getAssetColor}
+                currentPage={currentPage.history}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                showHeader={false}
+                filters={historyFilters}
+                onFiltersChange={setHistoryFilters}
+                searchTerm={historySearchTerm}
+                onSearchTermChange={setHistorySearchTerm}
+              />
+            </div>
+          </>
         )}
 
         {/* 개인지갑 일일한도 탭 컨텐츠 */}
         {activeTab === "limits" && (
           <>
-            {/* 검색 및 필터 */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
-                {/* 검색 및 필터 */}
-                <div className="flex items-center space-x-3">
-                  {/* 검색 입력 */}
-                  <div className="relative w-full sm:w-64">
-                    <input
-                      type="text"
-                      placeholder="지갑 이름, 자산 검색..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
-                    <div className="absolute left-3 top-2.5">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* 상태 필터 */}
+            <TabHeader
+              title="일일 한도 관리"
+              description="개인 지갑의 일일 입출금 한도 사용량을 모니터링합니다"
+              rightSection={
+                <>
+                  <SearchInput
+                    placeholder="지갑 이름, 자산 검색..."
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                  />
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as "all" | "normal" | "warning" | "danger")}
@@ -468,9 +559,9 @@ export default function AddressManagement() {
                     <option value="warning">경고</option>
                     <option value="danger">주의</option>
                   </select>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+            />
 
             <div className="p-6">
               {personalAddresses.length > 0 ? (

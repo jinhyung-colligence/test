@@ -12,15 +12,39 @@ interface TransactionHistoryProps {
   currentPage: number;
   itemsPerPage: number;
   onPageChange: (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => void;
+  showHeader?: boolean; // 헤더 표시 여부 (기본 false)
+  // 외부에서 필터 상태 제어
+  filters?: TransactionFilters;
+  onFiltersChange?: (filters: TransactionFilters) => void;
+  searchTerm?: string;
+  onSearchTermChange?: (term: string) => void;
 }
 
-export default function TransactionHistory({ transactions, getAssetColor, currentPage, itemsPerPage, onPageChange }: TransactionHistoryProps) {
-  const [filters, setFilters] = useState<TransactionFilters>({
+export default function TransactionHistory({
+  transactions,
+  getAssetColor,
+  currentPage,
+  itemsPerPage,
+  onPageChange,
+  showHeader = false,
+  filters: externalFilters,
+  onFiltersChange,
+  searchTerm: externalSearchTerm,
+  onSearchTermChange
+}: TransactionHistoryProps) {
+  // 내부 상태 (외부에서 제어하지 않을 때 사용)
+  const [internalFilters, setInternalFilters] = useState<TransactionFilters>({
     direction: "all",
     assetType: "all",
     status: "all"
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [internalSearchTerm, setInternalSearchTerm] = useState("");
+
+  // 실제 사용할 값들 (외부 props가 있으면 외부 값, 없으면 내부 값)
+  const filters = externalFilters || internalFilters;
+  const searchTerm = externalSearchTerm || internalSearchTerm;
+  const setFilters = onFiltersChange || setInternalFilters;
+  const setSearchTerm = onSearchTermChange || setInternalSearchTerm;
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // 동적 truncate를 위한 상태 및 ref
@@ -158,89 +182,86 @@ export default function TransactionHistory({ transactions, getAssetColor, curren
     };
   };
 
+  // 필터 컴포넌트 (외부에서 사용할 수 있도록)
+  const renderFilters = () => (
+    <>
+      <input
+        type="text"
+        placeholder="해시, 자산, 라벨 검색..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 relative"
+      />
+      <select
+        value={filters.direction}
+        onChange={(e) => setFilters({ ...filters, direction: e.target.value as any })}
+        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+      >
+        <option value="all">모든 방향</option>
+        <option value="deposit">입금</option>
+        <option value="withdrawal">출금</option>
+      </select>
+      <select
+        value={filters.assetType}
+        onChange={(e) => setFilters({ ...filters, assetType: e.target.value })}
+        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+      >
+        <option value="all">모든 자산</option>
+        {uniqueAssets.map(asset => (
+          <option key={asset} value={asset}>{asset}</option>
+        ))}
+      </select>
+      <select
+        value={filters.status}
+        onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
+        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+      >
+        <option value="all">모든 상태</option>
+        <option value="completed">완료</option>
+        <option value="pending">대기</option>
+        <option value="failed">실패</option>
+      </select>
+    </>
+  );
+
   return (
     <div className="space-y-6">
-      {/* 필터 및 검색 */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* 검색 */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="해시, 자산, 라벨 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-            <div className="absolute left-3 top-2.5">
-              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+      {/* 조건부 필터 및 검색 (독립적으로 사용할 때만) */}
+      {showHeader && (
+        <>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {renderFilters()}
             </div>
           </div>
 
-          {/* 방향 필터 */}
-          <select
-            value={filters.direction}
-            onChange={(e) => setFilters({ ...filters, direction: e.target.value as any })}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">모든 방향</option>
-            <option value="deposit">입금</option>
-            <option value="withdrawal">출금</option>
-          </select>
-
-          {/* 자산 필터 */}
-          <select
-            value={filters.assetType}
-            onChange={(e) => setFilters({ ...filters, assetType: e.target.value })}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">모든 자산</option>
-            {uniqueAssets.map(asset => (
-              <option key={asset} value={asset}>{asset}</option>
-            ))}
-          </select>
-
-          {/* 상태 필터 */}
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">모든 상태</option>
-            <option value="completed">완료</option>
-            <option value="pending">대기</option>
-            <option value="failed">실패</option>
-          </select>
-        </div>
-      </div>
-
-      {/* 요약 정보 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">총 거래</div>
-          <div className="text-xl font-semibold text-gray-900">{filteredTransactions.length}건</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">입금 건수</div>
-          <div className="text-xl font-semibold text-blue-600">
-            {filteredTransactions.filter(tx => tx.direction === "deposit").length}건
+          {/* 요약 정보 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600">총 거래</div>
+              <div className="text-xl font-semibold text-gray-900">{filteredTransactions.length}건</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600">입금 건수</div>
+              <div className="text-xl font-semibold text-blue-600">
+                {filteredTransactions.filter(tx => tx.direction === "deposit").length}건
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600">출금 건수</div>
+              <div className="text-xl font-semibold text-amber-600">
+                {filteredTransactions.filter(tx => tx.direction === "withdrawal").length}건
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600">대기 중</div>
+              <div className="text-xl font-semibold text-gray-600">
+                {filteredTransactions.filter(tx => tx.status === "pending").length}건
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">출금 건수</div>
-          <div className="text-xl font-semibold text-amber-600">
-            {filteredTransactions.filter(tx => tx.direction === "withdrawal").length}건
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600">대기 중</div>
-          <div className="text-xl font-semibold text-gray-600">
-            {filteredTransactions.filter(tx => tx.status === "pending").length}건
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* 거래 내역 테이블 */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
