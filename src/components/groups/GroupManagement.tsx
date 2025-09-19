@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import {
   WalletIcon,
   PlusIcon,
-  ChartBarIcon,
-  CogIcon,
   UserIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
@@ -683,17 +681,6 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   )}
                 </div>
 
-                {/* 액션 버튼 */}
-                <div className="grid grid-cols-2 gap-2">
-                  <button className="flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                    <ChartBarIcon className="h-4 w-4 mr-1" />
-                    상세 분석
-                  </button>
-                  <button className="flex items-center justify-center px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                    <CogIcon className="h-4 w-4 mr-1" />
-                    설정
-                  </button>
-                </div>
               </div>
             </div>
           );
