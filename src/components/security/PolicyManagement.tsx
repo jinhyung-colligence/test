@@ -111,13 +111,13 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   const getRecommendedApprovers = (riskLevel: string): string[] => {
     switch (riskLevel) {
       case 'low':
-        return ['박CFO', '이CISO'];
+        return ['박재무', '윤보안'];
       case 'medium':
-        return ['박CFO', '이CISO', '김CTO'];
+        return ['박재무', '윤보안', '이기술'];
       case 'high':
-        return ['박CFO', '이CISO', '김CTO', '정법무이사'];
+        return ['박재무', '윤보안', '이기술', '송컴플'];
       case 'very_high':
-        return ['박CFO', '이CISO', '김CTO', '정법무이사', '최CEO'];
+        return ['박재무', '윤보안', '이기술', '송컴플', '김대표'];
       default:
         return [];
     }
@@ -126,6 +126,14 @@ export default function PolicyManagement({ onPolicyChange }: PolicyManagementPro
   // 위험도 변경 핸들러
   const handleRiskLevelChange = (riskLevel: string) => {
     setSelectedRiskLevel(riskLevel);
+
+    // 추천 결재자를 가져와서 자동으로 설정
+    const recommended = getRecommendedApprovers(riskLevel);
+    if (recommended.length > 0) {
+      setModalApprovers(recommended);
+    } else {
+      setModalApprovers(['']);
+    }
   };
 
   // 모달 결재자 관리 함수들
