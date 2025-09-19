@@ -363,15 +363,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* 테스트 계정 정보 */}
-        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h3 className="text-sm font-medium text-yellow-800 mb-2">🧪 테스트 계정</h3>
-          <div className="text-xs text-yellow-700 space-y-1">
-            <p><strong>이메일:</strong> ceo@company.com</p>
-            <p><strong>OTP:</strong> 123456</p>
-            <p><strong>SMS:</strong> 987654</p>
-          </div>
-        </div>
       </div>
     </div>
   )

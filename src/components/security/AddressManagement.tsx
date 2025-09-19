@@ -1,15 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { WhitelistedAddress, AddressFormData } from "@/types/address";
 import AddressModal from "./address/AddressModal";
 import AddressTable from "./address/AddressTable";
-import DailyLimitStatus from "./address/DailyLimitStatus";
 import PaginationNav from "./address/PaginationNav";
-import RemainingTime from "./address/RemainingTime";
 import TransactionHistory from "./address/TransactionHistory";
-import TabHeader from "./address/TabHeader";
 import SearchInput from "./address/SearchInput";
 import { mockAddresses } from "@/data/mockAddresses";
 import { mockTransactions } from "@/data/mockTransactions";
@@ -20,9 +17,7 @@ import {
   createPersonalWalletDefaults,
   resetDailyUsageIfNeeded,
   getVASPById,
-  getDailyLimitStatus,
-  formatKRW,
-  getProgressPercentage
+  getDailyLimitStatus
 } from "@/utils/addressHelpers";
 
 export default function AddressManagement() {
@@ -31,7 +26,7 @@ export default function AddressManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
-  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "limits" | "history">("personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "history">("personal");
 
   // 내역 탭 필터 상태
   const [historySearchTerm, setHistorySearchTerm] = useState("");
@@ -45,7 +40,6 @@ export default function AddressManagement() {
   const [currentPage, setCurrentPage] = useState({
     personal: 1,
     vasp: 1,
-    limits: 1,
     history: 1
   });
   const [itemsPerPage] = useState(10);
@@ -58,19 +52,13 @@ export default function AddressManagement() {
     }));
   }, [searchTerm, permissionFilter, statusFilter, activeTab]);
 
-  // 탭 변경 시 상태 필터 초기화 (limits 탭이 아닐 때)
-  useEffect(() => {
-    if (activeTab !== "limits") {
-      setStatusFilter("all");
-    }
-  }, [activeTab]);
 
   // URL 쿼리 파라미터에서 탭 설정 읽기
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    if (tabParam && ['personal', 'vasp', 'limits', 'history'].includes(tabParam)) {
-      setActiveTab(tabParam as "personal" | "vasp" | "limits" | "history");
+    if (tabParam && ['personal', 'vasp', 'history'].includes(tabParam)) {
+      setActiveTab(tabParam as "personal" | "vasp" | "history");
     }
   }, []);
 
@@ -188,6 +176,74 @@ export default function AddressManagement() {
     setIsModalOpen(true);
   };
 
+  // CSV 다운로드 함수
+  const downloadCSV = () => {
+    try {
+      // 필터링된 거래 데이터 준비
+      const filteredTransactions = mockTransactions.filter(tx => {
+        const matchesSearch = historySearchTerm === "" ||
+          tx.hash.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+          tx.assetType.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+          tx.addressLabel.toLowerCase().includes(historySearchTerm.toLowerCase());
+
+        const matchesDirection = historyFilters.direction === "all" || tx.direction === historyFilters.direction;
+        const matchesAsset = historyFilters.assetType === "all" || tx.assetType === historyFilters.assetType;
+        const matchesStatus = historyFilters.status === "all" || tx.status === historyFilters.status;
+
+        return matchesSearch && matchesDirection && matchesAsset && matchesStatus;
+      });
+
+      // CSV 헤더
+      const headers = [
+        "거래일시",
+        "방향",
+        "자산",
+        "금액",
+        "주소 라벨",
+        "거래 해시",
+        "상태",
+        "승인자",
+        "메모"
+      ];
+
+      // CSV 데이터 생성
+      const csvData = filteredTransactions.map(tx => [
+        new Date(tx.timestamp).toLocaleString("ko-KR"),
+        tx.direction === "deposit" ? "입금" : "출금",
+        tx.assetType,
+        tx.amount.toLocaleString(),
+        tx.addressLabel,
+        tx.hash,
+        tx.status === "completed" ? "완료" : tx.status === "pending" ? "대기" : "실패",
+        tx.approver || "-",
+        tx.memo || "-"
+      ]);
+
+      // CSV 문자열 생성
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map(row => row.map(field => `"${field}"`).join(","))
+      ].join("\n");
+
+      // UTF-8 BOM 추가 (Excel에서 한글 깨짐 방지)
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+
+      // 다운로드 실행
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `거래내역_${new Date().toLocaleDateString("ko-KR").replace(/\./g, "")}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("CSV 다운로드 실패:", error);
+      alert("CSV 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
 
   // 필터링된 주소 목록
   const getFilteredAddresses = (type?: "personal" | "vasp") => {
@@ -215,39 +271,9 @@ export default function AddressManagement() {
     });
   };
 
-  // 개인 지갑 주소 필터링 및 검색 (일일 한도 표시용)
-  const getFilteredPersonalAddresses = () => {
-    return addresses.filter(addr => {
-      // 개인 지갑만 표시
-      if (addr.type !== "personal") return false;
-
-      // 검색어 필터링
-      const matchesSearch = searchTerm === "" ||
-        addr.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        addr.coin.toLowerCase().includes(searchTerm.toLowerCase());
-
-      if (!matchesSearch) return false;
-
-      // 상태 필터링 (limits 탭에서만 적용)
-      if (activeTab === "limits" && statusFilter !== "all") {
-        const limitStatus = getDailyLimitStatus(addr);
-        if (!limitStatus) return false;
-
-        const depositProgress = getProgressPercentage(limitStatus.depositUsed, limitStatus.depositLimit);
-        const withdrawalProgress = getProgressPercentage(limitStatus.withdrawalUsed, limitStatus.withdrawalLimit);
-        const maxProgress = Math.max(depositProgress, withdrawalProgress);
-
-        if (statusFilter === "normal" && maxProgress >= 70) return false;
-        if (statusFilter === "warning" && (maxProgress < 70 || maxProgress >= 90)) return false;
-        if (statusFilter === "danger" && maxProgress < 90) return false;
-      }
-
-      return true;
-    });
-  };
 
   // 페이징된 데이터 가져오기
-  const getPaginatedData = (data: WhitelistedAddress[], tabKey: "personal" | "vasp" | "limits") => {
+  const getPaginatedData = (data: WhitelistedAddress[], tabKey: "personal" | "vasp") => {
     const startIndex = (currentPage[tabKey] - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return {
@@ -260,21 +286,18 @@ export default function AddressManagement() {
   };
 
   // 페이지 변경 함수
-  const handlePageChange = (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => {
+  const handlePageChange = (tabKey: "personal" | "vasp" | "history", page: number) => {
     setCurrentPage(prev => ({
       ...prev,
       [tabKey]: page
     }));
   };
 
-  const personalAddresses = getFilteredPersonalAddresses();
-
   // 각 탭별 데이터
   const filteredPersonalAddresses = getFilteredAddresses("personal");
   const filteredVaspAddresses = getFilteredAddresses("vasp");
   const paginatedPersonalData = getPaginatedData(filteredPersonalAddresses, "personal");
   const paginatedVaspData = getPaginatedData(filteredVaspAddresses, "vasp");
-  const paginatedLimitsData = getPaginatedData(personalAddresses, "limits");
 
   const getAssetColor = (asset: string) => {
     const colors: Record<string, string> = {
@@ -293,6 +316,7 @@ export default function AddressManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">주소 관리</h2>
+          <p className="text-gray-600 mt-1">지갑 주소를 등록하고 입출금 내역을 관리합니다</p>
         </div>
       </div>
 
@@ -321,16 +345,6 @@ export default function AddressManagement() {
               거래소/VASP ({filteredVaspAddresses.length})
             </button>
             <button
-              onClick={() => setActiveTab("limits")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "limits"
-                  ? "border-primary-500 text-primary-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              일일한도 ({personalAddresses.length})
-            </button>
-            <button
               onClick={() => setActiveTab("history")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === "history"
@@ -346,20 +360,9 @@ export default function AddressManagement() {
         {/* 개인 지갑 탭 컨텐츠 */}
         {activeTab === "personal" && (
           <>
-            <TabHeader
-              title="개인 지갑 주소"
-              description="개인 지갑 주소를 등록하고 입출금 권한을 관리합니다"
-              leftSection={
-                <button
-                  onClick={openModal}
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  개인 지갑 주소 추가
-                </button>
-              }
-              rightSection={
-                <>
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
                   <SearchInput
                     placeholder="주소, 라벨, 자산 검색..."
                     value={searchTerm}
@@ -375,9 +378,16 @@ export default function AddressManagement() {
                     <option value="withdrawal">출금만</option>
                     <option value="both">입출금 모두</option>
                   </select>
-                </>
-              }
-            />
+                </div>
+                <button
+                  onClick={openModal}
+                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  개인 지갑 주소 추가
+                </button>
+              </div>
+            </div>
 
             {/* 주소 테이블 */}
             <div className="p-6">
@@ -400,20 +410,9 @@ export default function AddressManagement() {
         {/* VASP 지갑 탭 컨텐츠 */}
         {activeTab === "vasp" && (
           <>
-            <TabHeader
-              title="거래소 및 VASP 주소"
-              description="거래소 및 가상자산 사업자(VASP) 주소를 관리합니다"
-              leftSection={
-                <button
-                  onClick={openModal}
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  거래소/VASP 주소 추가
-                </button>
-              }
-              rightSection={
-                <>
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
                   <SearchInput
                     placeholder="주소, 라벨, 자산 검색..."
                     value={searchTerm}
@@ -429,9 +428,16 @@ export default function AddressManagement() {
                     <option value="withdrawal">출금만</option>
                     <option value="both">입출금 모두</option>
                   </select>
-                </>
-              }
-            />
+                </div>
+                <button
+                  onClick={openModal}
+                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  거래소/VASP 주소 추가
+                </button>
+              </div>
+            </div>
 
             {/* 주소 테이블 */}
             <div className="p-6">
@@ -454,24 +460,9 @@ export default function AddressManagement() {
         {/* 내역 탭 컨텐츠 */}
         {activeTab === "history" && (
           <>
-            <TabHeader
-              title="거래 내역"
-              description="모든 입출금 거래 내역을 조회하고 분석합니다"
-              leftSection={
-                <div className="flex items-center space-x-6 text-sm">
-                  <div className="text-gray-500">
-                    총 <span className="font-medium text-gray-900">{mockTransactions.length}</span>건
-                  </div>
-                  <div className="text-blue-600">
-                    입금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "deposit").length}</span>건
-                  </div>
-                  <div className="text-amber-600">
-                    출금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "withdrawal").length}</span>건
-                  </div>
-                </div>
-              }
-              rightSection={
-                <>
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
                   <div className="relative w-64">
                     <input
                       type="text"
@@ -515,9 +506,27 @@ export default function AddressManagement() {
                     <option value="pending">대기</option>
                     <option value="failed">실패</option>
                   </select>
-                </>
-              }
-            />
+                </div>
+                <button
+                  onClick={downloadCSV}
+                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  내역 다운로드 (CSV)
+                </button>
+              </div>
+              <div className="flex items-center space-x-6 text-sm">
+                <div className="text-gray-500">
+                  총 <span className="font-medium text-gray-900">{mockTransactions.length}</span>건
+                </div>
+                <div className="text-blue-600">
+                  입금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "deposit").length}</span>건
+                </div>
+                <div className="text-amber-600">
+                  출금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "withdrawal").length}</span>건
+                </div>
+              </div>
+            </div>
 
             <div className="p-6">
               <TransactionHistory
@@ -536,194 +545,6 @@ export default function AddressManagement() {
           </>
         )}
 
-        {/* 개인지갑 일일한도 탭 컨텐츠 */}
-        {activeTab === "limits" && (
-          <>
-            <TabHeader
-              title="일일 한도 관리"
-              description="개인 지갑의 일일 입출금 한도 사용량을 모니터링합니다"
-              rightSection={
-                <>
-                  <SearchInput
-                    placeholder="지갑 이름, 자산 검색..."
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                  />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as "all" | "normal" | "warning" | "danger")}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">모든 상태</option>
-                    <option value="normal">정상</option>
-                    <option value="warning">경고</option>
-                    <option value="danger">주의</option>
-                  </select>
-                </>
-              }
-            />
-
-            <div className="p-6">
-              {personalAddresses.length > 0 ? (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            지갑 정보
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            입금 한도
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            출금 한도
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            상태
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            리셋 시간
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {paginatedLimitsData.items.map(addr => {
-                          const limitStatus = getDailyLimitStatus(addr);
-                          if (!limitStatus) return null;
-
-                          const depositProgress = getProgressPercentage(limitStatus.depositUsed, limitStatus.depositLimit);
-                          const withdrawalProgress = getProgressPercentage(limitStatus.withdrawalUsed, limitStatus.withdrawalLimit);
-                          const maxProgress = Math.max(depositProgress, withdrawalProgress);
-
-                          const getStatusInfo = (progress: number) => {
-                            if (progress >= 90) return { text: "주의", color: "bg-red-100 text-red-800" };
-                            if (progress >= 70) return { text: "경고", color: "bg-amber-100 text-amber-800" };
-                            return { text: "정상", color: "bg-blue-100 text-blue-800" };
-                          };
-
-                          const statusInfo = getStatusInfo(maxProgress);
-
-                          return (
-                            <tr key={addr.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {addr.label}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {addr.coin} • {addr.permissions.canDeposit && addr.permissions.canWithdraw ? "입출금" : addr.permissions.canDeposit ? "입금" : "출금"}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">
-                                      {formatKRW(limitStatus.depositUsed)}
-                                    </span>
-                                    <span className="text-gray-400">/</span>
-                                    <span className="text-gray-900">
-                                      {formatKRW(limitStatus.depositLimit)}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className={`h-2 rounded-full transition-all duration-300 ${
-                                        depositProgress >= 90 ? "bg-red-500" :
-                                        depositProgress >= 70 ? "bg-amber-500" : "bg-blue-500"
-                                      }`}
-                                      style={{ width: `${Math.min(depositProgress, 100)}%` }}
-                                    />
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    잔여: {formatKRW(limitStatus.depositLimit - limitStatus.depositUsed)}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">
-                                      {formatKRW(limitStatus.withdrawalUsed)}
-                                    </span>
-                                    <span className="text-gray-400">/</span>
-                                    <span className="text-gray-900">
-                                      {formatKRW(limitStatus.withdrawalLimit)}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className={`h-2 rounded-full transition-all duration-300 ${
-                                        withdrawalProgress >= 90 ? "bg-red-500" :
-                                        withdrawalProgress >= 70 ? "bg-amber-500" : "bg-blue-500"
-                                      }`}
-                                      style={{ width: `${Math.min(withdrawalProgress, 100)}%` }}
-                                    />
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    잔여: {formatKRW(limitStatus.withdrawalLimit - limitStatus.withdrawalUsed)}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
-                                  {statusInfo.text}
-                                </span>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  사용률: {Math.round(maxProgress)}%
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <RemainingTime nextResetAt={limitStatus.nextResetAt} />
-                                <div className="text-xs text-gray-500">
-                                  자동 리셋
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* 페이징 네비게이션 */}
-                  <PaginationNav
-                    paginatedData={paginatedLimitsData}
-                    tabKey="limits"
-                    onPageChange={handlePageChange}
-                  />
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      등록된 개인 지갑이 없습니다
-                    </h3>
-                    <p className="text-gray-500">
-                      개인 지갑을 먼저 추가하여 일일 한도를 확인하세요.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
 
       {/* 주소 추가 모달 */}
