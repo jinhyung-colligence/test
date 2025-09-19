@@ -3,6 +3,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ServicePlanProvider } from "@/contexts/ServicePlanContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ErrorGuard from "@/components/ErrorGuard";
 import MetaMaskErrorHandler from "@/components/MetaMaskErrorHandler";
@@ -122,9 +123,11 @@ export default function RootLayout({
             <UltimateErrorSuppression />
             <MetaMaskErrorHandler />
             <LanguageProvider>
-              <ServicePlanProvider>
-                <SidebarProvider>{children}</SidebarProvider>
-              </ServicePlanProvider>
+              <AuthProvider>
+                <ServicePlanProvider>
+                  <SidebarProvider>{children}</SidebarProvider>
+                </ServicePlanProvider>
+              </AuthProvider>
             </LanguageProvider>
           </ErrorGuard>
         </ErrorBoundary>

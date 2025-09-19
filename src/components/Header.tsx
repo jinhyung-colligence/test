@@ -1,15 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+import {
+  UserCircleIcon,
+  ClockIcon,
+  ChevronDownIcon,
+  ArrowRightOnRectangleIcon
+} from '@heroicons/react/24/outline'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useAuth } from '@/contexts/AuthContext'
 import LanguageToggle from './LanguageToggle'
 import Logo from './Logo'
 
 export default function Header() {
   const { t } = useLanguage()
+  const { user, logout } = useAuth()
   const [sessionTime, setSessionTime] = useState(1800) // 30분 = 1800초
   const [showExtensionModal, setShowExtensionModal] = useState(false)
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -76,11 +84,90 @@ export default function Header() {
                 </button>
               </div>
               <div className="w-px h-6 bg-gray-300"></div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">관리자</p>
-                <p className="text-xs text-gray-600">{t('header.admin')}</p>
+
+              {/* 사용자 프로필 */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors"
+                >
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name || '관리자'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {user?.department || t('header.admin')}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary-600">
+                        {user?.name?.charAt(0) || 'A'}
+                      </span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-gray-400 transition-transform ${
+                        showProfileDropdown ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </button>
+
+                {/* 드롭다운 메뉴 */}
+                {showProfileDropdown && (
+                  <>
+                    {/* 백드롭 */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowProfileDropdown(false)}
+                    />
+
+                    {/* 드롭다운 */}
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      {/* 사용자 정보 */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-lg font-semibold text-primary-600">
+                              {user?.name?.charAt(0) || 'A'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {user?.name || '관리자'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {user?.email || 'admin@company.com'}
+                            </p>
+                          </div>
+                        </div>
+                        {user?.department && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {user.department}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 메뉴 항목 */}
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false)
+                            logout()
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" />
+                          로그아웃
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <UserCircleIcon className="h-8 w-8 text-gray-400" />
+
               <div className="w-px h-6 bg-gray-300"></div>
               <LanguageToggle />
             </div>

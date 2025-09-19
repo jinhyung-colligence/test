@@ -36,7 +36,8 @@
       "Bash(npm run:*)",
       "Bash(printf \"1\\n\")",
       "Bash(timeout 10s npm run lint)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": [],
     "ask": []
