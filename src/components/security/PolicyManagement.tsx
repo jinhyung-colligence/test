@@ -25,7 +25,7 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string>('');
   const [modalApprovers, setModalApprovers] = useState<string[]>(['']);
 
-  const currencies: Currency[] = ['USD', 'BTC', 'ETH', 'USDC', 'USDT'];
+  const currencies: Currency[] = ['USD', 'BTC', 'ETH', 'USDC', 'USDT', 'KRW'];
 
   // initialCurrency가 변경되면 selectedCurrency 업데이트
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function PolicyManagement({ onPolicyChange, initialCurrency }: Po
     if (amount === 0) return '0';
     if (amount === Infinity) return '∞';
 
-    if (currency === 'USD') {
+    if (currency === 'USD' || currency === 'KRW') {
       return amount.toLocaleString();
     }
 

@@ -22,7 +22,8 @@ export type Currency =
   | "BTC"
   | "ETH"
   | "USDC"
-  | "USDT";
+  | "USDT"
+  | "KRW";
 
 export interface WithdrawalRequest {
   id: string;

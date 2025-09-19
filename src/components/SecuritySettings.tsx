@@ -20,7 +20,7 @@ interface SecuritySettingsProps {
   plan: ServicePlan;
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
-  policyCurrency?: "USD" | "BTC" | "ETH" | "USDC" | "USDT";
+  policyCurrency?: "USD" | "BTC" | "ETH" | "USDC" | "USDT" | "KRW";
   policySubtab?: "amount" | "type";
 }
 

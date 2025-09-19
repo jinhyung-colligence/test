@@ -132,6 +132,41 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
     currency: "USDT",
     requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
     description: "USDT 고액 거래 (10만 USDT 이상)"
+  },
+  {
+    minAmount: 0,
+    maxAmount: 1000000,
+    currency: "KRW",
+    requiredApprovers: ["박CFO", "이CISO"],
+    description: "KRW 소액 거래 (100만원 미만)"
+  },
+  {
+    minAmount: 1000000,
+    maxAmount: 10000000,
+    currency: "KRW",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO"],
+    description: "KRW 일반 거래 (100만원 이상 1천만원 미만)"
+  },
+  {
+    minAmount: 10000000,
+    maxAmount: 50000000,
+    currency: "KRW",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사"],
+    description: "KRW 중액 거래 (1천만원 이상 5천만원 미만)"
+  },
+  {
+    minAmount: 50000000,
+    maxAmount: 100000000,
+    currency: "KRW",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
+    description: "KRW 고액 거래 (5천만원 이상 1억원 미만)"
+  },
+  {
+    minAmount: 100000000,
+    maxAmount: Infinity,
+    currency: "KRW",
+    requiredApprovers: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
+    description: "KRW 초고액 거래 (1억원 이상)"
   }
 ];
 
@@ -143,7 +178,8 @@ const EXCHANGE_RATES = {
   BTC: 65000000,
   ETH: 3500000,
   USDC: 1340,
-  USDT: 1340
+  USDT: 1340,
+  KRW: 1
 };
 
 /**

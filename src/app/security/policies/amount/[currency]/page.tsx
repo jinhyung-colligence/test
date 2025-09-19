@@ -13,7 +13,7 @@ interface PolicyAmountCurrencyPageProps {
 }
 
 // 유효한 통화 목록
-const VALID_CURRENCIES = ['USD', 'BTC', 'ETH', 'USDC', 'USDT'] as const
+const VALID_CURRENCIES = ['USD', 'BTC', 'ETH', 'USDC', 'USDT', 'KRW'] as const
 type ValidCurrency = typeof VALID_CURRENCIES[number]
 
 function isValidCurrency(currency: string): currency is ValidCurrency {
