@@ -1,4 +1,4 @@
-export type PolicyLogAction = 'CREATE' | 'UPDATE' | 'SUSPEND';
+export type PolicyLogAction = 'CREATE' | 'UPDATE' | 'SUSPEND' | 'DELETE';
 
 export interface PolicyLogChange {
   field: string;
@@ -38,6 +38,7 @@ export interface PolicyLogSummary {
   createCount: number;
   updateCount: number;
   suspendCount: number;
+  deleteCount: number;
   uniqueUsers: number;
   lastActivity: string;
 }

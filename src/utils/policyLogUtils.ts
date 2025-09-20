@@ -308,6 +308,7 @@ export function getPolicyLogSummary(): PolicyLogSummary {
   const createCount = logs.filter(log => log.action === 'CREATE').length;
   const updateCount = logs.filter(log => log.action === 'UPDATE').length;
   const suspendCount = logs.filter(log => log.action === 'SUSPEND').length;
+  const deleteCount = logs.filter(log => log.action === 'DELETE').length;
 
   const uniqueUsers = new Set(logs.map(log => log.userId)).size;
 
@@ -320,6 +321,7 @@ export function getPolicyLogSummary(): PolicyLogSummary {
     createCount,
     updateCount,
     suspendCount,
+    deleteCount,
     uniqueUsers,
     lastActivity
   };

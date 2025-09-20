@@ -46,6 +46,8 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
       switch (newTab) {
         case "notifications":
           return `/security/notifications/logs`;
+        case "addresses":
+          return `/security/addresses/personal`;
         case "policies":
           return `/security/policies/amount`;
         default:

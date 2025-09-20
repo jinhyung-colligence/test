@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { PlusIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { WhitelistedAddress, AddressFormData } from "@/types/address";
 import AddressModal from "./address/AddressModal";
@@ -20,13 +21,20 @@ import {
   getDailyLimitStatus
 } from "@/utils/addressHelpers";
 
-export default function AddressManagement() {
+interface AddressManagementProps {
+  initialTab?: "personal" | "vasp" | "history";
+}
+
+export default function AddressManagement({ initialTab }: AddressManagementProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [addresses, setAddresses] = useState<WhitelistedAddress[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
-  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "history">("personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "history">(initialTab || "personal");
 
   // 내역 탭 필터 상태
   const [historySearchTerm, setHistorySearchTerm] = useState("");
@@ -53,14 +61,12 @@ export default function AddressManagement() {
   }, [searchTerm, permissionFilter, statusFilter, activeTab]);
 
 
-  // URL 쿼리 파라미터에서 탭 설정 읽기
+  // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get('tab');
-    if (tabParam && ['personal', 'vasp', 'history'].includes(tabParam)) {
-      setActiveTab(tabParam as "personal" | "vasp" | "history");
+    if (initialTab) {
+      setActiveTab(initialTab);
     }
-  }, []);
+  }, [initialTab]);
 
   // 주소 목록 로드
   useEffect(() => {
@@ -182,9 +188,9 @@ export default function AddressManagement() {
       // 필터링된 거래 데이터 준비
       const filteredTransactions = mockTransactions.filter(tx => {
         const matchesSearch = historySearchTerm === "" ||
-          tx.hash.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+          tx.txHash.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
           tx.assetType.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-          tx.addressLabel.toLowerCase().includes(historySearchTerm.toLowerCase());
+          (tx.addressLabel && tx.addressLabel.toLowerCase().includes(historySearchTerm.toLowerCase()));
 
         const matchesDirection = historyFilters.direction === "all" || tx.direction === historyFilters.direction;
         const matchesAsset = historyFilters.assetType === "all" || tx.assetType === historyFilters.assetType;
@@ -202,7 +208,6 @@ export default function AddressManagement() {
         "주소 라벨",
         "거래 해시",
         "상태",
-        "승인자",
         "메모"
       ];
 
@@ -212,10 +217,9 @@ export default function AddressManagement() {
         tx.direction === "deposit" ? "입금" : "출금",
         tx.assetType,
         tx.amount.toLocaleString(),
-        tx.addressLabel,
-        tx.hash,
+        tx.addressLabel || "-",
+        tx.txHash,
         tx.status === "completed" ? "완료" : tx.status === "pending" ? "대기" : "실패",
-        tx.approver || "-",
         tx.memo || "-"
       ]);
 
@@ -293,6 +297,12 @@ export default function AddressManagement() {
     }));
   };
 
+  // 탭 변경 함수 (URL도 함께 변경)
+  const handleTabChange = (newTab: "personal" | "vasp" | "history") => {
+    setActiveTab(newTab);
+    router.push(`/security/addresses/${newTab}`);
+  };
+
   // 각 탭별 데이터
   const filteredPersonalAddresses = getFilteredAddresses("personal");
   const filteredVaspAddresses = getFilteredAddresses("vasp");
@@ -325,7 +335,7 @@ export default function AddressManagement() {
         <div className="border-b border-gray-200">
           <nav className="flex">
             <button
-              onClick={() => setActiveTab("personal")}
+              onClick={() => handleTabChange("personal")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === "personal"
                   ? "border-primary-500 text-primary-600"
@@ -335,7 +345,7 @@ export default function AddressManagement() {
               개인 지갑 ({filteredPersonalAddresses.length})
             </button>
             <button
-              onClick={() => setActiveTab("vasp")}
+              onClick={() => handleTabChange("vasp")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === "vasp"
                   ? "border-primary-500 text-primary-600"
@@ -345,7 +355,7 @@ export default function AddressManagement() {
               거래소/VASP ({filteredVaspAddresses.length})
             </button>
             <button
-              onClick={() => setActiveTab("history")}
+              onClick={() => handleTabChange("history")}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === "history"
                   ? "border-primary-500 text-primary-600"

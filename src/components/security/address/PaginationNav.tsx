@@ -6,8 +6,8 @@ interface PaginationNavProps {
     currentPage: number,
     itemsPerPage: number
   };
-  tabKey: "personal" | "vasp" | "limits" | "history";
-  onPageChange: (tabKey: "personal" | "vasp" | "limits" | "history", page: number) => void;
+  tabKey: "personal" | "vasp" | "history";
+  onPageChange: (tabKey: "personal" | "vasp" | "history", page: number) => void;
 }
 
 export default function PaginationNav({ paginatedData, tabKey, onPageChange }: PaginationNavProps) {
