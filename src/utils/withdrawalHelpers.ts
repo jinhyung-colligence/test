@@ -80,12 +80,10 @@ export const getPriorityInfo = (priority: string) => {
 };
 
 export const formatCurrency = (amount: number, currency: string) => {
-  if (currency === "KRW") return `${amount.toLocaleString()} KRW`;
   return `${amount.toLocaleString()} ${currency}`;
 };
 
 export const formatAmount = (amount: number, currency: string) => {
-  if (currency === "KRW") return amount.toLocaleString();
   return amount.toLocaleString();
 };
 

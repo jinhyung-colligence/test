@@ -7,6 +7,7 @@ import {
   formatAmount,
   formatDateTime,
 } from "@/utils/withdrawalHelpers";
+import { convertToKRW } from "@/utils/approverAssignment";
 import { WithdrawalTableRow } from "./WithdrawalTableRow";
 import { ApprovalStatus } from "./ApprovalStatus";
 import { BlockchainInfo } from "./BlockchainInfo";
@@ -361,14 +362,7 @@ export default function ApprovalTab({
                             </div>
                             <div className="text-lg font-semibold text-primary-600">
                               ₩
-                              {(
-                                request.amount *
-                                (request.currency === "KRW"
-                                  ? 1340
-                                  : request.currency === "KRW"
-                                  ? 1
-                                  : 1340)
-                              ).toLocaleString()}
+                              {convertToKRW(request.amount, request.currency).toLocaleString()}
                             </div>
                           </div>
                         </div>

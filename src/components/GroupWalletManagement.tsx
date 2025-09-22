@@ -91,9 +91,15 @@ const formatCryptoAmountWithIcon = (
   cryptoAmount: CryptoAmount
 ): JSX.Element => {
   const decimals = getCurrencyDecimals(cryptoAmount.currency);
-  const formattedNumber = cryptoAmount.amount
+  const fixedNumber = cryptoAmount.amount
     .toFixed(decimals)
     .replace(/\.?0+$/, "");
+
+  // 천자리 콤마 추가
+  const formattedNumber = parseFloat(fixedNumber).toLocaleString('ko-KR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals
+  });
 
   return (
     <div className="flex items-center space-x-2">

@@ -28,7 +28,14 @@ export const getCryptoIconUrl = (currency: CryptoCurrency): string => {
 // 가상자산 금액 포맷팅
 export const formatCryptoAmount = (cryptoAmount: CryptoAmount): string => {
   const decimals = getCurrencyDecimals(cryptoAmount.currency);
-  const formattedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
+  const fixedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
+
+  // 천자리 콤마 추가
+  const formattedNumber = parseFloat(fixedNumber).toLocaleString('ko-KR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals
+  });
+
   return `${formattedNumber} ${cryptoAmount.currency}`;
 };
 
@@ -92,7 +99,7 @@ export const getExpensesForPeriod = (expenses: ExpenseRequest[], period: "monthl
 export const getTypeColor = (type: GroupType) => {
   const colors = {
     department: "bg-blue-100 text-blue-800",
-    project: "bg-green-100 text-green-800",
+    project: "bg-indigo-100 text-indigo-800",
     team: "bg-purple-100 text-purple-800",
   };
   return colors[type];

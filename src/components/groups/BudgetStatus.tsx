@@ -10,7 +10,9 @@ import {
   getExpensesForPeriod,
   getBudgetUsagePercentage,
   getQuarterlyBudgetUsagePercentage,
-  getYearlyBudgetUsagePercentage
+  getYearlyBudgetUsagePercentage,
+  getTypeColor,
+  getTypeName
 } from "@/utils/groupsUtils";
 
 interface BudgetStatusProps {
@@ -249,7 +251,13 @@ export default function BudgetStatus({}: BudgetStatusProps) {
               <div key={group.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold text-gray-900">{group.name}</h4>
-                  <span className="text-sm text-gray-500">{group.type}</span>
+                  <span
+                    className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(
+                      group.type
+                    )}`}
+                  >
+                    {getTypeName(group.type)}
+                  </span>
                 </div>
                 
                 {/* 월간 예산 */}

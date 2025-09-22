@@ -48,15 +48,18 @@
 **핵심 원칙**: 거래는 가상자산 단위로 실행하되, 모든 정책과 통제는 KRW 환산 금액을 기준으로 관리
 
 #### 거래 실행 단위
+
 - **실제 거래**: 가상자산 단위로 실행 (BTC, ETH, USDT 등)
 - **출금/입금/교환**: 가상자산으로 처리
 
 #### 정책 관리 기준
+
 - **금액 기준**: KRW 환산 금액으로 통제
 - **한도 설정**: KRW 기준으로 정책 수립
 - **승인 기준**: KRW 환산 금액 기준으로 승인 프로세스
 
 #### 예시 시나리오
+
 ```
 사용자가 1 BTC 출금 요청
 → 실제 거래: 1 BTC 출금
@@ -119,13 +122,9 @@ useEffect(() => {
 
 ```typescript
 // CryptoIcon 컴포넌트 사용 예시
-import CryptoIcon from '@/components/ui/CryptoIcon'
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
-<CryptoIcon
-  symbol="BTC"
-  size={24}
-  className="mr-2 flex-shrink-0"
-/>
+<CryptoIcon symbol="BTC" size={24} className="mr-2 flex-shrink-0" />;
 ```
 
 ### 아이콘 파일 위치
@@ -154,9 +153,3 @@ import CryptoIcon from '@/components/ui/CryptoIcon'
 - **직접 img 태그 사용 금지**: 가상자산 아이콘에 대해서는 반드시 CryptoIcon 컴포넌트 사용
 - **외부 CDN URL 사용 금지**: GitHub raw URL 등 외부 링크 사용 금지
 - **하드코딩된 아이콘 URL 금지**: 동적 아이콘 로딩을 위해 CryptoIcon 컴포넌트 활용
-
-### 마이그레이션 현황
-
-- **완료**: TransactionHistory.tsx
-- **대기**: DepositManagement.tsx, 출금 관련 컴포넌트 등 11개 파일
-- **계획서**: `claudedocs/cryptocurrency-icons-migration-plan.md` 참조

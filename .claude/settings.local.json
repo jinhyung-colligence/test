@@ -43,7 +43,8 @@
       "Bash(done)",
       "Bash(npx eslint:*)",
       "Bash(npx playwright:*)",
-      "Bash(open /Users/jinhyungjeon/dev/colligence/custody/dashboard-custody/test-login-blocking.html)"
+      "Bash(open /Users/jinhyungjeon/dev/colligence/custody/dashboard-custody/test-login-blocking.html)",
+      "Bash(do sed -i '' 's/currency: \"\"KRW\"\",/currency: \"\"BTC\"\",/1' \"$file\")"
     ],
     "deny": [],
     "ask": []

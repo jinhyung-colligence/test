@@ -20,6 +20,7 @@ import { PriorityBadge } from './withdrawal/PriorityBadge'
 import { StatusBadge } from './withdrawal/StatusBadge'
 import { mockWithdrawalRequests } from '@/data/mockWithdrawalData'
 import { formatAmount, formatDateTime } from '@/utils/withdrawalHelpers'
+import CryptoIcon from '@/components/ui/CryptoIcon'
 
 interface AssetOverviewProps {
   plan: ServicePlan
@@ -34,7 +35,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   const router = useRouter()
 
   const mockAssets = [
-    { symbol: 'KRW', name: 'Korean Won', balance: '75000000', value: 75000000, change: -2.34, currentPrice: 1 }
+    { symbol: 'BTC', name: 'Bitcoin', balance: '12.50', value: 750000000, change: -2.34, currentPrice: 60000000 },
+    { symbol: 'ETH', name: 'Ethereum', balance: '156.75', value: 650000000, change: 3.45, currentPrice: 4150000 },
+    { symbol: 'USDT', name: 'Tether', balance: '250000.00', value: 340000000, change: 0.02, currentPrice: 1360 },
+    { symbol: 'USDC', name: 'USD Coin', balance: '185000.00', value: 251500000, change: -0.01, currentPrice: 1360 }
   ]
 
   // Filter actual withdrawal requests with submitted status (pending approval)
@@ -122,10 +126,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat(language === 'ko' ? 'ko-KR' : 'en-US', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(value)
+    return new Intl.NumberFormat(language === 'ko' ? 'ko-KR' : 'en-US').format(value) + ' 원'
   }
 
   const formatTimeAgo = (timestamp: string) => {
@@ -157,9 +158,8 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
 
   const highUrgencyApprovals = mockWithdrawalApprovals.filter(request => request.priority === 'high' || request.priority === 'critical')
   const totalPendingValue = mockWithdrawalApprovals.reduce((sum, request) => {
-    // Convert amount to KRW for total calculation
-    const krwValue = request.currency === 'KRW' ? request.amount : request.amount;
-    return sum + krwValue;
+    // Sum all amounts regardless of currency for display purposes
+    return sum + request.amount;
   }, 0)
 
   return (
@@ -206,10 +206,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm font-medium">{t('overview.daily_change')}</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">+2.45%</p>
+              <p className="text-2xl font-bold text-sky-600 mt-1">+2.45%</p>
             </div>
-            <div className="p-3 bg-green-50 rounded-full">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-sky-50 rounded-full">
+              <ArrowTrendingUpIcon className="h-6 w-6 text-sky-600" />
             </div>
           </div>
         </div>
@@ -281,20 +281,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <img
-                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-                          alt={request.currency}
-                          className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
-                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                                <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                                <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                  ${request.currency}
-                                </text>
-                              </svg>
-                            `)}`;
-                          }}
+                        <CryptoIcon
+                          symbol={request.currency}
+                          size={32}
+                          className="mr-3 flex-shrink-0"
                         />
                         <div className="text-sm">
                           <p className="font-semibold text-gray-900">
@@ -549,20 +539,10 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 mr-3">
-                        <img 
-                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${asset.symbol.toLowerCase()}.png`}
-                          alt={asset.symbol}
-                          className="w-10 h-10 rounded-full"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
-                              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                                <circle cx="20" cy="20" r="20" fill="#f3f4f6"/>
-                                <text x="20" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#6b7280">
-                                  ${asset.symbol}
-                                </text>
-                              </svg>
-                            `)}`
-                          }}
+                        <CryptoIcon
+                          symbol={asset.symbol}
+                          size={40}
+                          className=""
                         />
                       </div>
                       <div>
@@ -579,7 +559,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`font-semibold ${
-                      asset.change >= 0 ? 'text-green-600' : 'text-red-600'
+                      asset.change >= 0 ? 'text-sky-600' : 'text-red-600'
                     }`}>
                       {asset.change >= 0 ? '+' : ''}{asset.change}%
                     </span>

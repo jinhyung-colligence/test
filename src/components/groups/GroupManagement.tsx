@@ -61,7 +61,13 @@ const getCryptoIcon = (currency: CryptoCurrency) => {
 // 아이콘과 함께 가상자산 금액 포맷팅
 const formatCryptoAmountWithIcon = (cryptoAmount: CryptoAmount): JSX.Element => {
   const decimals = getCurrencyDecimals(cryptoAmount.currency);
-  const formattedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
+  const fixedNumber = cryptoAmount.amount.toFixed(decimals).replace(/\.?0+$/, '');
+
+  // 천자리 콤마 추가
+  const formattedNumber = parseFloat(fixedNumber).toLocaleString('ko-KR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals
+  });
 
   return (
     <div className="flex items-center space-x-2">
