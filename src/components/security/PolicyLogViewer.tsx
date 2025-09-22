@@ -17,11 +17,15 @@ import { Modal } from "@/components/common/Modal";
 interface PolicyLogViewerProps {
   isOpen: boolean;
   onClose: () => void;
+  policyId?: string;  // 특정 정책 ID (optional)
+  policyDescription?: string;  // 정책 설명 (UI 표시용)
 }
 
 export default function PolicyLogViewer({
   isOpen,
   onClose,
+  policyId,
+  policyDescription,
 }: PolicyLogViewerProps) {
   const [logs, setLogs] = useState<PolicyLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<PolicyLog[]>([]);
@@ -35,18 +39,36 @@ export default function PolicyLogViewer({
   // 로그 데이터 로드
   useEffect(() => {
     if (isOpen) {
-      const allLogs = getPolicyLogs();
-      setLogs(allLogs);
-      setFilteredLogs(allLogs);
+      let logsToShow: PolicyLog[];
+
+      if (policyId) {
+        // 특정 정책의 로그만 가져오기
+        logsToShow = getFilteredPolicyLogs({ policyId });
+      } else {
+        // 전체 로그 가져오기
+        logsToShow = getPolicyLogs();
+      }
+
+      setLogs(logsToShow);
+      setFilteredLogs(logsToShow);
       setSummary(getPolicyLogSummary());
     }
-  }, [isOpen]);
+  }, [isOpen, policyId]);
 
   // 필터 적용
   useEffect(() => {
-    const filtered = getFilteredPolicyLogs(filter);
+    let filtered: PolicyLog[];
+
+    if (policyId) {
+      // 특정 정책의 로그에 추가 필터 적용
+      filtered = getFilteredPolicyLogs({ ...filter, policyId });
+    } else {
+      // 전체 로그에 필터 적용
+      filtered = getFilteredPolicyLogs(filter);
+    }
+
     setFilteredLogs(filtered);
-  }, [filter, logs]);
+  }, [filter, logs, policyId]);
 
   const handleFilterChange = (field: keyof PolicyLogFilter, value: any) => {
     setFilter((prev) => ({
@@ -279,10 +301,16 @@ export default function PolicyLogViewer({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
-                정책 변경 이력
+                {policyId && policyDescription
+                  ? `${policyDescription} 세부 이력`
+                  : "정책 변경 이력"
+                }
               </h2>
               <p className="text-gray-600 text-sm mt-1">
-                모든 정책 변경사항을 확인할 수 있습니다
+                {policyId
+                  ? "해당 정책의 변경사항을 확인할 수 있습니다"
+                  : "모든 정책 변경사항을 확인할 수 있습니다"
+                }
               </p>
             </div>
             <button

@@ -32,6 +32,8 @@ export default function PolicyManagement({
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null);
   const [showAddPolicyModal, setShowAddPolicyModal] = useState(false);
   const [showLogViewer, setShowLogViewer] = useState(false);
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
+  const [selectedPolicyDescription, setSelectedPolicyDescription] = useState<string | null>(null);
   const [showSuspendConfirm, setShowSuspendConfirm] = useState(false);
   const [suspendPolicyId, setSuspendPolicyId] = useState<string | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
@@ -774,10 +776,14 @@ export default function PolicyManagement({
                             최근 변경 이력
                           </h5>
                           <button
-                            onClick={() => setShowLogViewer(true)}
+                            onClick={() => {
+                              setSelectedPolicyId(policyId);
+                              setSelectedPolicyDescription(policy.description);
+                              setShowLogViewer(true);
+                            }}
                             className="text-xs text-primary-600 hover:text-primary-700 font-medium"
                           >
-                            전체 이력
+                            세부 이력
                           </button>
                         </div>
                         {(() => {
@@ -1144,7 +1150,13 @@ export default function PolicyManagement({
       {/* Policy Log Viewer */}
       <PolicyLogViewer
         isOpen={showLogViewer}
-        onClose={() => setShowLogViewer(false)}
+        onClose={() => {
+          setShowLogViewer(false);
+          setSelectedPolicyId(null);
+          setSelectedPolicyDescription(null);
+        }}
+        policyId={selectedPolicyId || undefined}
+        policyDescription={selectedPolicyDescription || undefined}
       />
     </div>
   );
