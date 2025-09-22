@@ -32,7 +32,7 @@ export default function Header() {
   }
   
   const extendSession = () => {
-    setSessionTime(1800) // 30분 연장
+    // UI/UX 기획을 위해 세션 연장 로직 비활성화 - UI만 유지
     setShowExtensionModal(false)
   }
   

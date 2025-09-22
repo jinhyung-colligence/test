@@ -134,7 +134,19 @@ export default function PolicyLogViewer({
       return value.toLocaleString();
     }
 
-    return String(value);
+    // 상태값을 한글로 변환
+    const statusValue = String(value);
+    if (statusValue === "ACTIVE") {
+      return "활성";
+    }
+    if (statusValue === "SUSPENDED") {
+      return "정지";
+    }
+    if (statusValue === "INACTIVE") {
+      return "비활성";
+    }
+
+    return statusValue;
   };
 
   // 타임라인 뷰 렌더링
@@ -644,25 +656,37 @@ export default function PolicyLogViewer({
                                 {selectedLog.action === "CREATE" ? (
                                   // 생성 시에는 이후 값만 표시
                                   <div className="space-y-1">
-                                    <div className="text-green-600 font-medium">생성된 값:</div>
-                                    <div className="bg-green-50 p-2 rounded border-l-4 border-green-200">
+                                    <div className="text-green-600 font-medium">
+                                      생성된 값:
+                                    </div>
+                                    <div className="bg-green-50 p-2 rounded">
                                       {formatChangeValue(change.newValue)}
                                     </div>
                                   </div>
                                 ) : selectedLog.action === "SUSPEND" ? (
                                   // 정지 시에는 정지 상태 표시
                                   <div className="space-y-1">
-                                    <div className="text-orange-600 font-medium">정지됨</div>
-                                    <div className="bg-orange-50 p-2 rounded border-l-4 border-orange-200">
+                                    <div className="text-orange-600 font-medium">
+                                      정지됨
+                                    </div>
+                                    <div className="bg-orange-50 p-2 rounded">
                                       {change.field === "status" ? (
                                         <div>
-                                          <div className="text-sm text-gray-600 mb-1">상태 변경:</div>
+                                          <div className="text-sm text-gray-600 mb-1">
+                                            상태 변경:
+                                          </div>
                                           <div className="text-orange-700">
-                                            {formatChangeValue(change.oldValue)} → {formatChangeValue(change.newValue)}
+                                            {formatChangeValue(change.oldValue)}{" "}
+                                            →{" "}
+                                            {formatChangeValue(change.newValue)}
                                           </div>
                                         </div>
                                       ) : (
-                                        <div>정지 사유: {selectedLog.metadata.reason || "사유 없음"}</div>
+                                        <div>
+                                          정지 사유:{" "}
+                                          {selectedLog.metadata.reason ||
+                                            "사유 없음"}
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -670,14 +694,18 @@ export default function PolicyLogViewer({
                                   // 수정 시에는 이전/이후 값 모두 표시
                                   <div className="space-y-2">
                                     <div>
-                                      <div className="text-red-600 font-medium mb-1">이전 값:</div>
-                                      <div className="bg-red-50 p-2 rounded border-l-4 border-red-200">
+                                      <div className="text-red-600 font-medium mb-1">
+                                        이전 값:
+                                      </div>
+                                      <div className="bg-red-50 p-2 rounded">
                                         {formatChangeValue(change.oldValue)}
                                       </div>
                                     </div>
                                     <div>
-                                      <div className="text-green-600 font-medium mb-1">변경된 값:</div>
-                                      <div className="bg-green-50 p-2 rounded border-l-4 border-green-200">
+                                      <div className="text-green-600 font-medium mb-1">
+                                        변경된 값:
+                                      </div>
+                                      <div className="bg-green-50 p-2 rounded">
                                         {formatChangeValue(change.newValue)}
                                       </div>
                                     </div>

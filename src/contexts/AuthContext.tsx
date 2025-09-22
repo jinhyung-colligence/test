@@ -92,10 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone: '010-1234-5678',
     role: 'admin',
     status: 'active',
-    permissions: ['read', 'write', 'admin'],
-    lastLogin: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    permissions: ['permission.all'],
+    lastLogin: new Date().toISOString()
   }
 
   const [user, setUser] = useState<User | null>(dummyUser)

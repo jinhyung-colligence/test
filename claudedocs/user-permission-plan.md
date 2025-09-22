@@ -1,18 +1,22 @@
 # ABC Custody 권한 관리 UI/UX 설계
 
+- 모든 피드백에 이모지(🚀, ⚠️, ✅ 등) 문자 사용하지 않음
+
 ## 1. 역할 체계 설계 (간소화: 7개 → 4개)
 
 ### 새로운 역할 구조
-| 역할 | 한국어명 | 주요 업무 | 대상 사용자 |
-|------|---------|----------|------------|
-| **Admin** | 관리자 | 시스템 전체 관리, 모든 권한 | IT 관리자, 시스템 관리자 |
-| **Manager** | 매니저 | 정책 설정, 사용자 관리, 승인 권한 | 재무 책임자, 팀장급 |
-| **Operator** | 운영자 | 일반 거래 처리, 승인 권한 | 실무 담당자 |
-| **Viewer** | 조회자 | 데이터 조회, 리포트 확인 | 감사, 경영진 |
+
+| 역할         | 한국어명 | 주요 업무                         | 대상 사용자              |
+| ------------ | -------- | --------------------------------- | ------------------------ |
+| **Admin**    | 관리자   | 시스템 전체 관리, 모든 권한       | IT 관리자, 시스템 관리자 |
+| **Manager**  | 매니저   | 정책 설정, 사용자 관리, 승인 권한 | 재무 책임자, 팀장급      |
+| **Operator** | 운영자   | 일반 거래 처리, 승인 권한         | 실무 담당자              |
+| **Viewer**   | 조회자   | 데이터 조회, 리포트 확인          | 감사, 경영진             |
 
 ## 2. 권한 모듈 설계
 
 ### 5개 권한 카테고리 정의
+
 ```
 📊 자산 관리 (Assets)
 ├── 자산 현황 조회
@@ -45,6 +49,7 @@
 ### 3.1 사용자 관리 페이지 개선
 
 #### 권한 설정 UI 레이아웃
+
 ```
 ┌─────────────────────────────────────────┐
 │ 사용자 정보                              │
@@ -74,6 +79,7 @@
 ```
 
 #### 권한 미리보기 카드
+
 ```
 ┌─────────────────────────────────────────┐
 │ 💡 권한 미리보기                         │
@@ -96,24 +102,28 @@
 ### 3.2 역할별 대시보드 차별화
 
 #### Admin 대시보드
+
 - 전체 시스템 현황 위젯
 - 사용자 활동 모니터링
 - 시스템 알림 및 경고
 - 빠른 설정 접근
 
 #### Manager 대시보드
+
 - 승인 대기 항목 위젯
 - 팀 자산 현황
 - 정책 위반 알림
 - 사용자 관리 바로가기
 
 #### Operator 대시보드
+
 - 오늘의 거래 현황
 - 내가 신청한 거래
 - 승인 대기 중인 거래
 - 빠른 거래 신청
 
 #### Viewer 대시보드
+
 - 자산 현황 요약
 - 최근 거래 내역
 - 리포트 다운로드
@@ -122,11 +132,10 @@
 ### 3.3 권한 부족 시 UX 처리
 
 #### 비활성화 처리 예시
+
 ```html
 <!-- 권한 있는 경우 -->
-<button class="bg-primary-600 text-white">
-  사용자 추가
-</button>
+<button class="bg-primary-600 text-white">사용자 추가</button>
 
 <!-- 권한 없는 경우 -->
 <button class="bg-gray-300 text-gray-500 cursor-not-allowed" disabled>
@@ -135,6 +144,7 @@
 ```
 
 #### 권한 부족 안내 메시지
+
 ```
 ┌─────────────────────────────────────────┐
 │ ⚠️ 접근 권한이 없습니다                 │
@@ -152,6 +162,7 @@
 ## 4. 사이드바 메뉴 권한별 표시
 
 ### 권한에 따른 메뉴 필터링
+
 ```typescript
 // Admin: 모든 메뉴 표시
 // Manager: 시스템 설정 제외
@@ -160,31 +171,32 @@
 
 const menuItems = [
   {
-    label: '자산 현황',
-    path: '/overview',
-    minRole: 'viewer'
+    label: "자산 현황",
+    path: "/overview",
+    minRole: "viewer",
   },
   {
-    label: '출금 관리',
-    path: '/withdrawal',
-    minRole: 'operator'
+    label: "출금 관리",
+    path: "/withdrawal",
+    minRole: "operator",
   },
   {
-    label: '사용자 관리',
-    path: '/users',
-    minRole: 'manager'
+    label: "사용자 관리",
+    path: "/users",
+    minRole: "manager",
   },
   {
-    label: '시스템 설정',
-    path: '/settings',
-    minRole: 'admin'
-  }
+    label: "시스템 설정",
+    path: "/settings",
+    minRole: "admin",
+  },
 ];
 ```
 
 ## 5. 권한 변경 이력 UI
 
 ### 이력 표시 테이블
+
 ```
 ┌─────────────────────────────────────────┐
 │ 권한 변경 이력                           │
@@ -204,6 +216,7 @@ const menuItems = [
 ## 6. 정책 연동 권한 시스템
 
 ### 정책과 권한의 연결
+
 - 각 역할은 승인 가능한 정책 ID 목록을 가짐
 - 정책은 `/security/policies/amount`에서 관리
 - 기업이 자유롭게 금액 구간과 필수 결재자 설정
@@ -212,6 +225,7 @@ const menuItems = [
 ## 7. 권한 관련 알림 설계
 
 ### 실시간 알림 예시
+
 - "권한이 Manager로 상승되었습니다"
 - "새로운 승인 권한이 부여되었습니다"
 - "정책 관리 권한이 제거되었습니다"
@@ -219,12 +233,14 @@ const menuItems = [
 ## 8. 정책 기반 승인 시스템 통합
 
 ### 정책 관리 페이지와의 연동
+
 - **정책 관리 페이지** (`/security/policies/amount`)
   - 기업이 자유롭게 금액 구간 설정
   - 각 정책별 필수 결재자 지정
   - 정책별 위험도 레벨 설정
 
 ### 사용자별 승인 권한 매핑
+
 ```typescript
 interface UserApprovalPermission {
   userId: string;
@@ -234,14 +250,15 @@ interface UserApprovalPermission {
 
 // 예시: Manager 역할의 기본 승인 정책
 const managerDefaultPolicies = [
-  'policy_small_amount',  // 소액 거래
-  'policy_medium_amount'  // 중액 거래
+  "policy_small_amount", // 소액 거래
+  "policy_medium_amount", // 중액 거래
 ];
 ```
 
 ## 9. 프로토타입 플로우
 
 ### 신규 사용자 추가 플로우
+
 1. 사용자 정보 입력
 2. 기본 역할 선택
 3. 승인 가능 정책 선택 (정책 관리에서 설정된 정책 목록)
@@ -250,6 +267,7 @@ const managerDefaultPolicies = [
 6. 저장 및 이메일 발송
 
 ### 권한 변경 플로우
+
 1. 사용자 선택
 2. 현재 권한 및 승인 가능 정책 표시
 3. 새로운 역할/권한/정책 선택
@@ -260,12 +278,14 @@ const managerDefaultPolicies = [
 ## 10. 색상 및 아이콘 가이드
 
 ### 역할별 색상 코드
+
 - Admin: `text-red-600 bg-red-50`
 - Manager: `text-blue-600 bg-blue-50`
 - Operator: `text-indigo-600 bg-indigo-50`
 - Viewer: `text-gray-600 bg-gray-50`
 
 ### 권한 상태 아이콘
+
 - ✓ 권한 있음 (text-sky-600)
 - ✗ 권한 없음 (text-gray-400)
 - ⚠️ 제한적 권한 (text-yellow-600)
