@@ -15,30 +15,14 @@ import Logo from './Logo'
 export default function Header() {
   const { t } = useLanguage()
   const { user, logout } = useAuth()
-  const [sessionTime, setSessionTime] = useState(1800) // 30분 = 1800초
+  // UI/UX 기획을 위해 세션 타이머 비활성화
+  const [sessionTime] = useState(1800) // 고정값으로 설정
   const [showExtensionModal, setShowExtensionModal] = useState(false)
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
-  
+
+  // UI/UX 기획을 위해 세션 타이머 로직 비활성화
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSessionTime((prevTime) => {
-        if (prevTime <= 0) {
-          clearInterval(timer)
-          // 세션 만료 처리
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.')
-          return 0
-        }
-        
-        // 5분 남았을 때 경고
-        if (prevTime === 300) {
-          setShowExtensionModal(true)
-        }
-        
-        return prevTime - 1
-      })
-    }, 1000)
-    
-    return () => clearInterval(timer)
+    // 세션 타이머 로직 제거 - UI만 유지
   }, [])
   
   const formatTime = (seconds: number) => {

@@ -82,35 +82,33 @@ const checkBlockStatus = (email: string) => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // UI/UX 기획을 위해 더미 사용자 데이터 설정
+  const dummyUser: User = {
+    id: 'dummy-user-1',
+    name: '관리자',
+    email: 'admin@company.com',
+    department: 'IT 보안팀',
+    phone: '010-1234-5678',
+    role: 'admin',
+    status: 'active',
+    permissions: ['read', 'write', 'admin'],
+    lastLogin: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+
+  const [user, setUser] = useState<User | null>(dummyUser)
+  const [isAuthenticated, setIsAuthenticated] = useState(true) // 항상 인증된 상태
   const [authStep, setAuthStep] = useState<AuthStep>({
-    step: 'email',
+    step: 'email', // UI/UX 확인을 위해 이메일 단계부터 시작
     attempts: 0,
     maxAttempts: 5
   })
 
-  // 세션 체크 (localStorage에서 로그인 상태 복원)
+  // UI/UX 기획을 위해 세션 체크 비활성화
   useEffect(() => {
-    const savedAuth = localStorage.getItem('auth_session')
-    if (savedAuth) {
-      try {
-        const { user: savedUser, timestamp } = JSON.parse(savedAuth)
-        const now = Date.now()
-        const thirtyMinutes = 30 * 60 * 1000
-
-        // 30분 내의 세션만 유효
-        if (now - timestamp < thirtyMinutes) {
-          setUser(savedUser)
-          setIsAuthenticated(true)
-          setAuthStep({ step: 'completed', user: savedUser, attempts: 0, maxAttempts: 5 })
-        } else {
-          localStorage.removeItem('auth_session')
-        }
-      } catch (error) {
-        localStorage.removeItem('auth_session')
-      }
-    }
+    // 세션 체크 로직 제거 - 항상 인증된 상태 유지
   }, [])
 
   const login = async (email: string): Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }> => {

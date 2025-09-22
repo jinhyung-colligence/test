@@ -2,21 +2,16 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
 
 export type ServicePlan = 'enterprise' | 'premium' | 'free' | null
 
 export default function HomePage() {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/overview')
-    } else {
-      router.replace('/login')
-    }
-  }, [router, isAuthenticated])
+    // UI/UX 기획을 위해 항상 로그인 페이지로 리다이렉트
+    router.replace('/login')
+  }, [router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -11,6 +11,7 @@ import {
   savePolicyLog,
   comparePolicy,
   initializeMockData,
+  getPolicyLogsByPolicyId,
 } from "@/utils/policyLogUtils";
 import PolicyLogViewer from "./PolicyLogViewer";
 
@@ -369,6 +370,55 @@ export default function PolicyManagement({
     setSuspendReason("");
   };
 
+  // 정책별 최근 이력 가져오기
+  const getRecentHistoryForPolicy = (policyId: string) => {
+    const logs = getPolicyLogsByPolicyId(policyId);
+    return logs.slice(0, 2); // 최근 2개만
+  };
+
+  // 시간 포맷팅 (간단한 형태)
+  const formatRelativeTime = (timestamp: string) => {
+    const now = new Date();
+    const logTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - logTime.getTime()) / (1000 * 60));
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}분 전`;
+    } else if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)}시간 전`;
+    } else {
+      return `${Math.floor(diffInMinutes / 1440)}일 전`;
+    }
+  };
+
+  // 액션 텍스트 변환
+  const getActionText = (action: string) => {
+    switch (action) {
+      case 'CREATE':
+        return '생성';
+      case 'UPDATE':
+        return '수정';
+      case 'SUSPEND':
+        return '정지';
+      default:
+        return action;
+    }
+  };
+
+  // 액션별 색상 클래스
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'CREATE':
+        return 'text-blue-600';
+      case 'UPDATE':
+        return 'text-yellow-600';
+      case 'SUSPEND':
+        return 'text-orange-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header - Outside the box */}
@@ -693,26 +743,72 @@ export default function PolicyManagement({
                       </div>
                     </div>
                   ) : (
-                    <div>
-                      <h5 className="font-medium text-gray-900 mb-2">
-                        필요 결재자
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {policy.requiredApprovers.map(
-                          (approver, approverIndex) => (
-                            <div
-                              key={approver}
-                              className="flex items-center space-x-1"
-                            >
-                              <span className="text-xs text-gray-500">
-                                {approverIndex + 1}.
-                              </span>
-                              <span className="text-xs text-gray-700">
-                                {approver}
-                              </span>
+                    <div className="space-y-4">
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-2">
+                          필요 결재자
+                        </h5>
+                        <div className="flex flex-wrap gap-2">
+                          {policy.requiredApprovers.map(
+                            (approver, approverIndex) => (
+                              <div
+                                key={approver}
+                                className="flex items-center space-x-1"
+                              >
+                                <span className="text-xs text-gray-500">
+                                  {approverIndex + 1}.
+                                </span>
+                                <span className="text-xs text-gray-700">
+                                  {approver}
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 최근 변경 이력 섹션 */}
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium text-gray-900 text-sm">
+                            최근 변경 이력
+                          </h5>
+                          <button
+                            onClick={() => setShowLogViewer(true)}
+                            className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                          >
+                            전체 이력
+                          </button>
+                        </div>
+                        {(() => {
+                          const recentHistory = getRecentHistoryForPolicy(policyId);
+                          if (recentHistory.length === 0) {
+                            return (
+                              <p className="text-xs text-gray-500">
+                                최근 변경 이력이 없습니다.
+                              </p>
+                            );
+                          }
+                          return (
+                            <div className="space-y-1">
+                              {recentHistory.map((log) => (
+                                <div key={log.id} className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center space-x-2">
+                                    <span className={`font-medium ${getActionColor(log.action)}`}>
+                                      {getActionText(log.action)}
+                                    </span>
+                                    <span className="text-gray-600">
+                                      {log.userName}
+                                    </span>
+                                  </div>
+                                  <span className="text-gray-500">
+                                    {formatRelativeTime(log.timestamp)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                          )
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
