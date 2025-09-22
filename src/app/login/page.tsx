@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   ArrowRightIcon,
@@ -10,8 +11,10 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
+import AttemptLimitMessage from '@/components/auth/AttemptLimitMessage'
 
 export default function LoginPage() {
+  const router = useRouter()
   const { authStep, login, verifyOtp, verifySms, sendSms, resetAuth } = useAuth()
   const [email, setEmail] = useState('ceo@company.com')
   const [otpCode, setOtpCode] = useState('123456')
@@ -28,7 +31,7 @@ export default function LoginPage() {
     }
   }, [authStep.step])
 
-  // 쿨다운 타이머
+  // OTP 재발송 쿨다운 타이머
   useEffect(() => {
     if (otpResendCooldown > 0) {
       const timer = setTimeout(() => {
@@ -37,6 +40,7 @@ export default function LoginPage() {
       return () => clearTimeout(timer)
     }
   }, [otpResendCooldown])
+
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +51,22 @@ export default function LoginPage() {
     if (result.success) {
       setMessage({ type: 'success', text: result.message || '' })
     } else {
+      // 차단 상태인 경우 blocked 페이지로 이동
+      if (result.isBlocked && result.blockedUntil && result.blockReason) {
+        console.log('차단 상태 감지:', result)
+        setLoading(false)
+
+        // localStorage에 차단 정보 임시 저장 (이메일도 포함)
+        localStorage.setItem('blocked_info', JSON.stringify({
+          until: result.blockedUntil,
+          reason: result.blockReason,
+          email: email
+        }))
+
+        // 깔끔한 URL로 이동
+        router.push('/login/blocked')
+        return
+      }
       setMessage({ type: 'error', text: result.message || '' })
     }
     setLoading(false)
@@ -61,6 +81,22 @@ export default function LoginPage() {
     if (result.success) {
       setMessage({ type: 'success', text: result.message || '' })
     } else {
+      // 차단 상태인 경우 blocked 페이지로 이동
+      if (result.isBlocked && result.blockedUntil && result.blockReason) {
+        console.log('OTP 차단 상태 감지:', result)
+        setLoading(false)
+
+        // localStorage에 차단 정보 임시 저장 (이메일도 포함)
+        localStorage.setItem('blocked_info', JSON.stringify({
+          until: result.blockedUntil,
+          reason: result.blockReason,
+          email: authStep.email || authStep.user?.email
+        }))
+
+        // 깔끔한 URL로 이동
+        router.push('/login/blocked')
+        return
+      }
       setMessage({ type: 'error', text: result.message || '' })
     }
     setLoading(false)
@@ -75,6 +111,22 @@ export default function LoginPage() {
     if (result.success) {
       setMessage({ type: 'success', text: result.message || '' })
     } else {
+      // 차단 상태인 경우 blocked 페이지로 이동
+      if (result.isBlocked && result.blockedUntil && result.blockReason) {
+        console.log('SMS 차단 상태 감지:', result)
+        setLoading(false)
+
+        // localStorage에 차단 정보 임시 저장 (이메일도 포함)
+        localStorage.setItem('blocked_info', JSON.stringify({
+          until: result.blockedUntil,
+          reason: result.blockReason,
+          email: authStep.email || authStep.user?.email
+        }))
+
+        // 깔끔한 URL로 이동
+        router.push('/login/blocked')
+        return
+      }
       setMessage({ type: 'error', text: result.message || '' })
     }
     setLoading(false)
@@ -98,6 +150,7 @@ export default function LoginPage() {
       { key: 'otp', label: 'OTP 인증', icon: KeyIcon },
       { key: 'sms', label: 'SMS 인증', icon: DevicePhoneMobileIcon },
     ]
+
 
     return (
       <div className="flex items-center justify-center mb-8">
@@ -213,9 +266,11 @@ export default function LoginPage() {
                 </button>
 
                 <div className="text-center mt-4">
-                  <p className="text-xs text-gray-500">
-                    남은 시도: {authStep.maxAttempts - authStep.attempts}회
-                  </p>
+                  <AttemptLimitMessage
+                    isLimitExceeded={false}
+                    currentAttempts={authStep.attempts}
+                    maxAttempts={authStep.maxAttempts}
+                  />
                 </div>
               </form>
             </>
@@ -268,9 +323,14 @@ export default function LoginPage() {
                   >
                     이메일 다시 입력
                   </button>
-                  <p className="text-xs text-gray-500">
-                    남은 시도: {authStep.maxAttempts - authStep.attempts}회
-                  </p>
+                </div>
+
+                <div className="text-center mt-4">
+                  <AttemptLimitMessage
+                    isLimitExceeded={false}
+                    currentAttempts={authStep.attempts}
+                    maxAttempts={authStep.maxAttempts}
+                  />
                 </div>
 
               </form>
@@ -330,9 +390,14 @@ export default function LoginPage() {
                     )}
                     {otpResendCooldown > 0 ? `재발송 (${otpResendCooldown}초)` : smsLoading ? '발송 중...' : 'SMS 재발송'}
                   </button>
-                  <p className="text-xs text-gray-500">
-                    남은 시도: {authStep.maxAttempts - authStep.attempts}회
-                  </p>
+                </div>
+
+                <div className="text-center mt-4">
+                  <AttemptLimitMessage
+                    isLimitExceeded={false}
+                    currentAttempts={authStep.attempts}
+                    maxAttempts={authStep.maxAttempts}
+                  />
                 </div>
 
               </form>

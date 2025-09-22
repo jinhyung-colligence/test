@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
 interface TransactionHistoryProps {
   plan: ServicePlan;
@@ -274,24 +275,10 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                       {tx.asset.includes("→") ? (
                         <div className="flex items-center">
                           <div className="flex items-center">
-                            <img
-                              src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${tx.asset
-                                .split(" ")[0]
-                                .toLowerCase()}.png`}
-                              alt={tx.asset.split(" ")[0]}
-                              className="w-6 h-6 rounded-full mr-2 flex-shrink-0"
-                              onError={(e) => {
-                                (
-                                  e.target as HTMLImageElement
-                                ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="12" fill="#f3f4f6"/>
-                                    <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#6b7280">
-                                      ${tx.asset.split(" ")[0]}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                              }}
+                            <CryptoIcon
+                              symbol={tx.asset.split(" ")[0]}
+                              size={24}
+                              className="mr-2 flex-shrink-0"
                             />
                             <span className="text-gray-900 font-semibold mr-2">
                               {tx.asset.split(" ")[0]}
@@ -299,24 +286,10 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                           </div>
                           <span className="mx-2 text-gray-400">→</span>
                           <div className="flex items-center">
-                            <img
-                              src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${tx.asset
-                                .split(" ")[2]
-                                .toLowerCase()}.png`}
-                              alt={tx.asset.split(" ")[2]}
-                              className="w-6 h-6 rounded-full mr-2 flex-shrink-0"
-                              onError={(e) => {
-                                (
-                                  e.target as HTMLImageElement
-                                ).src = `data:image/svg+xml;base64,${btoa(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="12" fill="#f3f4f6"/>
-                                    <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#6b7280">
-                                      ${tx.asset.split(" ")[2]}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                              }}
+                            <CryptoIcon
+                              symbol={tx.asset.split(" ")[2]}
+                              size={24}
+                              className="mr-2 flex-shrink-0"
                             />
                             <span className="text-gray-900 font-semibold">
                               {tx.asset.split(" ")[2]}
@@ -325,22 +298,10 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                         </div>
                       ) : (
                         <div className="flex items-center">
-                          <img
-                            src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${tx.asset.toLowerCase()}.png`}
-                            alt={tx.asset}
-                            className="w-6 h-6 rounded-full mr-2 flex-shrink-0"
-                            onError={(e) => {
-                              (
-                                e.target as HTMLImageElement
-                              ).src = `data:image/svg+xml;base64,${btoa(`
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                                  <circle cx="12" cy="12" r="12" fill="#f3f4f6"/>
-                                  <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#6b7280">
-                                    ${tx.asset}
-                                  </text>
-                                </svg>
-                              `)}`;
-                            }}
+                          <CryptoIcon
+                            symbol={tx.asset}
+                            size={24}
+                            className="mr-2 flex-shrink-0"
                           />
                           <span className="text-gray-900 font-semibold">
                             {tx.asset}

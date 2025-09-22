@@ -7,6 +7,7 @@ export function middleware(request: NextRequest) {
   // 로그인 페이지와 정적 파일들은 인증 체크 건너뛰기
   if (
     pathname === '/login' ||
+    pathname.startsWith('/login/blocked') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||

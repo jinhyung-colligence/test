@@ -83,3 +83,57 @@ useEffect(() => {
 
 - **이더리움**: `0x742d35Cc6634C0532925a3b844Bc9e7595...f0bEb0`
 - **비트코인**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx...x0wlh`
+
+## 가상자산 아이콘 시스템
+
+### 기본 원칙
+
+- **CryptoIcon 컴포넌트 사용**: 모든 가상자산 아이콘은 `src/components/ui/CryptoIcon.tsx` 컴포넌트 사용
+- **로컬 파일 시스템**: 외부 CDN 의존성 제거, 로컬 cryptocurrency-icons 패키지 활용
+- **Fallback 시스템**: 지원되지 않는 자산에 대한 텍스트 기반 fallback 제공
+
+### 구현 방식
+
+```typescript
+// CryptoIcon 컴포넌트 사용 예시
+import CryptoIcon from '@/components/ui/CryptoIcon'
+
+<CryptoIcon
+  symbol="BTC"
+  size={24}
+  className="mr-2 flex-shrink-0"
+/>
+```
+
+### 아이콘 파일 위치
+
+- **패키지**: `cryptocurrency-icons@^0.18.1`
+- **로컬 경로**: `public/cryptocurrency-icons/32/color/`
+- **지원 형식**: PNG 파일 (32x32 픽셀)
+
+### 지원 가상자산
+
+- **BTC** (Bitcoin): `btc.png`
+- **ETH** (Ethereum): `eth.png`
+- **USDC** (USD Coin): `usdc.png`
+- **USDT** (Tether): `usdt.png`
+- **SOL** (Solana): `sol.png`
+- **기타**: 500+ 가상자산 지원
+
+### Fallback 처리
+
+- **지원되지 않는 자산**: KRW, KRD, WON 등은 텍스트 기반 원형 아이콘으로 표시
+- **로딩 실패**: 자동으로 텍스트 fallback으로 전환
+- **일관된 디자인**: 모든 fallback은 회색 배경에 자산 심볼 표시
+
+### 사용 금지 사항
+
+- **직접 img 태그 사용 금지**: 가상자산 아이콘에 대해서는 반드시 CryptoIcon 컴포넌트 사용
+- **외부 CDN URL 사용 금지**: GitHub raw URL 등 외부 링크 사용 금지
+- **하드코딩된 아이콘 URL 금지**: 동적 아이콘 로딩을 위해 CryptoIcon 컴포넌트 활용
+
+### 마이그레이션 현황
+
+- **완료**: TransactionHistory.tsx
+- **대기**: DepositManagement.tsx, 출금 관련 컴포넌트 등 11개 파일
+- **계획서**: `claudedocs/cryptocurrency-icons-migration-plan.md` 참조

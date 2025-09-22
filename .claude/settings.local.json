@@ -41,7 +41,9 @@
       "Bash(for:*)",
       "Bash(do sed -i '' 's/USDT/KRW/g' \"$file\")",
       "Bash(done)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx playwright:*)",
+      "Bash(open /Users/jinhyungjeon/dev/colligence/custody/dashboard-custody/test-login-blocking.html)"
     ],
     "deny": [],
     "ask": []

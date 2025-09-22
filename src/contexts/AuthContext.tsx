@@ -7,26 +7,78 @@ import { getUserByEmail } from '@/data/userMockData'
 import { verifyOTP, verifySMSCode, sendSMSCode } from '@/utils/authenticationHelpers'
 
 interface AuthStep {
-  step: 'email' | 'otp' | 'sms' | 'completed'
+  step: 'email' | 'otp' | 'sms' | 'completed' | 'blocked'
   email?: string
   user?: User
   attempts: number
   maxAttempts: number
+  blockedUntil?: number
+  blockReason?: string
 }
 
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   authStep: AuthStep
-  login: (email: string) => Promise<{ success: boolean; message?: string }>
-  verifyOtp: (otp: string) => Promise<{ success: boolean; message?: string }>
-  verifySms: (code: string) => Promise<{ success: boolean; message?: string }>
+  login: (email: string) => Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }>
+  verifyOtp: (otp: string) => Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }>
+  verifySms: (code: string) => Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }>
   sendSms: () => Promise<{ success: boolean; message?: string }>
   logout: () => void
   resetAuth: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// 쿨다운 기간 계산 (점진적 증가: 30초, 1분, 5분, 15분, 1시간)
+const getCooldownDuration = (attemptCount: number): number => {
+  const durations = [30, 60, 300, 900, 3600] // 초 단위
+  const index = Math.min(attemptCount - 5, durations.length - 1)
+  return durations[index] * 1000 // 밀리초로 변환
+}
+
+// localStorage에서 시도 기록 가져오기
+const getStoredAttempts = (email: string) => {
+  try {
+    const stored = localStorage.getItem(`login_attempts_${email}`)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch (error) {
+    // localStorage 에러 시 무시
+  }
+  return { count: 0, lastAttempt: 0, blockedUntil: 0 }
+}
+
+// localStorage에 시도 기록 저장
+const setStoredAttempts = (email: string, count: number, blockedUntil: number = 0) => {
+  try {
+    const data = {
+      count,
+      lastAttempt: Date.now(),
+      blockedUntil
+    }
+    localStorage.setItem(`login_attempts_${email}`, JSON.stringify(data))
+  } catch (error) {
+    // localStorage 에러 시 무시
+  }
+}
+
+// 차단 상태 확인
+const checkBlockStatus = (email: string) => {
+  const stored = getStoredAttempts(email)
+  const now = Date.now()
+
+  if (stored.blockedUntil > now) {
+    return {
+      isBlocked: true,
+      remainingTime: stored.blockedUntil - now,
+      totalAttempts: stored.count
+    }
+  }
+
+  return { isBlocked: false, remainingTime: 0, totalAttempts: stored.count }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -61,20 +113,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string): Promise<{ success: boolean; message?: string }> => {
+  const login = async (email: string): Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }> => {
+    // 차단 상태 확인
+    const blockStatus = checkBlockStatus(email)
+
+    if (blockStatus.isBlocked) {
+      const blockedUntil = Date.now() + blockStatus.remainingTime
+      const reason = '너무 많은 로그인 시도로 인해 일시적으로 차단되었습니다'
+
+      return {
+        success: false,
+        message: '차단 페이지로 이동합니다.',
+        isBlocked: true,
+        blockedUntil,
+        blockReason: reason
+      }
+    }
+
+    // 기존 시도 횟수 확인
     if (authStep.attempts >= authStep.maxAttempts) {
-      return { success: false, message: '로그인 시도 횟수를 초과했습니다.' }
+      const totalAttempts = blockStatus.totalAttempts + 1
+      const cooldownDuration = getCooldownDuration(totalAttempts)
+      const blockedUntil = Date.now() + cooldownDuration
+
+      // localStorage에 차단 정보 저장
+      setStoredAttempts(email, totalAttempts, blockedUntil)
+
+      const reason = '너무 많은 로그인 시도로 인해 일시적으로 차단되었습니다'
+
+      return {
+        success: false,
+        message: '차단 페이지로 이동합니다.',
+        isBlocked: true,
+        blockedUntil,
+        blockReason: reason
+      }
     }
 
     const foundUser = getUserByEmail(email)
     if (!foundUser) {
-      setAuthStep(prev => ({ ...prev, attempts: prev.attempts + 1 }))
+      const newAttempts = authStep.attempts + 1
+      const newTotalAttempts = blockStatus.totalAttempts + 1
+
+      setAuthStep(prev => ({ ...prev, attempts: newAttempts }))
+
+      // 실패 시 localStorage에도 기록
+      setStoredAttempts(email, newTotalAttempts)
+
+      // 5회 실패 시 즉시 차단 처리
+      if (newAttempts >= authStep.maxAttempts) {
+        const cooldownDuration = getCooldownDuration(newTotalAttempts)
+        const blockedUntil = Date.now() + cooldownDuration
+
+        // localStorage에 차단 정보 저장
+        setStoredAttempts(email, newTotalAttempts, blockedUntil)
+
+        const reason = '너무 많은 로그인 시도로 인해 일시적으로 차단되었습니다'
+
+        return {
+          success: false,
+          message: '차단 페이지로 이동합니다.',
+          isBlocked: true,
+          blockedUntil,
+          blockReason: reason
+        }
+      }
+
       return { success: false, message: '등록되지 않은 이메일입니다.' }
     }
 
     if (foundUser.status !== 'active') {
       return { success: false, message: '비활성화된 계정입니다.' }
     }
+
+    // 성공 시 저장된 실패 기록 초기화
+    setStoredAttempts(email, 0)
 
     setAuthStep({
       step: 'otp',
@@ -87,13 +200,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: 'OTP 코드를 입력해주세요.' }
   }
 
-  const verifyOtp = async (otp: string): Promise<{ success: boolean; message?: string }> => {
+  const verifyOtp = async (otp: string): Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }> => {
     if (!authStep.user || authStep.step !== 'otp') {
       return { success: false, message: '잘못된 접근입니다.' }
     }
 
     if (authStep.attempts >= authStep.maxAttempts) {
-      return { success: false, message: 'OTP 시도 횟수를 초과했습니다.' }
+      const email = authStep.email || authStep.user.email
+      const totalAttempts = getStoredAttempts(email).count + 1
+      const cooldownDuration = getCooldownDuration(totalAttempts)
+      const blockedUntil = Date.now() + cooldownDuration
+
+      // localStorage에 차단 정보 저장
+      setStoredAttempts(email, totalAttempts, blockedUntil)
+
+      const reason = 'OTP 시도 횟수 초과로 인해 일시적으로 차단되었습니다'
+
+      return {
+        success: false,
+        message: '차단 페이지로 이동합니다.',
+        isBlocked: true,
+        blockedUntil,
+        blockReason: reason
+      }
     }
 
     try {
@@ -107,7 +236,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }))
         return { success: true, message: 'SMS 인증 코드를 발송했습니다.' }
       } else {
-        setAuthStep(prev => ({ ...prev, attempts: prev.attempts + 1 }))
+        const newAttempts = authStep.attempts + 1
+        setAuthStep(prev => ({ ...prev, attempts: newAttempts }))
+
+        // 5회 실패 시 즉시 차단 처리
+        if (newAttempts >= authStep.maxAttempts) {
+          const email = authStep.email || authStep.user.email
+          const totalAttempts = getStoredAttempts(email).count + 1
+          const cooldownDuration = getCooldownDuration(totalAttempts)
+          const blockedUntil = Date.now() + cooldownDuration
+
+          // localStorage에 차단 정보 저장
+          setStoredAttempts(email, totalAttempts, blockedUntil)
+
+          const reason = 'OTP 시도 횟수 초과로 인해 일시적으로 차단되었습니다'
+
+          return {
+            success: false,
+            message: '차단 페이지로 이동합니다.',
+            isBlocked: true,
+            blockedUntil,
+            blockReason: reason
+          }
+        }
+
         return { success: false, message: '올바르지 않은 OTP 코드입니다.' }
       }
     } catch (error) {
@@ -132,13 +284,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const verifySms = async (code: string): Promise<{ success: boolean; message?: string }> => {
+  const verifySms = async (code: string): Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }> => {
     if (!authStep.user || authStep.step !== 'sms') {
       return { success: false, message: '잘못된 접근입니다.' }
     }
 
     if (authStep.attempts >= authStep.maxAttempts) {
-      return { success: false, message: 'SMS 시도 횟수를 초과했습니다.' }
+      const email = authStep.email || authStep.user.email
+      const totalAttempts = getStoredAttempts(email).count + 1
+      const cooldownDuration = getCooldownDuration(totalAttempts)
+      const blockedUntil = Date.now() + cooldownDuration
+
+      // localStorage에 차단 정보 저장
+      setStoredAttempts(email, totalAttempts, blockedUntil)
+
+      const reason = 'SMS 시도 횟수 초과로 인해 일시적으로 차단되었습니다'
+
+      return {
+        success: false,
+        message: '차단 페이지로 이동합니다.',
+        isBlocked: true,
+        blockedUntil,
+        blockReason: reason
+      }
     }
 
     try {
@@ -171,7 +339,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return { success: true, message: '로그인에 성공했습니다.' }
       } else {
-        setAuthStep(prev => ({ ...prev, attempts: prev.attempts + 1 }))
+        const newAttempts = authStep.attempts + 1
+        setAuthStep(prev => ({ ...prev, attempts: newAttempts }))
+
+        // 5회 실패 시 즉시 차단 처리
+        if (newAttempts >= authStep.maxAttempts) {
+          const email = authStep.email || authStep.user.email
+          const totalAttempts = getStoredAttempts(email).count + 1
+          const cooldownDuration = getCooldownDuration(totalAttempts)
+          const blockedUntil = Date.now() + cooldownDuration
+
+          // localStorage에 차단 정보 저장
+          setStoredAttempts(email, totalAttempts, blockedUntil)
+
+          const reason = 'SMS 시도 횟수 초과로 인해 일시적으로 차단되었습니다'
+
+          return {
+            success: false,
+            message: '차단 페이지로 이동합니다.',
+            isBlocked: true,
+            blockedUntil,
+            blockReason: reason
+          }
+        }
+
         return { success: false, message: '올바르지 않은 인증 코드입니다.' }
       }
     } catch (error) {
