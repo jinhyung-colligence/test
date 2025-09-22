@@ -211,10 +211,10 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     name: "",
     type: "department" as GroupType,
     description: "",
-    currency: 'KRW' as CryptoCurrency, // 그룹 전체 자산 설정
-    monthlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
-    quarterlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
-    yearlyBudget: { amount: 0, currency: 'KRW' as CryptoCurrency },
+    currency: 'BTC' as CryptoCurrency, // 그룹 전체 자산 설정
+    monthlyBudget: { amount: 0, currency: 'BTC' as CryptoCurrency },
+    quarterlyBudget: { amount: 0, currency: 'BTC' as CryptoCurrency },
+    yearlyBudget: { amount: 0, currency: 'BTC' as CryptoCurrency },
     budgetSetup: null as BudgetSetup | null, // 새로운 예산 설정
     manager: "",
   });
@@ -383,10 +383,10 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       name: "",
       type: "department",
       description: "",
-      currency: 'KRW' as CryptoCurrency,
-      monthlyBudget: { amount: 0, currency: 'KRW' },
-      quarterlyBudget: { amount: 0, currency: 'KRW' },
-      yearlyBudget: { amount: 0, currency: 'KRW' },
+      currency: 'BTC' as CryptoCurrency,
+      monthlyBudget: { amount: 0, currency: 'BTC' },
+      quarterlyBudget: { amount: 0, currency: 'BTC' },
+      yearlyBudget: { amount: 0, currency: 'BTC' },
       budgetSetup: null,
       manager: "",
     });
@@ -787,12 +787,12 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 >
                   <option value="BTC">Bitcoin (BTC)</option>
                   <option value="ETH">Ethereum (ETH)</option>
-                  <option value="SOL">Solana (SOL)</option>
+                  <option value="USDT">Tether (USDT)</option>
                   <option value="USDC">USD Coin (USDC)</option>
-                  <option value="KRW">Tether (KRW)</option>
+                  <option value="SOL">Solana (SOL)</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  이 그룹의 모든 예산은 선택한 자산으로 설정됩니다.
+                  커스터디 지갑에 보관된 가상자산으로 예산을 관리합니다. 이 그룹의 모든 예산은 선택한 자산으로 설정됩니다.
                 </p>
               </div>
 
