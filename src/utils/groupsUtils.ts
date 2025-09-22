@@ -39,6 +39,29 @@ export const formatCryptoAmount = (cryptoAmount: CryptoAmount): string => {
   return `${formattedNumber} ${cryptoAmount.currency}`;
 };
 
+// 소수점 입력 검증 함수
+export const validateDecimalInput = (value: string, currency: CryptoCurrency): boolean => {
+  if (value === '') return true;
+
+  // 소수점을 포함한 숫자 패턴 검증
+  if (!/^\d*\.?\d*$/.test(value)) return false;
+
+  const decimals = getCurrencyDecimals(currency);
+  const parts = value.split('.');
+
+  // 소수점 자리수 확인
+  if (parts.length === 2 && parts[1].length > decimals) return false;
+
+  return true;
+};
+
+// 암호화폐 입력값을 숫자로 변환 (검증 포함)
+export const parseDecimalAmount = (value: string): number => {
+  if (value === '') return 0;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 // 예산 사용률 계산
 export const calculateBudgetUsageRate = (used: CryptoAmount, budget: CryptoAmount): number => {
   // 같은 통화인 경우에만 계산

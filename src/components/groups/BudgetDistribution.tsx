@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { PencilIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { BudgetSetup, MonthlyBudget, QuarterlyBudget } from "@/types/groups";
 import { adjustMonthlyBudget, validateBudgetSum, getMonthsInQuarter } from "@/utils/budgetCalculator";
+import { getCurrencyDecimals, validateDecimalInput, parseDecimalAmount } from "@/utils/groupsUtils";
 
 interface BudgetDistributionProps {
   budgetSetup: BudgetSetup;
@@ -28,6 +29,7 @@ export default function BudgetDistribution({
     remaining: 0,
     message: null
   });
+  const decimals = getCurrencyDecimals(budgetSetup.currency);
 
   // 검증 상태 업데이트
   useEffect(() => {
@@ -52,9 +54,9 @@ export default function BudgetDistribution({
   };
 
   const handleEditSave = () => {
-    const newAmount = editing.tempValue === '' ? 0 : parseInt(editing.tempValue);
+    const newAmount = parseDecimalAmount(editing.tempValue);
 
-    if (isNaN(newAmount) || newAmount < 0) {
+    if (newAmount < 0) {
       if (onError) {
         onError("올바른 금액을 입력해주세요.");
       }
@@ -86,7 +88,10 @@ export default function BudgetDistribution({
   };
 
   const formatAmount = (amount: number): string => {
-    return amount.toLocaleString();
+    return amount.toLocaleString('ko-KR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals
+    });
   };
 
   const getDateRange = (budgetSetup: BudgetSetup): string => {
@@ -149,13 +154,13 @@ export default function BudgetDistribution({
                       value={editing.tempValue}
                       onChange={(e) => {
                         const value = e.target.value;
-                        // 숫자와 빈 문자열만 허용
-                        if (value === '' || /^\d+$/.test(value)) {
+                        if (validateDecimalInput(value, budgetSetup.currency)) {
                           setEditing({ ...editing, tempValue: value });
                         }
                       }}
-                      className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      inputMode="numeric"
+                      className="w-32 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      inputMode="decimal"
+                      placeholder={`최대 ${decimals}자리 소수점`}
                       autoFocus
                     />
                     <span className="text-xs text-gray-500">{budgetSetup.currency}</span>

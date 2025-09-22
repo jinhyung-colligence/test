@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CryptoCurrency } from "@/types/groups";
+import { getCurrencyDecimals, validateDecimalInput, parseDecimalAmount } from "@/utils/groupsUtils";
 
 interface BudgetSetupFormProps {
   currency: CryptoCurrency;
@@ -21,6 +22,7 @@ export default function BudgetSetupForm({
 }: BudgetSetupFormProps) {
   const [baseType, setBaseType] = useState<'yearly' | 'quarterly' | 'monthly'>('yearly');
   const [baseAmountStr, setBaseAmountStr] = useState<string>('');
+  const decimals = getCurrencyDecimals(currency);
 
   // 현재 날짜 기준으로 남은 분기와 월 계산
   const currentDate = new Date();
@@ -45,28 +47,40 @@ export default function BudgetSetupForm({
   const [selectedQuarter, setSelectedQuarter] = useState<number>(currentQuarter);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
 
-  const baseAmount = baseAmountStr === '' ? 0 : Number(baseAmountStr);
+  const baseAmount = parseDecimalAmount(baseAmountStr);
 
   // year가 변경될 때만 선택된 분기와 월을 첫 번째 가능한 값으로 리셋
   useEffect(() => {
-    if (availableQuarters.length > 0) {
-      setSelectedQuarter(availableQuarters[0]);
+    // year가 변경될 때만 실행되도록 dependency를 year만으로 제한
+    const newAvailableQuarters = year === currentYear
+      ? Array.from({ length: 4 - currentQuarter + 1 }, (_, i) => currentQuarter + i)
+      : year > currentYear
+        ? [1, 2, 3, 4]
+        : [];
+
+    const newAvailableMonths = year === currentYear
+      ? Array.from({ length: 12 - currentMonth + 1 }, (_, i) => currentMonth + i)
+      : year > currentYear
+        ? Array.from({ length: 12 }, (_, i) => i + 1)
+        : [];
+
+    if (newAvailableQuarters.length > 0) {
+      setSelectedQuarter(newAvailableQuarters[0]);
     }
-    if (availableMonths.length > 0) {
-      setSelectedMonth(availableMonths[0]);
+    if (newAvailableMonths.length > 0) {
+      setSelectedMonth(newAvailableMonths[0]);
     }
-  }, [year, availableQuarters, availableMonths]);
+  }, [year]); // year만 dependency로 설정
 
   const handleAmountChange = (value: string) => {
-    // 숫자와 빈 문자열만 허용
-    if (value === '' || /^\d+$/.test(value)) {
+    if (validateDecimalInput(value, currency)) {
       setBaseAmountStr(value);
     }
   };
 
   const handleSubmit = () => {
     if (baseAmount <= 0) {
-      alert("예산 금액을 입력해주세요.");
+      alert("올바른 예산 금액을 입력해주세요.");
       return;
     }
 
@@ -195,8 +209,8 @@ export default function BudgetSetupForm({
             value={baseAmountStr}
             onChange={(e) => handleAmountChange(e.target.value)}
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="예산 금액을 입력하세요"
-            inputMode="numeric"
+            placeholder={`예산 금액을 입력하세요 (최대 ${decimals}자리 소수점)`}
+            inputMode="decimal"
           />
           <div className="px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-700 font-medium">
             {currency}
@@ -210,6 +224,9 @@ export default function BudgetSetupForm({
           {baseType === 'yearly' && `${year}년 연간 예산을 설정하면 현재 시점부터 남은 분기와 월별로 자동 분배됩니다.`}
           {baseType === 'quarterly' && `${year}년 분기 예산을 설정하면 해당 분기의 남은 월별로 자동 분배됩니다.`}
           {baseType === 'monthly' && `${year}년 선택한 월의 예산만 설정됩니다.`}
+        </div>
+        <div className="text-xs text-blue-600 mt-1">
+          {currency} 소수점 최대 {decimals}자리까지 입력 가능합니다. 나머지 금액은 마지막 달에 자동으로 추가됩니다.
         </div>
       </div>
 

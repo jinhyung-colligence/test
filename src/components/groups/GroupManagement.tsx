@@ -695,7 +695,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
 
       {/* 그룹 생성 모달 */}
       <Modal isOpen={showCreateModal}>
-        <div className="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+        <div className="bg-white rounded-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
             {/* 고정 헤더 */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -832,7 +832,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   <option value="">관리자 선택</option>
                   {getEligibleUsers().map(user => (
                     <option key={user.id} value={user.id}>
-                      {user.name} ({user.department} - {user.position}) - {ROLE_NAMES[user.role]}
+                      {user.name} ({user.department}) - {ROLE_NAMES[user.role]}
                     </option>
                   ))}
                 </select>
@@ -857,7 +857,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                           !requiredApprovers.includes(user.id) || user.id === approverId
                         ).map(user => (
                           <option key={user.id} value={user.id}>
-                            {user.name} ({user.department} - {user.position}) - {ROLE_NAMES[user.role]}
+                            {user.name} ({user.department}) - {ROLE_NAMES[user.role]}
                           </option>
                         ))}
                       </select>

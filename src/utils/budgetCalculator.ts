@@ -1,8 +1,17 @@
 import { BudgetSetup, MonthlyBudget, QuarterlyBudget, CryptoCurrency } from "@/types/groups";
+import { getCurrencyDecimals } from "./groupsUtils";
 
 /**
  * 예산 자동 분배 및 계산 유틸리티 함수들
  */
+
+/**
+ * 소수점 정밀도를 고려한 반올림 함수
+ */
+const roundToPrecision = (value: number, decimals: number): number => {
+  const factor = Math.pow(10, decimals);
+  return Math.round(value * factor) / factor;
+};
 
 /**
  * 현재 날짜부터 남은 월들을 계산
@@ -61,6 +70,7 @@ export const distributeYearlyBudget = (
 ): BudgetSetup => {
   const remainingMonths = getRemainingMonths(currentDate, year);
   const remainingQuarters = getRemainingQuarters(currentDate, year);
+  const decimals = getCurrencyDecimals(currency);
 
   if (remainingMonths.length === 0) {
     throw new Error("선택한 년도에 남은 기간이 없습니다.");
@@ -72,21 +82,25 @@ export const distributeYearlyBudget = (
     const monthsInThisQuarter = getMonthsInQuarter(quarter).filter(
       month => remainingMonths.includes(month)
     );
-    const quarterAmount = Math.floor(baseAmount / remainingMonths.length * monthsInThisQuarter.length);
+    const quarterAmount = roundToPrecision(baseAmount / remainingMonths.length * monthsInThisQuarter.length, decimals);
     quarterlyBudgets.push({ quarter, amount: quarterAmount });
   }
 
   // 월별 자동 분배 (균등 분배)
-  const monthlyAmount = Math.floor(baseAmount / remainingMonths.length);
+  const monthlyAmount = roundToPrecision(baseAmount / remainingMonths.length, decimals);
   const monthlyBudgets: MonthlyBudget[] = remainingMonths.map(month => ({
     month,
     amount: monthlyAmount
   }));
 
   // 나머지 금액을 마지막 월에 추가
-  const remainder = baseAmount - (monthlyAmount * remainingMonths.length);
+  const totalDistributed = monthlyAmount * remainingMonths.length;
+  const remainder = roundToPrecision(baseAmount - totalDistributed, decimals);
   if (remainder > 0 && monthlyBudgets.length > 0) {
-    monthlyBudgets[monthlyBudgets.length - 1].amount += remainder;
+    monthlyBudgets[monthlyBudgets.length - 1].amount = roundToPrecision(
+      monthlyBudgets[monthlyBudgets.length - 1].amount + remainder,
+      decimals
+    );
   }
 
   // 날짜 범위 계산
@@ -142,17 +156,23 @@ export const distributeQuarterlyBudget = (
     throw new Error("선택한 분기에 남은 기간이 없습니다.");
   }
 
+  const decimals = getCurrencyDecimals(currency);
+
   // 월별 자동 분배 (균등 분배)
-  const monthlyAmount = Math.floor(baseAmount / quarterRemainingMonths.length);
+  const monthlyAmount = roundToPrecision(baseAmount / quarterRemainingMonths.length, decimals);
   const monthlyBudgets: MonthlyBudget[] = quarterRemainingMonths.map(month => ({
     month,
     amount: monthlyAmount
   }));
 
   // 나머지 금액을 마지막 월에 추가
-  const remainder = baseAmount - (monthlyAmount * quarterRemainingMonths.length);
+  const totalDistributed = monthlyAmount * quarterRemainingMonths.length;
+  const remainder = roundToPrecision(baseAmount - totalDistributed, decimals);
   if (remainder > 0 && monthlyBudgets.length > 0) {
-    monthlyBudgets[monthlyBudgets.length - 1].amount += remainder;
+    monthlyBudgets[monthlyBudgets.length - 1].amount = roundToPrecision(
+      monthlyBudgets[monthlyBudgets.length - 1].amount + remainder,
+      decimals
+    );
   }
 
   // 분기 예산
