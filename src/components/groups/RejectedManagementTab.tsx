@@ -1,14 +1,40 @@
 import { useState } from "react";
-import { GroupCreationRequest, GroupType } from "@/types/groups";
-import { getTypeColor, getTypeName, formatDate } from "@/utils/groupsUtils";
+import { GroupCreationRequest } from "@/types/groups";
+import { getTypeColor, getTypeName, formatDate, getCryptoIconUrl, formatCryptoAmount } from "@/utils/groupsUtils";
 import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  ExclamationCircleIcon,
-  UserIcon,
-  BanknotesIcon
+  ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
+
+const getCryptoIcon = (currency: string) => {
+  return (
+    <img
+      src={getCryptoIconUrl(currency as any)}
+      alt={currency}
+      className="w-5 h-5"
+      onError={(e) => {
+        const target = e.target as HTMLImageElement;
+        target.style.display = "none";
+        const fallback = document.createElement("div");
+        fallback.className =
+          "w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold";
+        fallback.textContent = currency[0];
+        target.parentNode?.insertBefore(fallback, target);
+      }}
+    />
+  );
+};
+
+const formatCryptoAmountWithIcon = (cryptoAmount: any) => {
+  return (
+    <div className="flex items-center space-x-2">
+      {getCryptoIcon(cryptoAmount.currency)}
+      <span>{formatCryptoAmount(cryptoAmount)}</span>
+    </div>
+  );
+};
 
 interface RejectedManagementTabProps {
   groupRequests: GroupCreationRequest[];
@@ -16,18 +42,6 @@ interface RejectedManagementTabProps {
   onArchive: (requestId: string) => void;
 }
 
-const getGroupTypeIcon = (type: GroupType) => {
-  switch (type) {
-    case "department":
-      return <BanknotesIcon className="h-5 w-5" />;
-    case "project":
-      return <ClockIcon className="h-5 w-5" />;
-    case "team":
-      return <UserIcon className="h-5 w-5" />;
-    default:
-      return <ExclamationCircleIcon className="h-5 w-5" />;
-  }
-};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -51,7 +65,7 @@ const getStatusInfo = (status: string) => {
   }
 };
 
-const formatCryptoAmount = (amount: number, currency: string) => {
+const formatCryptoAmountForDetail = (amount: number, currency: string) => {
   const decimals = currency === 'BTC' ? 4 : currency === 'ETH' ? 2 : 0;
   return amount.toFixed(decimals).replace(/\.?0+$/, '');
 };
@@ -227,25 +241,22 @@ export default function RejectedManagementTab({
                 <table className="w-full min-w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        요청 ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         그룹 정보
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         예산 정보
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         요청자
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        요청일
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         상태
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        승인진행률
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         작업
                       </th>
                     </tr>
@@ -253,62 +264,58 @@ export default function RejectedManagementTab({
                   <tbody className="bg-white divide-y divide-gray-200">
                     {paginatedData.items.map((request) => {
                       const statusInfo = getStatusInfo(request.status);
-                      const totalProgress = request.approvals.length + request.rejections.length;
-                      const progressPercentage = (totalProgress / request.requiredApprovals.length) * 100;
 
                       return (
                         <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              #{request.id}
-                            </span>
-                          </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <div className={`p-2 rounded-lg mr-3 ${getTypeColor(request.type)}`}>
-                                {getGroupTypeIcon(request.type)}
-                              </div>
-                              <div>
+                            <div>
+                              <div className="flex items-center space-x-2 mb-1">
                                 <p className="font-medium text-gray-900">
                                   {request.name}
                                 </p>
-                                <p className="text-sm text-gray-500">
-                                  {getTypeName(request.type)} • {request.description}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {formatDate(request.requestedAt)}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <img
-                                  src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.monthlyBudget.currency.toLowerCase()}.png`}
-                                  alt={request.monthlyBudget.currency}
-                                  className="w-4 h-4"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                                <span className="font-medium text-gray-900">
-                                  {formatCryptoAmount(request.monthlyBudget.amount, request.monthlyBudget.currency)} {request.monthlyBudget.currency}
+                                <span
+                                  className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getTypeColor(
+                                    request.type
+                                  )}`}
+                                >
+                                  {getTypeName(request.type)}
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-500">월간 예산</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <span className="text-sm text-gray-900 font-medium">
-                                {request.requestedBy}
-                              </span>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-sm text-gray-500">
+                                {request.description}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
                                 관리자: {request.manager}
                               </p>
                             </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm">
+                              {request.budgetSetup?.baseType === "quarterly" &&
+                                request.quarterlyBudget && request.quarterlyBudget.amount > 0 ? (
+                                  <>
+                                    <span className="text-gray-500">분기:</span>{" "}
+                                    {formatCryptoAmountWithIcon(request.quarterlyBudget)}
+                                  </>
+                                ) : request.budgetSetup?.baseType === "monthly" &&
+                                  request.monthlyBudget ? (
+                                  <>
+                                    <span className="text-gray-500">월간:</span>{" "}
+                                    {formatCryptoAmountWithIcon(request.monthlyBudget)}
+                                  </>
+                                ) : request.yearlyBudget ? (
+                                  <>
+                                    <span className="text-gray-500">연간:</span>{" "}
+                                    {formatCryptoAmountWithIcon(request.yearlyBudget)}
+                                  </>
+                                ) : null}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {request.requestedBy}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(request.requestedAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -318,22 +325,6 @@ export default function RejectedManagementTab({
                               >
                                 {statusInfo.name}
                               </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="w-full">
-                              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                                <span>
-                                  {totalProgress}/{request.requiredApprovals.length}
-                                </span>
-                                <span className="text-red-600 font-medium">반려</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="h-2 rounded-full bg-red-500 transition-all"
-                                  style={{ width: `${progressPercentage}%` }}
-                                />
-                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -531,19 +522,19 @@ export default function RejectedManagementTab({
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">월간 예산</span>
                               <span className="font-medium">
-                                {formatCryptoAmount(request.monthlyBudget.amount, request.monthlyBudget.currency)} {request.monthlyBudget.currency}
+                                {formatCryptoAmountForDetail(request.monthlyBudget.amount, request.monthlyBudget.currency)} {request.monthlyBudget.currency}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">분기 예산</span>
                               <span className="font-medium">
-                                {formatCryptoAmount(request.quarterlyBudget.amount, request.quarterlyBudget.currency)} {request.quarterlyBudget.currency}
+                                {formatCryptoAmountForDetail(request.quarterlyBudget.amount, request.quarterlyBudget.currency)} {request.quarterlyBudget.currency}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">연간 예산</span>
                               <span className="font-medium">
-                                {formatCryptoAmount(request.yearlyBudget.amount, request.yearlyBudget.currency)} {request.yearlyBudget.currency}
+                                {formatCryptoAmountForDetail(request.yearlyBudget.amount, request.yearlyBudget.currency)} {request.yearlyBudget.currency}
                               </span>
                             </div>
                           </div>

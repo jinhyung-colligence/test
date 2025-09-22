@@ -552,7 +552,7 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {showBalances ? asset.balance : '***'}
+                    {showBalances ? Number(asset.balance).toLocaleString() : '***'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {showBalances ? formatCurrency(asset.value) : '***,***,***'}
