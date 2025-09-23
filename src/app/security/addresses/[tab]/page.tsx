@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation'
 import PageLayout from '@/components/PageLayout'
-import AddressManagement from '@/components/security/AddressManagement'
+import SecuritySettings from '@/components/SecuritySettings'
 import { useServicePlan } from '@/contexts/ServicePlanContext'
 
 interface AddressTabPageProps {
@@ -30,7 +30,11 @@ export default function AddressTabPage({ params }: AddressTabPageProps) {
 
   return (
     <PageLayout activeTab="security">
-      <AddressManagement initialTab={tab} />
+      <SecuritySettings
+        plan={selectedPlan}
+        initialTab="addresses"
+        addressSubtab={tab}
+      />
     </PageLayout>
   )
 }

@@ -6,7 +6,7 @@ import Sidebar from './Sidebar'
 import { useServicePlan } from '@/contexts/ServicePlanContext'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useRouter } from 'next/navigation'
-import { DashboardTab } from './Dashboard'
+import { DashboardTab } from '@/types/dashboard'
 
 interface PageLayoutProps {
   children: ReactNode

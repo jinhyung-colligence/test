@@ -19,7 +19,7 @@ import {
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ServicePlan } from '@/app/page'
-import { DashboardTab } from './Dashboard'
+import { DashboardTab } from '@/types/dashboard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSidebar } from '@/contexts/SidebarContext'
 

@@ -1,14 +1,19 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import PageLayout from '@/components/PageLayout'
+import SecuritySettings from '@/components/SecuritySettings'
+import { useServicePlan } from '@/contexts/ServicePlanContext'
 
 export default function AddressesPage() {
-  const router = useRouter()
+  const { selectedPlan } = useServicePlan()
 
-  useEffect(() => {
-    router.replace('/security/addresses/personal')
-  }, [router])
-
-  return null
+  return (
+    <PageLayout activeTab="security">
+      <SecuritySettings
+        plan={selectedPlan}
+        initialTab="addresses"
+        addressSubtab="personal"
+      />
+    </PageLayout>
+  )
 }

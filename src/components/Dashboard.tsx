@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { ServicePlan } from '@/app/page'
+import { DashboardTab } from '@/types/dashboard'
 import Sidebar from './Sidebar'
 import AssetOverview from './AssetOverview'
 import TransactionHistory from './TransactionHistory'
@@ -18,8 +19,6 @@ interface DashboardProps {
   plan: ServicePlan
   onPlanChange: (plan: ServicePlan) => void
 }
-
-export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'deposit' | 'withdrawal' | 'services' | 'security'
 
 export default function Dashboard({ plan, onPlanChange }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')

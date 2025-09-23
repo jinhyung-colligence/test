@@ -21,9 +21,10 @@ interface SecuritySettingsProps {
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
   policySubtab?: "amount" | "type";
+  addressSubtab?: "personal" | "vasp" | "history";
 }
 
-export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab }: SecuritySettingsProps) {
+export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab, addressSubtab }: SecuritySettingsProps) {
   const router = useRouter();
   const pathname = usePathname();
   // 탭 관리 상태
@@ -98,7 +99,7 @@ export default function SecuritySettings({ plan, initialTab, notificationSubtab,
 
       {/* 탭 콘텐츠 */}
       {activeTab === "security" && <SecurityTab plan={plan} />}
-      {activeTab === "addresses" && <AddressManagement />}
+      {activeTab === "addresses" && <AddressManagement initialTab={addressSubtab} />}
       {activeTab === "accounts" && <AccountManagement plan={plan} />}
       {activeTab === "policies" && <PolicyManagement />}
       {activeTab === "notifications" && <NotificationCenter initialSubtab={notificationSubtab} />}
