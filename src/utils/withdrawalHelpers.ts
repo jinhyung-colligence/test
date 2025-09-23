@@ -24,7 +24,7 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
     },
     approved: {
       name: "결재 승인",
-      color: "bg-green-100 text-green-800",
+      color: "bg-sky-100 text-sky-800",
       icon: CheckCircleIcon,
     },
     pending: {
@@ -39,7 +39,7 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
     },
     completed: {
       name: "전송 완료",
-      color: "bg-green-100 text-green-800",
+      color: "bg-sky-100 text-sky-800",
       icon: CheckCircleIcon,
     },
     rejected: {
@@ -68,7 +68,7 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
 
 export const getPriorityInfo = (priority: string) => {
   const priorityConfig = {
-    low: { name: "낮음", color: "bg-green-100 text-green-800" },
+    low: { name: "낮음", color: "bg-sky-100 text-sky-800" },
     medium: { name: "보통", color: "bg-yellow-100 text-yellow-800" },
     high: { name: "높음", color: "bg-orange-100 text-orange-800" },
     critical: { name: "긴급", color: "bg-red-100 text-red-800" },

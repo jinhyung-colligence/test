@@ -7,6 +7,9 @@ import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   KeyIcon,
+  PencilIcon,
+  TrashIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -14,7 +17,6 @@ import {
   User,
   UserRole,
   UserStatus,
-  DEFAULT_PERMISSIONS_BY_ROLE,
   ROLE_NAMES,
 } from "@/types/user";
 import { MOCK_USERS } from "@/data/userMockData";
@@ -26,6 +28,15 @@ import {
   searchUsers,
   getUserStatsByRole,
 } from "@/utils/userHelpers";
+import {
+  getRoleColor,
+  getDefaultPermissionsForRole,
+  hasPermission
+} from "@/utils/permissionUtils";
+import UserPermissionEditor from "@/components/user/UserPermissionEditor";
+import PermissionPreview from "@/components/user/PermissionPreview";
+import PermissionHistory from "@/components/user/PermissionHistory";
+import { PermissionChangeLog } from "@/types/permission";
 
 interface UserManagementProps {
   plan: ServicePlan;
@@ -36,7 +47,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
   const [filterRole, setFilterRole] = useState<UserRole | "all">("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [permissionEditingUser, setPermissionEditingUser] = useState<User | null>(null);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -44,47 +58,51 @@ export default function UserManagement({ plan }: UserManagementProps) {
   const [successMessageData, setSuccessMessageData] = useState<{
     name: string;
     email: string;
-    type: "add" | "edit" | "deactivate";
+    type: "add" | "edit" | "deactivate" | "permission";
   } | null>(null);
+
+  // 새 사용자 생성 폼 데이터
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
     phone: "",
     role: "viewer" as UserRole,
     department: "",
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer as string[],
+    position: "",
+    permissions: getDefaultPermissionsForRole("viewer"),
   });
+
+  // 권한 편집 관련 상태
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+
+  // Mock 권한 변경 이력
+  const [permissionLogs] = useState<PermissionChangeLog[]>([
+    {
+      id: "log1",
+      userId: "2",
+      changedBy: "관리자",
+      changeType: "role_change",
+      oldValue: "operator",
+      newValue: "manager",
+      reason: "팀장 승진",
+      timestamp: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      id: "log2",
+      userId: "2",
+      changedBy: "관리자",
+      changeType: "permission_add",
+      newValue: "사용자 관리 권한",
+      reason: "업무 범위 확대",
+      timestamp: new Date(Date.now() - 172800000).toISOString()
+    }
+  ]);
+
   const { t, language } = useLanguage();
-
-  // SMS 인증 시뮬레이션 함수
-  const sendSMSVerification = async (phone: string, userName: string) => {
-    console.log(
-      `SMS 발송 시뮬레이션: ${phone}로 ${userName}님의 계정 활성화 인증 코드 발송`
-    );
-    // 실제로는 SMS API 호출
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return {
-      success: true,
-      message: `${phone}로 인증 코드가 발송되었습니다.`,
-    };
-  };
-
-  const getRoleColor = (role: UserRole) => {
-    const colors = {
-      admin: "text-red-600 bg-red-50",
-      manager: "text-blue-600 bg-blue-50",
-      viewer: "text-green-600 bg-green-50",
-      approver: "text-purple-600 bg-purple-50",
-      initiator: "text-cyan-600 bg-cyan-50",
-      required_approver: "text-orange-600 bg-orange-50",
-      operator: "text-gray-600 bg-gray-50",
-    };
-    return colors[role] || "text-gray-600 bg-gray-50";
-  };
 
   const getStatusColor = (status: UserStatus) => {
     const colors = {
-      active: "text-green-600 bg-green-50",
+      active: "text-sky-600 bg-sky-50",
       inactive: "text-gray-600 bg-gray-50",
       pending: "text-yellow-600 bg-yellow-50",
     };
@@ -105,37 +123,31 @@ export default function UserManagement({ plan }: UserManagementProps) {
     const matchesSearch =
       searchUsers(searchTerm, [user]).length > 0 || searchTerm === "";
     const matchesRole = filterRole === "all" || user.role === filterRole;
-
     return matchesSearch && matchesRole;
   });
 
+  const handleRoleChange = (role: UserRole) => {
+    const permissions = getDefaultPermissionsForRole(role);
+
+    setNewUser(prev => ({
+      ...prev,
+      role,
+      permissions
+    }));
+  };
+
+  const handlePermissionsChange = (permissions: string[]) => {
+    setNewUser(prev => ({ ...prev, permissions }));
+  };
+
+
   const handleAddUser = async () => {
     setIsSubmitting(true);
-
     try {
-      // 이메일 및 SMS 발송 시뮬레이션 (실제로는 API 호출)
-      console.log("Sending invitation email to:", newUser.email);
-      console.log("Sending SMS verification to:", newUser.phone);
+      // 실제로는 API 호출
+      console.log("Adding user:", newUser);
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // 이메일 발송 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // SMS 발송 시뮬레이션
-      const smsResult = await sendSMSVerification(newUser.phone, newUser.name);
-      console.log("SMS 발송 결과:", smsResult);
-
-      // 새 사용자를 대기 상태로 추가 (실제로는 서버에 저장)
-      const newUserData = {
-        ...newUser,
-        id: `user-${Date.now()}`,
-        status: "pending" as UserStatus, // 대기 상태로 설정
-        lastLogin: "",
-        invitedAt: new Date().toISOString(),
-      };
-
-      console.log("User added with pending status:", newUserData);
-
-      // 성공 처리
       setSuccessMessageData({
         name: newUser.name,
         email: newUser.email,
@@ -151,24 +163,28 @@ export default function UserManagement({ plan }: UserManagementProps) {
         phone: "",
         role: "viewer",
         department: "",
-        permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer,
+        position: "",
+        permissions: getDefaultPermissionsForRole("viewer"),
       });
 
-      // 5초 후 성공 메시지 숨김
       setTimeout(() => {
         setShowSuccessMessage(false);
         setSuccessMessageData(null);
       }, 5000);
     } catch (error) {
-      console.error("Failed to send invitation email:", error);
-      alert("이메일 발송 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error("Failed to add user:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleEditUser = (user: User) => {
-    setEditingUser(user);
+    setEditingUser({
+      ...user,
+      phone: user.phone || '',
+      department: user.department || '',
+      position: user.position || ''
+    });
     setShowEditModal(true);
   };
 
@@ -176,419 +192,289 @@ export default function UserManagement({ plan }: UserManagementProps) {
     if (!editingUser) return;
 
     setIsSubmitting(true);
-
     try {
-      // 사용자 정보 업데이트 시뮬레이션 (실제로는 API 호출)
-      console.log("Updating user:", editingUser);
+      // 실제로는 API 호출
+      console.log('Updating user:', editingUser);
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // 2초 대기로 업데이트 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Mock: 사용자 목록 업데이트
+      const updatedUser = {
+        ...editingUser,
+        updatedAt: new Date().toISOString()
+      };
 
-      // 성공 처리
-      setShowEditModal(false);
-      setEditingUser(null);
-
-      // 성공 메시지 표시 (편의상 기존 성공 메시지 재사용)
       setSuccessMessageData({
         name: editingUser.name,
         email: editingUser.email,
-        type: "edit",
+        type: 'edit',
       });
+      setShowEditModal(false);
+      setEditingUser(null);
       setShowSuccessMessage(true);
 
-      // 5초 후 성공 메시지 숨김
       setTimeout(() => {
         setShowSuccessMessage(false);
         setSuccessMessageData(null);
       }, 5000);
     } catch (error) {
-      console.error("Failed to update user:", error);
-      alert("사용자 정보 업데이트 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error('Failed to update user:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleEditPermissions = (user: User) => {
+    setPermissionEditingUser(user);
+    setSelectedPermissions(user.permissions || getDefaultPermissionsForRole(user.role));
+    setShowPermissionModal(true);
+  };
+
+  const handlePermissionUpdate = async () => {
+    if (!permissionEditingUser) return;
+
+    setIsSubmitting(true);
+    try {
+      // 실제로는 API 호출
+      console.log("Updating permissions for:", permissionEditingUser.id);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setSuccessMessageData({
+        name: permissionEditingUser.name,
+        email: permissionEditingUser.email,
+        type: "permission",
+      });
+      setShowPermissionModal(false);
+      setPermissionEditingUser(null);
+      setShowSuccessMessage(true);
+
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+        setSuccessMessageData(null);
+      }, 5000);
+    } catch (error) {
+      console.error("Failed to update permissions:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleShowHistory = (user: User) => {
+    setPermissionEditingUser(user);
+    setShowHistoryModal(true);
+  };
+
   const handleDeactivateUser = (user: User) => {
+    // 이미 비활성 상태인 사용자는 처리하지 않음
+    if (user.status === 'inactive') {
+      return;
+    }
     setDeactivatingUser(user);
     setShowDeactivateModal(true);
   };
 
-  const handleConfirmDeactivate = async () => {
+  const confirmDeactivate = async () => {
     if (!deactivatingUser) return;
 
     setIsSubmitting(true);
-
     try {
-      // 사용자 비활성 처리 시뮬레이션 (실제로는 API 호출)
-      console.log("Deactivating user:", deactivatingUser);
+      console.log("Deactivating user:", deactivatingUser.id);
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // 2초 대기로 비활성 처리 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Mock: 사용자 상태를 비활성으로 변경
+      const updatedUser = {
+        ...deactivatingUser,
+        status: 'inactive' as UserStatus,
+        updatedAt: new Date().toISOString()
+      };
 
-      // 성공 처리
-      setShowDeactivateModal(false);
-      setDeactivatingUser(null);
-
-      // 성공 메시지 표시
       setSuccessMessageData({
         name: deactivatingUser.name,
         email: deactivatingUser.email,
         type: "deactivate",
       });
+      setShowDeactivateModal(false);
+      setDeactivatingUser(null);
       setShowSuccessMessage(true);
 
-      // 5초 후 성공 메시지 숨김
       setTimeout(() => {
         setShowSuccessMessage(false);
         setSuccessMessageData(null);
       }, 5000);
     } catch (error) {
       console.error("Failed to deactivate user:", error);
-      alert("사용자 비활성 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getPermissionName = (permission: string) => {
-    const permissionNames = {
-      "permission.all": "모든 권한",
-      "permission.view_assets": "자산 조회",
-      "permission.view_transactions": "거래 내역 조회",
-      "permission.approve_transactions": "거래 승인",
-      "permission.manage_users": "사용자 관리",
-      "permission.set_policies": "정책 설정",
-      "permission.manage_groups": "그룹 관리",
-      "permission.create_expense": "지출 신청",
-      "permission.approve_expense": "지출 승인",
-      "permission.manage_budget": "예산 관리",
-      "permission.view_group_assets": "그룹 자산 조회",
-      "permission.initiate_withdrawal": "출금 신청",
-      "permission.approve_withdrawal": "출금 승인",
-      "permission.required_approval": "필수 결재",
-      "permission.airgap_operation": "Air-gap 운영",
-      "permission.view_audit": "감사 추적 조회",
-    };
-    return (
-      permissionNames[permission as keyof typeof permissionNames] || permission
-    );
-  };
-
-  const handleRoleChange = (role: UserRole) => {
-    setNewUser({
-      ...newUser,
-      role,
-      permissions: DEFAULT_PERMISSIONS_BY_ROLE[role] || [],
-    });
-  };
-
-  if (plan === "free") {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {t("users.title")}
-          </h3>
-          <p className="text-gray-500 mb-4">{t("users.not_available")}</p>
-        </div>
-      </div>
-    );
-  }
+  const userStats = getUserStatsByRole();
 
   return (
     <div className="space-y-6">
-      {/* 성공 메시지 */}
-      {showSuccessMessage && (
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-blue-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-gray-800">
-                {successMessageData?.type === "edit"
-                  ? "사용자 정보가 업데이트되었습니다"
-                  : successMessageData?.type === "deactivate"
-                  ? "사용자가 비활성 처리되었습니다"
-                  : "사용자 초대 이메일이 발송되었습니다"}
-              </h3>
-              <div className="mt-2 text-sm text-gray-600">
-                <p>
-                  {successMessageData?.type === "edit" ? (
-                    `${successMessageData?.name}님의 정보가 성공적으로 업데이트되었습니다.`
-                  ) : successMessageData?.type === "deactivate" ? (
-                    `${successMessageData?.name}님의 계정이 비활성 상태로 변경되었습니다. 로그인이 불가능하며 모든 권한이 제한됩니다.`
-                  ) : (
-                    <>
-                      {successMessageData?.name}님의 이메일 (
-                      {successMessageData?.email})로 초대 링크가 전송되었습니다.
-                      <br />
-                      이메일 인증을 완료하면 계정이 활성화됩니다.
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="ml-auto pl-3">
-              <div className="-mx-1.5 -my-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowSuccessMessage(false)}
-                  className="inline-flex bg-blue-50 rounded-md p-1.5 text-gray-400 hover:text-gray-600 hover:bg-blue-100"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <UsersIcon className="w-8 h-8 text-gray-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">사용자 관리</h1>
+            <p className="text-sm text-gray-600">사용자 계정 및 권한 관리</p>
           </div>
         </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {t("users.title")}
-          </h1>
-          <p className="text-gray-600 mt-1">{t("users.subtitle")}</p>
-        </div>
         <button
-          onClick={() => {
-            // 모달 열 때 초기값 리셋
-            setNewUser({
-              name: "",
-              email: "",
-              phone: "",
-              role: "viewer" as UserRole,
-              department: "",
-              permissions: [
-                "permission.view_assets",
-                "permission.view_transactions",
-                "permission.view_group_assets",
-                "permission.create_expense",
-                "permission.view_audit",
-              ],
-            });
-            setShowAddModal(true);
-          }}
-          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          {t("users.add_user")}
+          <PlusIcon className="w-4 h-4 mr-2" />
+          사용자 추가
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                {t("users.stats.total")}
-              </p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {MOCK_USERS.length}
-              </p>
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {Object.entries(userStats).map(([role, count]) => (
+          <div key={role} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className={`p-2 rounded-lg ${getRoleColor(role as UserRole)}`}>
+                <UsersIcon className="w-5 h-5" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {ROLE_NAMES[role as UserRole]}
+                </p>
+                <p className="text-lg font-semibold text-gray-900">{count}명</p>
+              </div>
             </div>
-            <UsersIcon className="h-8 w-8 text-blue-600" />
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                {t("users.stats.active")}
-              </p>
-              <p className="text-2xl font-bold text-green-600 mt-1">
-                {MOCK_USERS.filter((u) => u.status === "active").length}
-              </p>
+      {/* 검색 및 필터 */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="이름, 이메일로 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+              />
             </div>
-            <ShieldCheckIcon className="h-8 w-8 text-green-600" />
           </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                {t("users.stats.admins")}
-              </p>
-              <p className="text-2xl font-bold text-red-600 mt-1">
-                {MOCK_USERS.filter((u) => u.role === "admin").length}
-              </p>
-            </div>
-            <KeyIcon className="h-8 w-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                {t("users.stats.pending")}
-              </p>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">
-                {MOCK_USERS.filter((u) => u.status === "pending").length}
-              </p>
-            </div>
-            <div className="h-8 w-8 bg-yellow-600 rounded-full animate-pulse"></div>
+          <div className="sm:w-48">
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value as UserRole | "all")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+            >
+              <option value="all">모든 역할</option>
+              {Object.entries(ROLE_NAMES).map(([role, name]) => (
+                <option key={role} value={role}>
+                  {name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t("users.search_placeholder")}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-
-          <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value as UserRole | "all")}
-            className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">{t("users.filter_all_roles")}</option>
-            <option value="admin">{t("user.role.admin")}</option>
-            <option value="manager">{t("user.role.manager")}</option>
-            <option value="viewer">{t("user.role.viewer")}</option>
-            <option value="approver">{t("user.role.approver")}</option>
-          </select>
-        </div>
-
+      {/* 사용자 목록 */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.user")}
+                  사용자
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  전화번호
+                  역할
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.role")}
+                  상태
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.status")}
+                  최근 로그인
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.permissions")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.last_login")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("users.table.actions")}
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  작업
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr
+                  key={user.id}
+                  className={`hover:bg-gray-50 ${
+                    user.status === 'inactive' ? 'opacity-60 bg-gray-50' : ''
+                  }`}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="font-semibold text-gray-700">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-600">
                           {user.name.charAt(0)}
                         </span>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
                           {user.name}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                        {user.department && (
-                          <p className="text-xs text-gray-400">
-                            {user.department}
-                          </p>
-                        )}
+                        </div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <p className="text-sm text-gray-900 font-mono">
-                      {user.phone}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(
-                        user.role
-                      )}`}
-                    >
-                      {getRoleName(user.role)}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {ROLE_NAMES[user.role]}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        user.status
-                      )}`}
-                    >
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
                       {getStatusName(user.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {user.permissions.slice(0, 2).map((permission, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
-                        >
-                          {t(permission)}
-                        </span>
-                      ))}
-                      {user.permissions.length > 2 && (
-                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-                          +{user.permissions.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(user.lastLogin)}
+                    {user.lastLogin ? formatDate(user.lastLogin) : "로그인 기록 없음"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => handleEditUser(user)}
-                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                        className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="사용자 정보 수정"
+                        disabled={user.status === 'inactive'}
                       >
-                        수정
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEditPermissions(user)}
+                        className="text-sky-600 hover:text-sky-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="권한 관리"
+                        disabled={user.status === 'inactive'}
+                      >
+                        <ShieldCheckIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleShowHistory(user)}
+                        className="text-gray-600 hover:text-gray-900"
+                        title="권한 변경 이력"
+                      >
+                        <ClockIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeactivateUser(user)}
-                        className="px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 transition-colors"
+                        className={`${
+                          user.status === 'inactive'
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-red-600 hover:text-red-900'
+                        }`}
+                        title={user.status === 'inactive' ? '비활성화된 사용자' : '사용자 비활성화'}
+                        disabled={user.status === 'inactive'}
                       >
-                        비활성
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -597,595 +483,367 @@ export default function UserManagement({ plan }: UserManagementProps) {
             </tbody>
           </table>
         </div>
-
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">{t("users.no_results")}</p>
-          </div>
-        )}
       </div>
 
-      <Modal isOpen={showAddModal}>
-        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                사용자 추가
-              </h3>
+      {/* 사용자 추가 모달 */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+      >
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">새 사용자 추가</h3>
+          </div>
+          <div className="p-6 space-y-6">
+          {/* 기본 정보 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                이름 *
+              </label>
+              <input
+                type="text"
+                value={newUser.name}
+                onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                placeholder="홍길동"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                이메일 *
+              </label>
+              <input
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                placeholder="hong@company.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                전화번호 *
+              </label>
+              <input
+                type="tel"
+                value={newUser.phone}
+                onChange={(e) => setNewUser(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                placeholder="010-1234-5678"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                부서
+              </label>
+              <input
+                type="text"
+                value={newUser.department}
+                onChange={(e) => setNewUser(prev => ({ ...prev, department: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                placeholder="재무팀"
+              />
+            </div>
+          </div>
+
+          {/* 권한 설정 */}
+          <UserPermissionEditor
+            selectedRole={newUser.role}
+            onRoleChange={handleRoleChange}
+            customPermissions={newUser.permissions}
+            onPermissionsChange={handlePermissionsChange}
+          />
+
+          {/* 권한 미리보기 */}
+          <PermissionPreview
+            role={newUser.role}
+            permissions={newUser.permissions}
+          />
+
+            <div className="flex justify-end space-x-3 pt-4">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                취소
+              </button>
+              <button
+                onClick={handleAddUser}
+                disabled={isSubmitting || !newUser.name || !newUser.email || !newUser.phone}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
+              >
+                {isSubmitting ? "생성 중..." : "사용자 생성"}
               </button>
             </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddUser();
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이름 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newUser.name}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, name: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="사용자 이름을 입력하세요"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이메일 *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={newUser.email}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, email: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="user@company.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  전화번호 *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={newUser.phone}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, phone: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="+82 010-1234-5678"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  SMS 인증에 사용됩니다. 국가코드를 포함하여 입력해주세요.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  역할 *
-                </label>
-                <select
-                  value={newUser.role}
-                  onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="viewer">조회자 (Viewer)</option>
-                  <option value="initiator">기안자 (Initiator)</option>
-                  <option value="approver">승인자 (Approver)</option>
-                  <option value="required_approver">
-                    필수 결재자 (Required Approver)
-                  </option>
-                  <option value="operator">운영자 (Operator)</option>
-                  <option value="manager">매니저 (Manager)</option>
-                  <option value="admin">관리자 (Admin)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  부서
-                </label>
-                <input
-                  type="text"
-                  value={newUser.department}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, department: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="예: IT팀, 재무팀"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  권한 (역할에 따라 자동 설정됨)
-                </label>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex flex-wrap gap-2">
-                    {newUser.permissions.map((permission, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-                      >
-                        {getPermissionName(permission)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      이메일 발송 중...
-                    </>
-                  ) : (
-                    "사용자 추가"
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
-        </Modal>
+        </div>
+      </Modal>
 
       {/* 사용자 수정 모달 */}
-      <Modal isOpen={showEditModal && !!editingUser}>
-        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      >
+        <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">사용자 정보 수정</h3>
+          </div>
           {editingUser && (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                사용자 정보 수정
-              </h3>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이름 *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingUser.name}
+                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                    placeholder="홍길동"
                   />
-                </svg>
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdateUser();
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이름 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editingUser.name}
-                  onChange={(e) =>
-                    setEditingUser({ ...editingUser, name: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="사용자 이름을 입력하세요"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이메일 *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={editingUser.email}
-                  onChange={(e) =>
-                    setEditingUser({ ...editingUser, email: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="user@company.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  전화번호 *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={editingUser.phone}
-                  onChange={(e) =>
-                    setEditingUser({ ...editingUser, phone: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="+82 010-1234-5678"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  SMS 인증에 사용됩니다. 국가코드를 포함하여 입력해주세요.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  역할 *
-                </label>
-                <select
-                  value={editingUser.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value as UserRole;
-                    const rolePermissions = {
-                      admin: ["permission.all"],
-                      manager: [
-                        "permission.view_assets",
-                        "permission.approve_transactions",
-                        "permission.manage_users",
-                        "permission.manage_groups",
-                        "permission.approve_expense",
-                        "permission.manage_budget",
-                        "permission.approve_withdrawal",
-                      ],
-                      viewer: [
-                        "permission.view_assets",
-                        "permission.view_transactions",
-                        "permission.view_group_assets",
-                        "permission.create_expense",
-                        "permission.view_audit",
-                      ],
-                      approver: [
-                        "permission.approve_transactions",
-                        "permission.set_policies",
-                        "permission.approve_expense",
-                        "permission.approve_withdrawal",
-                      ],
-                      initiator: [
-                        "permission.view_assets",
-                        "permission.view_transactions",
-                        "permission.initiate_withdrawal",
-                        "permission.create_expense",
-                      ],
-                      required_approver: [
-                        "permission.view_assets",
-                        "permission.view_transactions",
-                        "permission.required_approval",
-                        "permission.view_audit",
-                      ],
-                      operator: [
-                        "permission.view_assets",
-                        "permission.view_transactions",
-                        "permission.airgap_operation",
-                        "permission.view_audit",
-                      ],
-                    };
-                    setEditingUser({
-                      ...editingUser,
-                      role: newRole,
-                      permissions: rolePermissions[newRole] || [],
-                    });
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="viewer">조회자 (Viewer)</option>
-                  <option value="initiator">기안자 (Initiator)</option>
-                  <option value="approver">승인자 (Approver)</option>
-                  <option value="required_approver">
-                    필수 결재자 (Required Approver)
-                  </option>
-                  <option value="operator">운영자 (Operator)</option>
-                  <option value="manager">매니저 (Manager)</option>
-                  <option value="admin">관리자 (Admin)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  상태 *
-                </label>
-                <select
-                  value={editingUser.status}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      status: e.target.value as UserStatus,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="active">활성</option>
-                  <option value="inactive">비활성</option>
-                  <option value="pending">대기</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  부서
-                </label>
-                <input
-                  type="text"
-                  value={editingUser.department || ""}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      department: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="예: IT팀, 재무팀"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  권한 (역할에 따라 자동 설정됨)
-                </label>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex flex-wrap gap-2">
-                    {editingUser.permissions.map((permission, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-                      >
-                        {getPermissionName(permission)}
-                      </span>
-                    ))}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이메일 *
+                  </label>
+                  <input
+                    type="email"
+                    value={editingUser.email}
+                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                    placeholder="hong@company.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    전화번호 *
+                  </label>
+                  <input
+                    type="tel"
+                    value={editingUser.phone || ''}
+                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                    placeholder="010-1234-5678"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    부서
+                  </label>
+                  <input
+                    type="text"
+                    value={editingUser.department || ''}
+                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, department: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                    placeholder="재무팀"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    직책
+                  </label>
+                  <input
+                    type="text"
+                    value={editingUser.position || ''}
+                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, position: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                    placeholder="대리"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    역할
+                  </label>
+                  <div className={`px-3 py-2 border border-gray-200 rounded-md bg-gray-50 ${getRoleColor(editingUser.role)}`}>
+                    <span className="text-sm font-medium">
+                      {ROLE_NAMES[editingUser.role]}
+                    </span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      역할 변경은 권한 관리에서 가능합니다.
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
-                  type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   취소
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  onClick={handleUpdateUser}
+                  disabled={isSubmitting || !editingUser.name || !editingUser.email}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      업데이트 중...
-                    </>
-                  ) : (
-                    "수정 완료"
-                  )}
+                  {isSubmitting ? "저장 중..." : "사용자 수정"}
                 </button>
               </div>
-            </form>
-          </>
-          )}
-          </div>
-        </Modal>
-
-      {/* 사용자 비활성 확인 모달 */}
-      <Modal isOpen={showDeactivateModal && !!deactivatingUser}>
-        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-          {deactivatingUser && (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                사용자 비활성 확인
-              </h3>
-              <button
-                onClick={() => setShowDeactivateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
             </div>
+          )}
+        </div>
+      </Modal>
 
-            <div className="mb-6">
+      {/* 권한 편집 모달 */}
+      <Modal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+      >
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              {permissionEditingUser?.name} 권한 관리
+            </h3>
+          </div>
+          {permissionEditingUser && (
+            <div className="p-6 space-y-6">
+            <UserPermissionEditor
+              selectedRole={permissionEditingUser.role}
+              onRoleChange={(role) => {
+                setPermissionEditingUser(prev => prev ? { ...prev, role } : null);
+                setSelectedPermissions(getDefaultPermissionsForRole(role));
+              }}
+              customPermissions={selectedPermissions}
+              onPermissionsChange={setSelectedPermissions}
+            />
+
+            <PermissionPreview
+              role={permissionEditingUser.role}
+              permissions={selectedPermissions}
+            />
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handlePermissionUpdate}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
+                >
+                  {isSubmitting ? "저장 중..." : "권한 저장"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* 권한 변경 이력 모달 */}
+      <Modal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+      >
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">
+              {permissionEditingUser?.name} 권한 변경 이력
+            </h3>
+          </div>
+          <div className="p-6">
+            <PermissionHistory
+              logs={permissionLogs.filter(log => log.userId === permissionEditingUser?.id)}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 사용자 비활성화 확인 모달 */}
+      <Modal
+        isOpen={showDeactivateModal}
+        onClose={() => setShowDeactivateModal(false)}
+      >
+        <div className="bg-white rounded-lg max-w-md w-full mx-4">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">사용자 비활성화</h3>
+          </div>
+          {deactivatingUser && (
+            <div className="p-6">
               <div className="flex items-center mb-4">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-8 w-8 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <TrashIcon className="w-6 h-6 text-red-600" />
                 </div>
                 <div className="ml-4">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    {deactivatingUser.name}님을 비활성 처리하시겠습니까?
-                  </h4>
+                  <p className="text-sm font-medium text-gray-900">
+                    정말로 이 사용자를 비활성화하시겠습니까?
+                  </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {deactivatingUser.email} •{" "}
-                    {getRoleName(deactivatingUser.role)}
+                    {deactivatingUser.name} ({deactivatingUser.email})
                   </p>
                 </div>
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
                 <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-gray-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                  <div className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5">
+                    ⚠
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-gray-800">
-                      비활성 처리 시 주의사항
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      주의사항
                     </h3>
-                    <div className="mt-2 text-sm text-gray-600">
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>사용자는 즉시 로그인할 수 없게 됩니다</li>
-                        <li>모든 시스템 권한이 제한됩니다</li>
-                        <li>진행 중인 작업이 중단될 수 있습니다</li>
+                    <div className="text-sm text-yellow-700 mt-1">
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>비활성화된 사용자는 시스템에 로그인할 수 없습니다</li>
+                        <li>모든 권한이 제거되며 진행 중인 작업이 중단됩니다</li>
                         <li>비활성화 후에는 다시 활성화할 수 없습니다</li>
                       </ul>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowDeactivateModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleConfirmDeactivate}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    비활성 처리 중...
-                  </>
-                ) : (
-                  "비활성 처리"
-                )}
-              </button>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeactivateModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmDeactivate}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {isSubmitting ? "비활성화 중..." : "비활성화"}
+                </button>
+              </div>
             </div>
-          </>
           )}
+        </div>
+      </Modal>
+
+      {/* 성공 메시지 */}
+      {showSuccessMessage && successMessageData && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
+          <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg pointer-events-auto">
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <div className="w-6 h-6 text-sky-600">✓</div>
+                </div>
+                <div className="ml-3 w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {successMessageData.type === "add" && "사용자가 추가되었습니다"}
+                    {successMessageData.type === "edit" && "사용자 정보가 수정되었습니다"}
+                    {successMessageData.type === "permission" && "권한이 업데이트되었습니다"}
+                    {successMessageData.type === "deactivate" && "사용자가 비활성화되었습니다"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {successMessageData.name} ({successMessageData.email})
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </Modal>
+        </div>
+      )}
     </div>
   );
 }

@@ -45,7 +45,7 @@ export const hasPermission = (user: User, permission: string): boolean => {
  */
 export const getAvailableApprovers = (excludeUserIds: string[] = []): User[] => {
   return MOCK_USERS.filter(user =>
-    ['approver', 'required_approver', 'manager', 'admin'].includes(user.role) &&
+    ['operator', 'manager', 'admin'].includes(user.role) &&
     user.status === 'active' &&
     !excludeUserIds.includes(user.id)
   );
@@ -56,7 +56,7 @@ export const getAvailableApprovers = (excludeUserIds: string[] = []): User[] => 
  */
 export const getRequiredApprovers = (): User[] => {
   return MOCK_USERS.filter(user =>
-    ['required_approver', 'admin'].includes(user.role) &&
+    ['manager', 'admin'].includes(user.role) &&
     user.status === 'active'
   );
 };

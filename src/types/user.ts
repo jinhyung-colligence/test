@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'manager' | 'viewer' | 'approver' | 'initiator' | 'required_approver' | 'operator';
+export type UserRole = 'admin' | 'manager' | 'operator' | 'viewer';
 export type UserStatus = 'active' | 'inactive' | 'pending';
 
 export interface User {
@@ -14,63 +14,60 @@ export interface User {
   position?: string;
 }
 
+// 5개 권한 카테고리별 권한 정의
 export interface UserPermissions {
+  // 전체 권한
   'permission.all': boolean;
-  'permission.view_assets': boolean;
-  'permission.view_transactions': boolean;
-  'permission.view_group_assets': boolean;
-  'permission.create_expense': boolean;
-  'permission.view_audit': boolean;
-  'permission.approve_transactions': boolean;
-  'permission.manage_users': boolean;
-  'permission.create_transactions': boolean;
-  'permission.approve_high_value': boolean;
-  'permission.manage_policies': boolean;
-  'permission.view_reports': boolean;
-  'permission.system_admin': boolean;
+
+  // 자산 관리 (Assets)
+  'permission.assets.view': boolean;
+  'permission.assets.view_transactions': boolean;
+  'permission.assets.create_transactions': boolean;
+
+  // 사용자 관리 (Users)
+  'permission.users.view': boolean;
+  'permission.users.create': boolean;
+  'permission.users.edit': boolean;
+  'permission.users.manage_permissions': boolean;
+
+  // 정책 관리 (Policies)
+  'permission.policies.view': boolean;
+  'permission.policies.create': boolean;
+  'permission.policies.edit': boolean;
+
+  // 시스템 관리 (System)
+  'permission.system.view_audit': boolean;
+  'permission.system.notifications': boolean;
+  'permission.system.security_settings': boolean;
+  'permission.system.admin': boolean;
 }
 
 // 역할별 기본 권한 매핑
 export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, string[]> = {
-  admin: ['permission.all'],
+  admin: [
+    'permission.all'
+  ],
   manager: [
-    'permission.view_assets',
-    'permission.approve_transactions',
-    'permission.manage_users',
-    'permission.view_reports',
-    'permission.create_transactions'
-  ],
-  viewer: [
-    'permission.view_assets',
-    'permission.view_transactions',
-    'permission.view_group_assets',
-    'permission.create_expense',
-    'permission.view_audit'
-  ],
-  approver: [
-    'permission.view_assets',
-    'permission.view_transactions',
-    'permission.approve_transactions',
-    'permission.approve_high_value',
-    'permission.view_reports'
-  ],
-  initiator: [
-    'permission.view_assets',
-    'permission.view_transactions',
-    'permission.create_transactions',
-    'permission.create_expense'
-  ],
-  required_approver: [
-    'permission.view_assets',
-    'permission.view_transactions',
-    'permission.approve_transactions',
-    'permission.approve_high_value'
+    'permission.assets.view',
+    'permission.assets.view_transactions',
+    'permission.assets.create_transactions',
+    'permission.users.view',
+    'permission.users.create',
+    'permission.users.edit',
+    'permission.users.manage_permissions',
+    'permission.policies.view',
+    'permission.system.view_audit'
   ],
   operator: [
-    'permission.view_assets',
-    'permission.view_transactions',
-    'permission.create_transactions',
-    'permission.view_audit'
+    'permission.assets.view',
+    'permission.assets.view_transactions',
+    'permission.assets.create_transactions',
+    'permission.system.view_audit'
+  ],
+  viewer: [
+    'permission.assets.view',
+    'permission.assets.view_transactions',
+    'permission.system.view_audit'
   ]
 };
 
@@ -78,11 +75,8 @@ export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, string[]> = {
 export const ROLE_NAMES: Record<UserRole, string> = {
   admin: '관리자',
   manager: '매니저',
-  viewer: '조회자',
-  approver: '승인자',
-  initiator: '신청자',
-  required_approver: '필수 승인자',
-  operator: '운영자'
+  operator: '운영자',
+  viewer: '조회자'
 };
 
 // 상태별 한국어 이름
@@ -91,3 +85,20 @@ export const STATUS_NAMES: Record<UserStatus, string> = {
   inactive: '비활성',
   pending: '대기중'
 };
+
+// 권한 카테고리 정의
+export const PERMISSION_CATEGORIES = {
+  ASSETS: 'assets',
+  USERS: 'users',
+  POLICIES: 'policies',
+  SYSTEM: 'system'
+} as const;
+
+// 권한 카테고리별 한국어 이름
+export const PERMISSION_CATEGORY_NAMES = {
+  [PERMISSION_CATEGORIES.ASSETS]: '자산 관리',
+  [PERMISSION_CATEGORIES.USERS]: '사용자 관리',
+  [PERMISSION_CATEGORIES.POLICIES]: '정책 관리',
+  [PERMISSION_CATEGORIES.SYSTEM]: '시스템 관리'
+} as const;
+

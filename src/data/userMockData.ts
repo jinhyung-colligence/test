@@ -18,10 +18,10 @@ export const MOCK_USERS: User[] = [
     name: '박재무',
     email: 'cfo@company.com',
     phone: '+82 010-1111-2222',
-    role: 'required_approver',
+    role: 'manager',
     status: 'active',
     lastLogin: '2025-09-14T09:15:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.required_approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: '재무팀',
     position: 'CFO'
   },
@@ -30,10 +30,10 @@ export const MOCK_USERS: User[] = [
     name: '이기술',
     email: 'cto@company.com',
     phone: '+82 010-1111-3333',
-    role: 'required_approver',
+    role: 'manager',
     status: 'active',
     lastLogin: '2025-09-13T08:45:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.required_approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: '기술팀',
     position: 'CTO'
   },
@@ -54,10 +54,10 @@ export const MOCK_USERS: User[] = [
     name: '정부관',
     email: 'sub-manager@company.com',
     phone: '+82 010-1111-5555',
-    role: 'approver',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-11T16:45:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: 'IT팀',
     position: '부관리자'
   },
@@ -66,10 +66,10 @@ export const MOCK_USERS: User[] = [
     name: '한리스크',
     email: 'risk@company.com',
     phone: '+82 010-1111-6666',
-    role: 'approver',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-10T15:20:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '리스크팀',
     position: '리스크관리자'
   },
@@ -78,10 +78,10 @@ export const MOCK_USERS: User[] = [
     name: '송컴플',
     email: 'compliance@company.com',
     phone: '+82 010-1111-7777',
-    role: 'approver',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-09T14:10:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '컴플라이언스팀',
     position: '컴플라이언스'
   },
@@ -126,10 +126,10 @@ export const MOCK_USERS: User[] = [
     name: '신신청자',
     email: 'initiator@company.com',
     phone: '+82 010-2222-1111',
-    role: 'initiator',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-05T10:30:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.initiator,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '운영팀',
     position: '신청자'
   },
@@ -138,10 +138,10 @@ export const MOCK_USERS: User[] = [
     name: '오승인자',
     email: 'approver2@company.com',
     phone: '+82 010-2222-2222',
-    role: 'approver',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-04T09:45:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '보안팀',
     position: '승인자'
   },
@@ -150,10 +150,10 @@ export const MOCK_USERS: User[] = [
     name: '윤보안',
     email: 'security@company.com',
     phone: '+82 010-2222-3333',
-    role: 'approver',
+    role: 'operator',
     status: 'active',
     lastLogin: '2025-09-03T17:20:00Z',
-    permissions: DEFAULT_PERMISSIONS_BY_ROLE.approver,
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '보안팀',
     position: 'CISO'
   },
@@ -211,14 +211,14 @@ export const getUserByEmail = (email: string): User | undefined => {
 // 승인자 관련 필터링
 export const getApprovers = (): User[] => {
   return MOCK_USERS.filter(user =>
-    ['approver', 'required_approver', 'manager', 'admin'].includes(user.role) &&
+    ['operator', 'manager', 'admin'].includes(user.role) &&
     user.status === 'active'
   );
 };
 
 export const getRequiredApprovers = (): User[] => {
   return MOCK_USERS.filter(user =>
-    ['required_approver', 'admin'].includes(user.role) &&
+    ['manager', 'admin'].includes(user.role) &&
     user.status === 'active'
   );
 };

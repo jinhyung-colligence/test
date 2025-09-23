@@ -52,7 +52,7 @@ export default function ServicePlanSelector({ onSelectPlan }: ServicePlanSelecto
       target: t('plan.free.target'),
       icon: GiftIcon,
       keyManagement: t('plan.free.key_management'),
-      color: 'green',
+      color: 'sky',
       features: [
         t('plan.free.features.0'),
         t('plan.free.features.1'),
@@ -67,7 +67,7 @@ export default function ServicePlanSelector({ onSelectPlan }: ServicePlanSelecto
     const styles = {
       primary: 'border-primary-200 hover:border-primary-300 hover:shadow-primary-100',
       purple: 'border-purple-200 hover:border-purple-300 hover:shadow-purple-100',
-      green: 'border-green-200 hover:border-green-300 hover:shadow-green-100'
+      sky: 'border-sky-200 hover:border-sky-300 hover:shadow-sky-100'
     }
     return styles[color as keyof typeof styles] || styles.primary
   }
@@ -76,7 +76,7 @@ export default function ServicePlanSelector({ onSelectPlan }: ServicePlanSelecto
     const styles = {
       primary: 'text-primary-600 bg-primary-50',
       purple: 'text-purple-600 bg-purple-50',
-      green: 'text-green-600 bg-green-50'
+      sky: 'text-sky-600 bg-sky-50'
     }
     return styles[color as keyof typeof styles] || styles.primary
   }
@@ -124,7 +124,7 @@ export default function ServicePlanSelector({ onSelectPlan }: ServicePlanSelecto
                   <ul className="space-y-2">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <CheckIcon className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                        <CheckIcon className="h-5 w-5 text-sky-500 mr-3 mt-0.5 flex-shrink-0" />
                         <span className="text-gray-700">{feature}</span>
                       </li>
                     ))}
@@ -141,7 +141,7 @@ export default function ServicePlanSelector({ onSelectPlan }: ServicePlanSelecto
                     ? 'bg-primary-600 hover:bg-primary-700 text-white' 
                     : plan.color === 'purple'
                     ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-sky-600 hover:bg-sky-700 text-white'
                 }`}>
                   {plan.name} {t('selector.select_plan')}
                 </button>

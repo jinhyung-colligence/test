@@ -21,17 +21,17 @@ export const getStatusInfo = (status: DepositStatus) => {
     case "confirmed":
       return {
         name: "컨펌 완료",
-        color: "text-green-600 bg-green-50 border-green-200",
-        bgColor: "bg-green-50",
-        textColor: "text-green-600",
+        color: "text-sky-600 bg-sky-50 border-sky-200",
+        bgColor: "bg-sky-50",
+        textColor: "text-sky-600",
         icon: "🟢"
       };
     case "credited":
       return {
         name: "입금 완료",
-        color: "text-green-700 bg-green-100 border-green-300",
-        bgColor: "bg-green-100",
-        textColor: "text-green-700",
+        color: "text-sky-700 bg-sky-100 border-sky-300",
+        bgColor: "bg-sky-100",
+        textColor: "text-sky-700",
         icon: "✅"
       };
     case "failed":
