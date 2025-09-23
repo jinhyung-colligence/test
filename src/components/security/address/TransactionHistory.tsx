@@ -11,7 +11,7 @@ interface TransactionHistoryProps {
   getAssetColor: (asset: string) => string;
   currentPage: number;
   itemsPerPage: number;
-  onPageChange: (tabKey: "personal" | "vasp" | "history", page: number) => void;
+  onPageChange: (tabKey: "personal" | "vasp", page: number) => void;
   showHeader?: boolean; // 헤더 표시 여부 (기본 false)
   // 외부에서 필터 상태 제어
   filters?: TransactionFilters;
@@ -413,7 +413,7 @@ export default function TransactionHistory({
         {/* 페이징 네비게이션 */}
         <PaginationNav
           paginatedData={paginatedData}
-          tabKey="history"
+          tabKey="personal"
           onPageChange={onPageChange}
         />
       </div>

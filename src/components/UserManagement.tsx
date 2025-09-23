@@ -766,8 +766,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
           {deactivatingUser && (
             <div className="p-6">
               <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <TrashIcon className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <TrashIcon className="w-6 h-6 text-gray-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-900">
@@ -779,16 +779,18 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4">
                 <div className="flex">
-                  <div className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5">
-                    ⚠
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">
+                    <h3 className="text-sm font-medium text-gray-800">
                       주의사항
                     </h3>
-                    <div className="text-sm text-yellow-700 mt-1">
+                    <div className="text-sm text-gray-700 mt-1">
                       <ul className="list-disc list-inside space-y-1">
                         <li>비활성화된 사용자는 시스템에 로그인할 수 없습니다</li>
                         <li>모든 권한이 제거되며 진행 중인 작업이 중단됩니다</li>
@@ -809,7 +811,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 <button
                   onClick={confirmDeactivate}
                   disabled={isSubmitting}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   {isSubmitting ? "비활성화 중..." : "비활성화"}
                 </button>

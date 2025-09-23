@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { PlusIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { WhitelistedAddress, AddressFormData } from "@/types/address";
 import AddressModal from "./address/AddressModal";
 import AddressTable from "./address/AddressTable";
 import PaginationNav from "./address/PaginationNav";
-import TransactionHistory from "./address/TransactionHistory";
 import SearchInput from "./address/SearchInput";
 import { mockAddresses } from "@/data/mockAddresses";
-import { mockTransactions } from "@/data/mockTransactions";
-import { TransactionFilters } from "@/types/transaction";
 import {
   validateBlockchainAddress,
   checkDuplicateAddress,
@@ -22,7 +19,7 @@ import {
 } from "@/utils/addressHelpers";
 
 interface AddressManagementProps {
-  initialTab?: "personal" | "vasp" | "history";
+  initialTab?: "personal" | "vasp";
 }
 
 export default function AddressManagement({ initialTab }: AddressManagementProps) {
@@ -34,21 +31,13 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
   const [searchTerm, setSearchTerm] = useState("");
   const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
-  const [activeTab, setActiveTab] = useState<"personal" | "vasp" | "history">(initialTab || "personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "vasp">(initialTab || "personal");
 
-  // 내역 탭 필터 상태
-  const [historySearchTerm, setHistorySearchTerm] = useState("");
-  const [historyFilters, setHistoryFilters] = useState<TransactionFilters>({
-    direction: "all",
-    assetType: "all",
-    status: "all"
-  });
 
   // 페이징 상태 (각 탭별로 독립적)
   const [currentPage, setCurrentPage] = useState({
     personal: 1,
-    vasp: 1,
-    history: 1
+    vasp: 1
   });
   const [itemsPerPage] = useState(10);
 
@@ -182,72 +171,6 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
     setIsModalOpen(true);
   };
 
-  // CSV 다운로드 함수
-  const downloadCSV = () => {
-    try {
-      // 필터링된 거래 데이터 준비
-      const filteredTransactions = mockTransactions.filter(tx => {
-        const matchesSearch = historySearchTerm === "" ||
-          tx.txHash.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-          tx.assetType.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-          (tx.addressLabel && tx.addressLabel.toLowerCase().includes(historySearchTerm.toLowerCase()));
-
-        const matchesDirection = historyFilters.direction === "all" || tx.direction === historyFilters.direction;
-        const matchesAsset = historyFilters.assetType === "all" || tx.assetType === historyFilters.assetType;
-        const matchesStatus = historyFilters.status === "all" || tx.status === historyFilters.status;
-
-        return matchesSearch && matchesDirection && matchesAsset && matchesStatus;
-      });
-
-      // CSV 헤더
-      const headers = [
-        "거래일시",
-        "방향",
-        "자산",
-        "금액",
-        "주소 라벨",
-        "거래 해시",
-        "상태",
-        "메모"
-      ];
-
-      // CSV 데이터 생성
-      const csvData = filteredTransactions.map(tx => [
-        new Date(tx.timestamp).toLocaleString("ko-KR"),
-        tx.direction === "deposit" ? "입금" : "출금",
-        tx.assetType,
-        tx.amount.toLocaleString(),
-        tx.addressLabel || "-",
-        tx.txHash,
-        tx.status === "completed" ? "완료" : tx.status === "pending" ? "대기" : "실패",
-        tx.memo || "-"
-      ]);
-
-      // CSV 문자열 생성
-      const csvContent = [
-        headers.join(","),
-        ...csvData.map(row => row.map(field => `"${field}"`).join(","))
-      ].join("\n");
-
-      // UTF-8 BOM 추가 (Excel에서 한글 깨짐 방지)
-      const BOM = "\uFEFF";
-      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-
-      // 다운로드 실행
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `거래내역_${new Date().toLocaleDateString("ko-KR").replace(/\./g, "")}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("CSV 다운로드 실패:", error);
-      alert("CSV 다운로드 중 오류가 발생했습니다.");
-    }
-  };
-
 
   // 필터링된 주소 목록
   const getFilteredAddresses = (type?: "personal" | "vasp") => {
@@ -290,7 +213,7 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
   };
 
   // 페이지 변경 함수
-  const handlePageChange = (tabKey: "personal" | "vasp" | "history", page: number) => {
+  const handlePageChange = (tabKey: "personal" | "vasp", page: number) => {
     setCurrentPage(prev => ({
       ...prev,
       [tabKey]: page
@@ -298,7 +221,7 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
   };
 
   // 탭 변경 함수 (URL도 함께 변경)
-  const handleTabChange = (newTab: "personal" | "vasp" | "history") => {
+  const handleTabChange = (newTab: "personal" | "vasp") => {
     setActiveTab(newTab);
     router.push(`/security/addresses/${newTab}`);
   };
@@ -353,16 +276,6 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
               }`}
             >
               거래소/VASP ({filteredVaspAddresses.length})
-            </button>
-            <button
-              onClick={() => handleTabChange("history")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "history"
-                  ? "border-primary-500 text-primary-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              내역 ({mockTransactions.length})
             </button>
           </nav>
         </div>
@@ -467,93 +380,6 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
           </>
         )}
 
-        {/* 내역 탭 컨텐츠 */}
-        {activeTab === "history" && (
-          <>
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative w-64">
-                    <input
-                      type="text"
-                      placeholder="해시, 자산, 라벨 검색..."
-                      value={historySearchTerm}
-                      onChange={(e) => setHistorySearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    />
-                    <div className="absolute left-3 top-2.5">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <select
-                    value={historyFilters.direction}
-                    onChange={(e) => setHistoryFilters({ ...historyFilters, direction: e.target.value as any })}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">모든 방향</option>
-                    <option value="deposit">입금</option>
-                    <option value="withdrawal">출금</option>
-                  </select>
-                  <select
-                    value={historyFilters.assetType}
-                    onChange={(e) => setHistoryFilters({ ...historyFilters, assetType: e.target.value })}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">모든 자산</option>
-                    {Array.from(new Set(mockTransactions.map(tx => tx.assetType))).sort().map(asset => (
-                      <option key={asset} value={asset}>{asset}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={historyFilters.status}
-                    onChange={(e) => setHistoryFilters({ ...historyFilters, status: e.target.value as any })}
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="all">모든 상태</option>
-                    <option value="completed">완료</option>
-                    <option value="pending">대기</option>
-                    <option value="failed">실패</option>
-                  </select>
-                </div>
-                <button
-                  onClick={downloadCSV}
-                  className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-                  내역 다운로드 (CSV)
-                </button>
-              </div>
-              <div className="flex items-center space-x-6 text-sm">
-                <div className="text-gray-500">
-                  총 <span className="font-medium text-gray-900">{mockTransactions.length}</span>건
-                </div>
-                <div className="text-blue-600">
-                  입금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "deposit").length}</span>건
-                </div>
-                <div className="text-amber-600">
-                  출금 <span className="font-medium">{mockTransactions.filter(tx => tx.direction === "withdrawal").length}</span>건
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <TransactionHistory
-                transactions={mockTransactions}
-                getAssetColor={getAssetColor}
-                currentPage={currentPage.history}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
-                showHeader={false}
-                filters={historyFilters}
-                onFiltersChange={setHistoryFilters}
-                searchTerm={historySearchTerm}
-                onSearchTermChange={setHistorySearchTerm}
-              />
-            </div>
-          </>
-        )}
 
       </div>
 

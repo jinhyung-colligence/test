@@ -12,7 +12,7 @@ interface AddressTabPageProps {
 }
 
 // 유효한 탭 목록
-const VALID_TABS = ['personal', 'vasp', 'history'] as const
+const VALID_TABS = ['personal', 'vasp'] as const
 type ValidTab = typeof VALID_TABS[number]
 
 function isValidTab(tab: string): tab is ValidTab {

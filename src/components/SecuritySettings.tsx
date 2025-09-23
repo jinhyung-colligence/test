@@ -21,7 +21,7 @@ interface SecuritySettingsProps {
   initialTab?: "security" | "addresses" | "accounts" | "policies" | "notifications";
   notificationSubtab?: "logs" | "templates" | "settings";
   policySubtab?: "amount" | "type";
-  addressSubtab?: "personal" | "vasp" | "history";
+  addressSubtab?: "personal" | "vasp";
 }
 
 export default function SecuritySettings({ plan, initialTab, notificationSubtab, policySubtab, addressSubtab }: SecuritySettingsProps) {
