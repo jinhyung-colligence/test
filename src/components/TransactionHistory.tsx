@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowUpIcon,
   ArrowDownIcon,
@@ -41,6 +41,8 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(
     null
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { t, language } = useLanguage();
 
   const mockTransactions: Transaction[] = [
@@ -176,6 +178,25 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
     return matchesSearch && matchesType && matchesStatus;
   });
 
+  const getPaginatedTransactions = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return {
+      items: filteredTransactions.slice(startIndex, endIndex),
+      totalItems: filteredTransactions.length,
+      totalPages: Math.ceil(filteredTransactions.length / itemsPerPage),
+      currentPage: currentPage,
+      itemsPerPage: itemsPerPage,
+    };
+  };
+
+  const paginatedData = getPaginatedTransactions();
+
+  // 필터나 검색어 변경시 페이지를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, filterStatus]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -263,7 +284,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((tx) => (
+              {paginatedData.items.map((tx) => (
                 <tr key={tx.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="font-semibold text-gray-900">
@@ -350,9 +371,75 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
           </table>
         </div>
 
-        {filteredTransactions.length === 0 && (
+        {paginatedData.totalItems === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">{t("transactions.no_results")}</p>
+          </div>
+        )}
+
+        {/* 페이징 네비게이션 */}
+        {paginatedData.totalPages > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-center">
+              <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                총 {paginatedData.totalItems}개 중{" "}
+                {Math.min(
+                  (paginatedData.currentPage - 1) * paginatedData.itemsPerPage + 1,
+                  paginatedData.totalItems
+                )}
+                -
+                {Math.min(
+                  paginatedData.currentPage * paginatedData.itemsPerPage,
+                  paginatedData.totalItems
+                )}
+                개 표시
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage(Math.max(1, paginatedData.currentPage - 1))
+                  }
+                  disabled={paginatedData.currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  이전
+                </button>
+
+                {[...Array(paginatedData.totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+                  const isCurrentPage = pageNumber === paginatedData.currentPage;
+
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`px-3 py-1 text-sm border rounded-md ${
+                        isCurrentPage
+                          ? "bg-primary-600 text-white border-primary-600"
+                          : "border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>
+                    setCurrentPage(
+                      Math.min(
+                        paginatedData.totalPages,
+                        paginatedData.currentPage + 1
+                      )
+                    )
+                  }
+                  disabled={paginatedData.currentPage === paginatedData.totalPages}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  다음
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
