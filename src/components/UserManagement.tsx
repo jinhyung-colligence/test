@@ -11,6 +11,7 @@ import {
   TrashIcon,
   ClockIcon,
   XMarkIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,11 +31,8 @@ import {
   getUserStatsByRole,
 } from "@/utils/userHelpers";
 import {
-  getRoleColor,
-  getDefaultPermissionsForRole,
-  hasPermission
+  getRoleColor
 } from "@/utils/permissionUtils";
-import UserPermissionEditor from "@/components/user/UserPermissionEditor";
 import PermissionPreview from "@/components/user/PermissionPreview";
 import PermissionHistory from "@/components/user/PermissionHistory";
 import { PermissionChangeLog } from "@/types/permission";
@@ -68,7 +66,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
     role: "viewer" as UserRole,
     department: "",
     position: "",
-    permissions: getDefaultPermissionsForRole("viewer"),
   });
 
 
@@ -124,17 +121,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
   });
 
   const handleRoleChange = (role: UserRole) => {
-    const permissions = getDefaultPermissionsForRole(role);
-
     setNewUser(prev => ({
       ...prev,
-      role,
-      permissions
+      role
     }));
-  };
-
-  const handlePermissionsChange = (permissions: string[]) => {
-    setNewUser(prev => ({ ...prev, permissions }));
   };
 
 
@@ -161,7 +151,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
         role: "viewer",
         department: "",
         position: "",
-        permissions: getDefaultPermissionsForRole("viewer"),
       });
 
       setTimeout(() => {
@@ -180,8 +169,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
       ...user,
       phone: user.phone || '',
       department: user.department || '',
-      position: user.position || '',
-      permissions: user.permissions || getDefaultPermissionsForRole(user.role)
+      position: user.position || ''
     });
     setShowEditModal(true);
   };
@@ -509,19 +497,48 @@ export default function UserManagement({ plan }: UserManagementProps) {
             </div>
           </div>
 
-          {/* 권한 설정 */}
-          <UserPermissionEditor
-            selectedRole={newUser.role}
-            onRoleChange={handleRoleChange}
-            customPermissions={newUser.permissions}
-            onPermissionsChange={handlePermissionsChange}
-          />
+          {/* 역할 선택 */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">역할 선택</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {(Object.keys(ROLE_NAMES) as UserRole[]).map((role) => (
+                <label
+                  key={role}
+                  className={`
+                    relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all
+                    ${newUser.role === role
+                      ? `${getRoleColor(role)} border-current`
+                      : 'border-gray-200 hover:border-gray-300'
+                    }
+                  `}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={role}
+                    checked={newUser.role === role}
+                    onChange={(e) => handleRoleChange(e.target.value as UserRole)}
+                    className="sr-only"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{ROLE_NAMES[role]}</div>
+                    <div className="text-sm opacity-75 mt-1">
+                      {role === 'admin' && '시스템 전체 관리'}
+                      {role === 'manager' && '정책 설정, 사용자 관리'}
+                      {role === 'operator' && '일반 거래 처리, 승인'}
+                      {role === 'viewer' && '데이터 조회, 리포트 확인'}
+                    </div>
+                  </div>
+                  {newUser.role === role && (
+                    <CheckIcon className="w-5 h-5 text-current flex-shrink-0" />
+                  )}
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* 권한 미리보기 */}
-          <PermissionPreview
-            role={newUser.role}
-            permissions={newUser.permissions}
-          />
+          <PermissionPreview role={newUser.role} />
 
             <div className="flex justify-end space-x-3 pt-4">
               <button
@@ -626,27 +643,48 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 </div>
               </div>
 
-              {/* 권한 관리 섹션 */}
-              <UserPermissionEditor
-                selectedRole={editingUser.role}
-                onRoleChange={(role) => {
-                  setEditingUser(prev => prev ? {
-                    ...prev,
-                    role,
-                    permissions: getDefaultPermissionsForRole(role)
-                  } : null);
-                }}
-                customPermissions={editingUser.permissions || []}
-                onPermissionsChange={(permissions) => {
-                  setEditingUser(prev => prev ? { ...prev, permissions } : null);
-                }}
-              />
+              {/* 역할 선택 섹션 */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">역할 선택</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {(Object.keys(ROLE_NAMES) as UserRole[]).map((role) => (
+                    <label
+                      key={role}
+                      className={`
+                        relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all
+                        ${editingUser.role === role
+                          ? `${getRoleColor(role)} border-current`
+                          : 'border-gray-200 hover:border-gray-300'
+                        }
+                      `}
+                    >
+                      <input
+                        type="radio"
+                        name="editRole"
+                        value={role}
+                        checked={editingUser.role === role}
+                        onChange={(e) => setEditingUser(prev => prev ? { ...prev, role: e.target.value as UserRole } : null)}
+                        className="sr-only"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{ROLE_NAMES[role]}</div>
+                        <div className="text-sm opacity-75 mt-1">
+                          {role === 'admin' && '시스템 전체 관리'}
+                          {role === 'manager' && '정책 설정, 사용자 관리'}
+                          {role === 'operator' && '일반 거래 처리, 승인'}
+                          {role === 'viewer' && '데이터 조회, 리포트 확인'}
+                        </div>
+                      </div>
+                      {editingUser.role === role && (
+                        <CheckIcon className="w-5 h-5 text-current flex-shrink-0" />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               {/* 권한 미리보기 */}
-              <PermissionPreview
-                role={editingUser.role}
-                permissions={editingUser.permissions || []}
-              />
+              <PermissionPreview role={editingUser.role} />
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button

@@ -17,6 +17,7 @@ export interface NotificationTemplate {
   channels: NotificationChannel[];
   enabled: boolean;
   variables: string[];
+  updatedAt?: string;
 }
 
 export interface NotificationConfig {
