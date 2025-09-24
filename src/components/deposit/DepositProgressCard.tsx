@@ -28,7 +28,7 @@ export default function DepositProgressCard({
         return "bg-yellow-500";
       case "confirmed":
       case "credited":
-        return "bg-green-500";
+        return "bg-sky-500";
       case "failed":
         return "bg-red-500";
       default:

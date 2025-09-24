@@ -28,6 +28,7 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
 
   const [addresses, setAddresses] = useState<WhitelistedAddress[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"personal" | "vasp" | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
   const [permissionFilter, setPermissionFilter] = useState<"all" | "deposit" | "withdrawal" | "both">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "normal" | "warning" | "danger">("all");
@@ -167,8 +168,19 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
     }
   };
 
-  const openModal = () => {
+  const openPersonalModal = () => {
+    setModalType("personal");
     setIsModalOpen(true);
+  };
+
+  const openVaspModal = () => {
+    setModalType("vasp");
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalType(undefined);
   };
 
 
@@ -303,7 +315,7 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
                   </select>
                 </div>
                 <button
-                  onClick={openModal}
+                  onClick={openPersonalModal}
                   className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
@@ -353,7 +365,7 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
                   </select>
                 </div>
                 <button
-                  onClick={openModal}
+                  onClick={openVaspModal}
                   className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
@@ -386,8 +398,9 @@ export default function AddressManagement({ initialTab }: AddressManagementProps
       {/* 주소 추가 모달 */}
       <AddressModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         onSubmit={handleAddAddress}
+        initialType={modalType}
       />
     </div>
   );

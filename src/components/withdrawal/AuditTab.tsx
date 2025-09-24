@@ -287,7 +287,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                         isFutureAction
                                           ? "bg-gray-400"
                                           : isApprovalAction
-                                          ? "bg-green-400"
+                                          ? "bg-sky-400"
                                           : "bg-blue-400"
                                       }`}
                                     ></div>
@@ -340,7 +340,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                                         key={`pending-${index}`}
                                         className="flex items-start bg-gray-50 p-3 rounded-lg"
                                       >
-                                        <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-orange-400"></div>
+                                        <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2 mr-3 bg-yellow-400"></div>
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center justify-between mb-1">
                                             <p className="text-sm font-medium text-gray-900">

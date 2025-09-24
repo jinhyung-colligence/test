@@ -44,8 +44,8 @@ export function ApprovalStatus({
         status: "approved",
         statusText: "승인 완료",
         statusTime: formatDateTime(approval.approvedAt),
-        iconColor: "text-green-500",
-        textColor: "text-green-700"
+        iconColor: "text-sky-500",
+        textColor: "text-sky-700"
       };
     } else if (rejection) {
       return {
@@ -183,7 +183,7 @@ export function ApprovalStatus({
               request.status === "rejected" || request.status === "archived" 
                 ? "text-red-600" 
                 : request.status === "approved" 
-                ? "text-green-600"
+                ? "text-sky-600"
                 : "text-blue-600"
             }`}>
               {request.status === "rejected" ? "반려됨" 

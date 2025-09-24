@@ -68,10 +68,10 @@ export const getStatusInfo = (status: WithdrawalStatus) => {
 
 export const getPriorityInfo = (priority: string) => {
   const priorityConfig = {
-    low: { name: "낮음", color: "bg-sky-100 text-sky-800" },
-    medium: { name: "보통", color: "bg-yellow-100 text-yellow-800" },
-    high: { name: "높음", color: "bg-orange-100 text-orange-800" },
-    critical: { name: "긴급", color: "bg-red-100 text-red-800" },
+    low: { name: "낮음", color: "bg-gray-50 text-gray-600" },
+    medium: { name: "보통", color: "bg-purple-50 text-purple-600" },
+    high: { name: "높음", color: "bg-blue-50 text-blue-600" },
+    critical: { name: "긴급", color: "bg-red-50 text-red-600" },
   };
   return (
     priorityConfig[priority as keyof typeof priorityConfig] ||

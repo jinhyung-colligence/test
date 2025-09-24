@@ -36,8 +36,8 @@ export function ApproverRoleBadge({
       "김CTO": {
         role: "CTO",
         shortName: "CTO",
-        color: "text-green-800",
-        bgColor: "bg-green-100",
+        color: "text-sky-800",
+        bgColor: "bg-sky-100",
         icon: "⚙️"
       },
       "정법무이사": {
@@ -71,8 +71,8 @@ export function ApproverRoleBadge({
       "정CTO": {
         role: "CTO",
         shortName: "CTO", 
-        color: "text-green-800",
-        bgColor: "bg-green-100",
+        color: "text-sky-800",
+        bgColor: "bg-sky-100",
         icon: "⚙️"
       },
       "한비즈데브이사": {

@@ -432,7 +432,7 @@ export default function ApprovalTab({
                         <div className="flex justify-end space-x-3">
                           <button
                             onClick={() => onApproval(request.id, "approve")}
-                            className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                            className="px-6 py-2 bg-sky-600 text-white text-sm rounded-lg hover:bg-sky-700 transition-colors"
                           >
                             승인
                           </button>

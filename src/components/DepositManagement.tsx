@@ -674,7 +674,7 @@ export default function DepositManagement({ plan }: DepositManagementProps) {
                           title="주소 복사"
                         >
                           {copiedAddress === asset.depositAddress ? (
-                            <CheckIcon className="h-4 w-4 text-green-600" />
+                            <CheckIcon className="h-4 w-4 text-sky-600" />
                           ) : (
                             <ClipboardDocumentIcon className="h-4 w-4" />
                           )}

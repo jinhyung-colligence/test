@@ -478,7 +478,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                                 >
                                   <div className="flex items-center">
                                     {approval ? (
-                                      <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
+                                      <CheckCircleIcon className="h-5 w-5 text-sky-500 mr-3" />
                                     ) : (
                                       <ClockIcon className="h-5 w-5 text-yellow-500 mr-3" />
                                     )}
@@ -489,7 +489,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                                   <div className="text-right">
                                     {approval ? (
                                       <div>
-                                        <span className="text-sm font-medium text-green-700">
+                                        <span className="text-sm font-medium text-sky-700">
                                           승인 완료
                                         </span>
                                         <div className="text-xs text-gray-500">
@@ -498,7 +498,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                                           ).toLocaleString("ko-KR")}
                                         </div>
                                         {approval.signature && (
-                                          <div className="text-xs text-green-600 mt-1">
+                                          <div className="text-xs text-sky-600 mt-1">
                                             디지털 서명 완료
                                           </div>
                                         )}

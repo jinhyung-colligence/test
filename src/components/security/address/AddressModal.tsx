@@ -10,14 +10,15 @@ interface AddressModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (formData: AddressFormData) => void;
+  initialType?: "personal" | "vasp";
 }
 
-export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModalProps) {
+export default function AddressModal({ isOpen, onClose, onSubmit, initialType }: AddressModalProps) {
   const [formData, setFormData] = useState<AddressFormData>({
     label: "",
     address: "",
     coin: "BTC",
-    type: "",
+    type: initialType || "",
     permissions: {
       canDeposit: true,
       canWithdraw: true
@@ -55,7 +56,7 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModal
       label: "",
       address: "",
       coin: "BTC",
-      type: "",
+      type: initialType || "",
       permissions: {
         canDeposit: true,
         canWithdraw: true
@@ -74,7 +75,9 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModal
       <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
-            지갑 주소 추가
+            {initialType === "personal" ? "개인 지갑 주소 추가" :
+             initialType === "vasp" ? "거래소/VASP 주소 추가" :
+             "지갑 주소 추가"}
           </h3>
           <button
             onClick={handleClose}
@@ -131,41 +134,43 @@ export default function AddressModal({ isOpen, onClose, onSubmit }: AddressModal
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              타입 *
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="personal"
-                  checked={formData.type === "personal"}
-                  onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
-                  className="mr-2 text-primary-600 focus:ring-primary-500"
-                />
-                <div>
-                  <span className="text-sm">개인 지갑</span>
-                  <p className="text-xs text-gray-500">일일 입/출금 한도: 100만원 미만</p>
-                </div>
+          {!initialType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                타입 *
               </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="addressType"
-                  value="vasp"
-                  checked={formData.type === "vasp"}
-                  onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
-                  className="mr-2 text-primary-600 focus:ring-primary-500"
-                />
-                <div>
-                  <span className="text-sm">거래소/VASP</span>
-                  <p className="text-xs text-gray-500">한도 제한 없음, 트래블룰 적용</p>
-                </div>
-              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="addressType"
+                    value="personal"
+                    checked={formData.type === "personal"}
+                    onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
+                    className="mr-2 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div>
+                    <span className="text-sm">개인 지갑</span>
+                    <p className="text-xs text-gray-500">일일 입/출금 한도: 100만원 미만</p>
+                  </div>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="addressType"
+                    value="vasp"
+                    checked={formData.type === "vasp"}
+                    onChange={(e) => updateFormData({ type: e.target.value as "personal" | "vasp" })}
+                    className="mr-2 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div>
+                    <span className="text-sm">거래소/VASP</span>
+                    <p className="text-xs text-gray-500">한도 제한 없음, 트래블룰 적용</p>
+                  </div>
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* VASP 선택 (거래소/VASP 선택 시) */}
           {formData.type === "vasp" && (

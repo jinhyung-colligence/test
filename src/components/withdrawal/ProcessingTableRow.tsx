@@ -1,6 +1,7 @@
 import { WithdrawalRequest } from "@/types/withdrawal";
 import { StatusBadge } from "./StatusBadge";
 import { formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
 interface ProcessingTableRowProps {
   request: WithdrawalRequest;
@@ -74,22 +75,10 @@ export function ProcessingTableRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center space-x-3">
-          <img
-            src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-            alt={request.currency}
-            className="w-6 h-6 rounded-full"
-            onError={(e) => {
-              (
-                e.target as HTMLImageElement
-              ).src = `data:image/svg+xml;base64,${btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                  <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                  <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                    ${request.currency}
-                  </text>
-                </svg>
-              `)}`;
-            }}
+          <CryptoIcon
+            symbol={request.currency}
+            size={24}
+            className="flex-shrink-0"
           />
           <div>
             <p className="font-medium text-gray-900">
@@ -125,7 +114,7 @@ export function ProcessingTableRow({
           </div>
         ) : (
           <div className="text-sm">
-            <p className="font-medium text-green-700">완료</p>
+            <p className="font-medium text-sky-700">완료</p>
           </div>
         )}
       </td>

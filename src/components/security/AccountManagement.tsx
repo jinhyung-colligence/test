@@ -14,22 +14,7 @@ import {
 import { Modal } from "@/components/common/Modal";
 import { ServicePlan } from "@/app/page";
 import OneWonVerification from "./OneWonVerification";
-
-interface ConnectedAccount {
-  id: string;
-  bankName: string;
-  bankCode: string;
-  accountNumber: string;
-  accountHolder: string;
-  accountType: string;
-  status: 'connected' | 'pending' | 'expired' | 'error';
-  connectedAt: string;
-  lastUsed?: string;
-  dailyLimit: number;
-  monthlyLimit: number;
-  isVerified: boolean;
-  balance?: number;
-}
+import { BANK_OPTIONS, mockConnectedAccounts, ConnectedAccount } from "@/data/mockAccounts";
 
 interface AccountManagementProps {
   plan: ServicePlan;
@@ -39,50 +24,7 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showOneWonVerification, setShowOneWonVerification] = useState(false);
   const [pendingAccount, setPendingAccount] = useState<Omit<ConnectedAccount, 'id' | 'status' | 'connectedAt' | 'isVerified'> | null>(null);
-  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([
-    {
-      id: "1",
-      bankName: "신한은행",
-      bankCode: "088",
-      accountNumber: "110-123-456789",
-      accountHolder: "홍길동",
-      accountType: "입출금통장",
-      status: "connected",
-      connectedAt: "2025-01-15T09:00:00Z",
-      lastUsed: "2025-01-20T14:30:00Z",
-      dailyLimit: 10000000,
-      monthlyLimit: 100000000,
-      isVerified: true,
-      balance: 5230000
-    },
-    {
-      id: "2",
-      bankName: "우리은행",
-      bankCode: "020",
-      accountNumber: "1002-123-567890",
-      accountHolder: "홍길동",
-      accountType: "입출금통장",
-      status: "connected",
-      connectedAt: "2025-01-10T11:20:00Z",
-      dailyLimit: 5000000,
-      monthlyLimit: 50000000,
-      isVerified: true,
-      balance: 2750000
-    },
-    {
-      id: "3",
-      bankName: "KB국민은행",
-      bankCode: "004",
-      accountNumber: "123456-78-901234",
-      accountHolder: "홍길동",
-      accountType: "입출금통장",
-      status: "pending",
-      connectedAt: "2025-01-22T15:45:00Z",
-      dailyLimit: 3000000,
-      monthlyLimit: 30000000,
-      isVerified: false
-    }
-  ]);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>(mockConnectedAccounts);
 
   const [newAccount, setNewAccount] = useState({
     bankName: "",
@@ -427,26 +369,21 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
                   required
                   value={newAccount.bankCode}
                   onChange={(e) => {
-                    const option = e.target.selectedOptions[0];
+                    const selectedBank = BANK_OPTIONS.find(bank => bank.code === e.target.value);
                     setNewAccount({
                       ...newAccount,
                       bankCode: e.target.value,
-                      bankName: option.text.split(' ')[0]
+                      bankName: selectedBank?.name || ""
                     });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">은행을 선택하세요</option>
-                  <option value="004">KB국민은행</option>
-                  <option value="011">NH농협은행</option>
-                  <option value="020">우리은행</option>
-                  <option value="088">신한은행</option>
-                  <option value="081">KEB하나은행</option>
-                  <option value="002">산업은행</option>
-                  <option value="003">기업은행</option>
-                  <option value="007">수협중앙회</option>
-                  <option value="023">SC제일은행</option>
-                  <option value="027">시티은행</option>
+                  {BANK_OPTIONS.map((bank) => (
+                    <option key={bank.code} value={bank.code}>
+                      {bank.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -239,11 +239,11 @@ export default function ApprovalAuthModal({
             <div className="flex items-center space-x-4">
               {/* OTP 단계 */}
               <div className={`flex items-center space-x-2 ${
-                authSession.otpAuth.status === "verified" ? "text-green-600" :
+                authSession.otpAuth.status === "verified" ? "text-sky-600" :
                 currentStep === "otp" ? "text-blue-600" : "text-gray-400"
               }`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  authSession.otpAuth.status === "verified" ? "bg-green-100" :
+                  authSession.otpAuth.status === "verified" ? "bg-sky-100" :
                   currentStep === "otp" ? "bg-blue-100" : "bg-gray-100"
                 }`}>
                   {authSession.otpAuth.status === "verified" ? (
@@ -259,11 +259,11 @@ export default function ApprovalAuthModal({
 
               {/* SMS 단계 */}
               <div className={`flex items-center space-x-2 ${
-                authSession.smsAuth.status === "verified" ? "text-green-600" :
+                authSession.smsAuth.status === "verified" ? "text-sky-600" :
                 currentStep === "sms" ? "text-blue-600" : "text-gray-400"
               }`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  authSession.smsAuth.status === "verified" ? "bg-green-100" :
+                  authSession.smsAuth.status === "verified" ? "bg-sky-100" :
                   currentStep === "sms" ? "bg-blue-100" : "bg-gray-100"
                 }`}>
                   {authSession.smsAuth.status === "verified" ? (
@@ -279,10 +279,10 @@ export default function ApprovalAuthModal({
 
               {/* 완료 단계 */}
               <div className={`flex items-center space-x-2 ${
-                currentStep === "complete" ? "text-green-600" : "text-gray-400"
+                currentStep === "complete" ? "text-sky-600" : "text-gray-400"
               }`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  currentStep === "complete" ? "bg-green-100" : "bg-gray-100"
+                  currentStep === "complete" ? "bg-sky-100" : "bg-gray-100"
                 }`}>
                   <ShieldCheckIcon className="w-5 h-5" />
                 </div>
@@ -411,7 +411,7 @@ export default function ApprovalAuthModal({
           {/* 완료 단계 */}
           {currentStep === "complete" && (
             <div className="space-y-4 text-center">
-              <CheckCircleIcon className="w-16 h-16 text-green-600 mx-auto" />
+              <CheckCircleIcon className="w-16 h-16 text-sky-600 mx-auto" />
               <h4 className="text-lg font-medium text-gray-900">
                 인증 완료
               </h4>
@@ -421,7 +421,7 @@ export default function ApprovalAuthModal({
                 출금 승인이 처리됩니다.
               </p>
               <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
               </div>
             </div>
           )}

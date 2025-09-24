@@ -3,6 +3,7 @@ import { StatusBadge } from "./StatusBadge";
 import { PriorityBadge } from "./PriorityBadge";
 import { ApprovalStatus } from "./ApprovalStatus";
 import { formatAmount, formatDateTime } from "@/utils/withdrawalHelpers";
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
 interface WithdrawalTableRowProps {
   request: WithdrawalRequest;
@@ -45,20 +46,10 @@ export function WithdrawalTableRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <img
-            src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${request.currency.toLowerCase()}.png`}
-            alt={request.currency}
-            className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                  <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                  <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                    ${request.currency}
-                  </text>
-                </svg>
-              `)}`;
-            }}
+          <CryptoIcon
+            symbol={request.currency}
+            size={32}
+            className="mr-3 flex-shrink-0"
           />
           <div className="text-sm">
             <p className="font-semibold text-gray-900">
@@ -87,13 +78,13 @@ export function WithdrawalTableRow({
                 {request.approvals.length}/{request.requiredApprovals.length}
               </span>
               {request.status === "approved" && (
-                <span className="text-green-600 font-medium">완료</span>
+                <span className="text-sky-600 font-medium">완료</span>
               )}
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all ${
-                  request.status === "approved" ? "bg-green-500" : "bg-blue-500"
+                  request.status === "approved" ? "bg-sky-500" : "bg-blue-500"
                 }`}
                 style={{ width: `${approvalProgress}%` }}
               />
@@ -114,7 +105,7 @@ export function WithdrawalTableRow({
               <div className="h-4 w-px bg-gray-300"></div>
               <button
                 onClick={() => onApproval(request.id, "approve")}
-                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                className="px-3 py-1 bg-sky-600 text-white text-xs rounded hover:bg-sky-700 transition-colors"
               >
                 승인
               </button>

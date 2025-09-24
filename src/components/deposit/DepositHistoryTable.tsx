@@ -366,7 +366,7 @@ export default function DepositHistoryTable({
                             title="트랜잭션 해시 복사"
                           >
                             {copiedHash === deposit.txHash ? (
-                              <CheckIcon className="h-4 w-4 text-green-600" />
+                              <CheckIcon className="h-4 w-4 text-sky-600" />
                             ) : (
                               <ClipboardDocumentIcon className="h-4 w-4" />
                             )}

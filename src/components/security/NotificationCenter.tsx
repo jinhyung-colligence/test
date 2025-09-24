@@ -54,6 +54,15 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [templateFilter, setTemplateFilter] = useState<string>('all');
 
+  // 템플릿 필터링 상태
+  const [templateSearchTerm, setTemplateSearchTerm] = useState("");
+  const [templateTypeFilter, setTemplateTypeFilter] = useState<"all" | "approval_pending" | "approval_overdue" | "approval_completed" | "approval_rejected" | "emergency">("all");
+  const [templateStatusFilter, setTemplateStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
+  // 템플릿 페이징 상태
+  const [templateCurrentPage, setTemplateCurrentPage] = useState(1);
+  const templateItemsPerPage = 3; // 페이징 테스트를 위해 3개로 설정
+
   // initialSubtab이 변경되면 activeTab 업데이트
   useEffect(() => {
     if (initialSubtab) {
@@ -126,27 +135,19 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
     switch (status) {
       case "sent": return {
         label: "발송 완료",
-        icon: "●",
-        color: "text-green-600",
-        dotColor: "text-green-500"
+        badgeClass: "px-2 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-600 border border-sky-200"
       };
       case "failed": return {
         label: "발송 실패",
-        icon: "●",
-        color: "text-red-600",
-        dotColor: "text-red-500"
+        badgeClass: "px-2 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 border border-red-200"
       };
       case "retry": return {
         label: "재발송 중",
-        icon: "●",
-        color: "text-amber-600",
-        dotColor: "text-amber-500"
+        badgeClass: "px-2 py-1 text-xs font-semibold rounded-full bg-yellow-50 text-yellow-600 border border-yellow-200"
       };
       default: return {
         label: "알 수 없음",
-        icon: "●",
-        color: "text-gray-600",
-        dotColor: "text-gray-400"
+        badgeClass: "px-2 py-1 text-xs font-semibold rounded-full bg-gray-50 text-gray-600 border border-gray-200"
       };
     }
   };
@@ -179,6 +180,37 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
+
+  // 템플릿 필터링
+  const filteredTemplates = templates.filter(template => {
+    const matchesSearch = templateSearchTerm === "" ||
+      template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+      (template.subject && template.subject.toLowerCase().includes(templateSearchTerm.toLowerCase()));
+
+    const matchesType = templateTypeFilter === "all" || template.trigger === templateTypeFilter;
+
+    const matchesStatus = templateStatusFilter === "all" ||
+      (templateStatusFilter === "active" && template.enabled) ||
+      (templateStatusFilter === "inactive" && !template.enabled);
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  // 템플릿 페이징
+  const templateTotalPages = Math.ceil(filteredTemplates.length / templateItemsPerPage);
+  const templateStartIndex = (templateCurrentPage - 1) * templateItemsPerPage;
+  const paginatedTemplates = filteredTemplates.slice(templateStartIndex, templateStartIndex + templateItemsPerPage);
+
+  const handleTemplatePageChange = (page: number) => {
+    if (page >= 1 && page <= templateTotalPages) {
+      setTemplateCurrentPage(page);
+    }
+  };
+
+  // 검색어나 필터 변경시 페이지를 1로 리셋
+  useEffect(() => {
+    setTemplateCurrentPage(1);
+  }, [templateSearchTerm, templateTypeFilter, templateStatusFilter]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
@@ -473,14 +505,9 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
                       {paginatedLogs.map((log) => (
                         <tr key={log.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <span className={`${getStatusDisplay(log.status).dotColor} text-sm`}>
-                                {getStatusDisplay(log.status).icon}
-                              </span>
-                              <span className={`text-sm font-medium ${getStatusDisplay(log.status).color}`}>
-                                {getStatusDisplay(log.status).label}
-                              </span>
-                            </div>
+                            <span className={getStatusDisplay(log.status).badgeClass}>
+                              {getStatusDisplay(log.status).label}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {log.recipient}
@@ -561,51 +588,208 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
             <div className="space-y-4">
               {!isEditing ? (
                 <>
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">알림 템플릿</h3>
-                    <button
-                      onClick={() => {
-                        setSelectedTemplate(null);
-                        setIsEditing(true);
-                      }}
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                    >
-                      새 템플릿
-                    </button>
-                  </div>
+                  {/* 헤더 및 필터 */}
+                  <div className="bg-white rounded-lg border border-gray-200">
+                    <div className="p-6 border-b border-gray-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">알림 템플릿</h3>
+                          <p className="text-sm text-gray-600 mt-1">이메일 알림 템플릿을 관리합니다</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedTemplate(null);
+                            setIsEditing(true);
+                          }}
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                        >
+                          새 템플릿
+                        </button>
+                      </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {templates.map((template) => (
-                      <div key={template.id} className="bg-white border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{template.name}</h4>
-                          <div className="flex items-center space-x-1">
-                            <span className={`w-2 h-2 rounded-full ${template.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                            <span className="text-xs text-gray-500">{template.enabled ? '활성' : '비활성'}</span>
-                          </div>
+                      {/* 검색 및 필터 */}
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        {/* 템플릿 검색 */}
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            placeholder="템플릿명으로 검색..."
+                            value={templateSearchTerm}
+                            onChange={(e) => setTemplateSearchTerm(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          />
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-3">{getTemplateDisplay(template.id)}</p>
+                        {/* 트리거 타입 필터 */}
+                        <div className="sm:w-48">
+                          <select
+                            value={templateTypeFilter}
+                            onChange={(e) => setTemplateTypeFilter(e.target.value as any)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          >
+                            <option value="all">모든 타입</option>
+                            <option value="approval_pending">승인 대기</option>
+                            <option value="approval_overdue">승인 지연</option>
+                            <option value="approval_completed">승인 완료</option>
+                            <option value="approval_rejected">승인 반려</option>
+                            <option value="emergency">긴급 승인</option>
+                          </select>
+                        </div>
 
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleTestNotification(template.id)}
-                            className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                        {/* 활성화 상태 필터 */}
+                        <div className="sm:w-36">
+                          <select
+                            value={templateStatusFilter}
+                            onChange={(e) => setTemplateStatusFilter(e.target.value as any)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                           >
-                            테스트
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedTemplate(template);
-                              setIsEditing(true);
-                            }}
-                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                          >
-                            편집
-                          </button>
+                            <option value="all">전체</option>
+                            <option value="active">활성</option>
+                            <option value="inactive">비활성</option>
+                          </select>
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* 템플릿 테이블 */}
+                    <div className="overflow-x-auto">
+                      {filteredTemplates.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="flex flex-col items-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                            <h4 className="text-lg font-medium text-gray-900 mb-2">
+                              {templates.length === 0 ? "등록된 템플릿이 없습니다" : "필터 조건에 맞는 템플릿이 없습니다"}
+                            </h4>
+                            <p className="text-gray-500 text-center max-w-sm">
+                              {templates.length === 0
+                                ? "새 템플릿을 생성해보세요."
+                                : "선택한 조건에 해당하는 템플릿이 없습니다. 필터를 조정해 보세요."
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">템플릿명</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">트리거</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일 제목</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수정일</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {paginatedTemplates.map((template) => (
+                                <tr key={template.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                      template.enabled
+                                        ? "bg-sky-50 text-sky-600 border border-sky-200"
+                                        : "bg-gray-50 text-gray-600 border border-gray-200"
+                                    }`}>
+                                      {template.enabled ? "활성" : "비활성"}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {template.name}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="text-sm text-gray-600">
+                                      {getTemplateDisplay(template.id)}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="text-sm text-gray-900 max-w-xs truncate" title={template.subject}>
+                                      {template.subject || "제목 없음"}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {template.updatedAt ? formatDate(template.updatedAt) : "-"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                    <div className="flex items-center justify-end space-x-2">
+                                      <button
+                                        onClick={() => handleTestNotification(template.id)}
+                                        className="px-2 py-1 text-xs bg-sky-100 text-sky-700 rounded hover:bg-sky-200 transition-colors"
+                                      >
+                                        테스트
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedTemplate(template);
+                                          setIsEditing(true);
+                                        }}
+                                        className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                                      >
+                                        편집
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+                          {/* 페이지네이션 */}
+                          {templateTotalPages > 1 && (
+                            <div className="px-6 py-4 border-t border-gray-200">
+                              <div className="flex flex-col sm:flex-row justify-between items-center">
+                                <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                                  총 {filteredTemplates.length}개 중{" "}
+                                  {Math.min(templateStartIndex + 1, filteredTemplates.length)}
+                                  -{Math.min(templateStartIndex + templateItemsPerPage, filteredTemplates.length)}개 표시
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => handleTemplatePageChange(templateCurrentPage - 1)}
+                                    disabled={templateCurrentPage === 1}
+                                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    이전
+                                  </button>
+
+                                  {[...Array(templateTotalPages)].map((_, index) => {
+                                    const pageNumber = index + 1;
+                                    const isCurrentPage = pageNumber === templateCurrentPage;
+
+                                    return (
+                                      <button
+                                        key={pageNumber}
+                                        onClick={() => handleTemplatePageChange(pageNumber)}
+                                        className={`px-3 py-1 text-sm border rounded-md ${
+                                          isCurrentPage
+                                            ? "bg-primary-600 text-white border-primary-600"
+                                            : "border-gray-300 hover:bg-gray-50"
+                                        }`}
+                                      >
+                                        {pageNumber}
+                                      </button>
+                                    );
+                                  })}
+
+                                  <button
+                                    onClick={() => handleTemplatePageChange(templateCurrentPage + 1)}
+                                    disabled={templateCurrentPage === templateTotalPages}
+                                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    다음
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </>
               ) : (

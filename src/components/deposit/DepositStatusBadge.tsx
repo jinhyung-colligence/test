@@ -27,29 +27,29 @@ export default function DepositStatusBadge({
         };
       case "confirming":
         return {
-          name: "진행중",
-          bgColor: "bg-amber-50",
-          textColor: "text-amber-700", 
-          borderColor: "border-amber-200",
-          dotColor: "bg-amber-400",
+          name: "감지됨",
+          bgColor: "bg-blue-50",
+          textColor: "text-blue-700",
+          borderColor: "border-blue-200",
+          dotColor: "bg-blue-400",
           icon: <ClockIcon className="w-3 h-3" />
         };
       case "confirmed":
         return {
           name: "컨펌완료",
-          bgColor: "bg-green-50",
-          textColor: "text-green-700",
-          borderColor: "border-green-200", 
-          dotColor: "bg-green-400",
+          bgColor: "bg-sky-50",
+          textColor: "text-sky-700",
+          borderColor: "border-sky-200",
+          dotColor: "bg-sky-400",
           icon: <CheckCircleIcon className="w-3 h-3" />
         };
       case "credited":
         return {
           name: "입금완료",
-          bgColor: "bg-emerald-50",
-          textColor: "text-emerald-700",
-          borderColor: "border-emerald-200",
-          dotColor: "bg-emerald-400", 
+          bgColor: "bg-sky-50",
+          textColor: "text-sky-700",
+          borderColor: "border-sky-200",
+          dotColor: "bg-sky-400",
           icon: <CheckCircleIcon className="w-3 h-3" />
         };
       case "failed":

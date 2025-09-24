@@ -86,10 +86,10 @@ export default function DepositTimeline({ deposit }: DepositTimelineProps) {
     switch (status) {
       case "completed":
         return {
-          bg: "bg-green-100",
-          border: "border-green-200",
-          icon: "text-green-600",
-          line: "bg-green-300"
+          bg: "bg-sky-100",
+          border: "border-sky-200",
+          icon: "text-sky-600",
+          line: "bg-sky-300"
         };
       case "current":
         return {

@@ -156,189 +156,62 @@ import CryptoIcon from "@/components/ui/CryptoIcon";
 
 ## 통합 배지 시스템 (Badge System)
 
-사용자 관리 페이지의 배지 디자인을 기준으로 한 프로젝트 전체 배지 시스템. 일관된 시각적 계층과 눈의 피로감 완화를 목적으로 설계되었습니다.
+사용자 관리 페이지 배지 컨셉을 기준으로 한 프로젝트 전체 배지 시스템
 
-### 🎨 핵심 배지 컬러 팔레트
-
-#### 계층별 색상 (우선순위/중요도 순)
+### 핵심 컬러 팔레트
 
 ```typescript
 const badgeColors = {
-  // 최고 우선순위 - 관리자/긴급/중요
-  highest: 'text-indigo-600 bg-indigo-50 border-indigo-200',
-
-  // 높은 우선순위 - 매니저/승인 필요/주의
-  high: 'text-blue-600 bg-blue-50 border-blue-200',
-
-  // 중간 우선순위 - 운영자/처리중/보통
-  medium: 'text-purple-600 bg-purple-50 border-purple-200',
-
-  // 성공/활성/긍정 상태 (초록색 대체)
-  positive: 'text-sky-600 bg-sky-50 border-sky-200',
-
-  // 경고/대기/보류 상태
-  warning: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-
-  // 오류/거부/위험 상태
-  danger: 'text-red-600 bg-red-50 border-red-200',
-
-  // 중성/비활성/기본 상태
-  neutral: 'text-gray-600 bg-gray-50 border-gray-200'
+  highest: "text-indigo-600 bg-indigo-50 border-indigo-200", // 관리자/긴급
+  high: "text-blue-600 bg-blue-50 border-blue-200", // 매니저/주의
+  medium: "text-purple-600 bg-purple-50 border-purple-200", // 운영자/보통
+  positive: "text-sky-600 bg-sky-50 border-sky-200", // 성공/활성 (초록색 대체)
+  warning: "text-yellow-600 bg-yellow-50 border-yellow-200", // 경고/대기
+  danger: "text-red-600 bg-red-50 border-red-200", // 오류/위험
+  neutral: "text-gray-600 bg-gray-50 border-gray-200", // 중성/기본
 };
 ```
 
-### 📋 용도별 배지 매핑
+### 용도별 매핑
 
-#### 사용자 역할 배지
+#### 역할/상태/우선순위 배지
 
 ```typescript
+// 사용자 역할
 const roleColors = {
-  admin: badgeColors.highest,     // 관리자
-  manager: badgeColors.high,      // 매니저
-  operator: badgeColors.medium,   // 운영자
-  viewer: badgeColors.neutral     // 뷰어
+  admin: badgeColors.highest, manager: badgeColors.high,
+  operator: badgeColors.medium, viewer: badgeColors.neutral
 };
-```
 
-#### 상태 배지
-
-```typescript
+// 일반 상태
 const statusColors = {
-  // 일반 상태
-  active: badgeColors.positive,     // 활성/연결됨/성공
-  inactive: badgeColors.neutral,    // 비활성/연결끊김
-  pending: badgeColors.warning,     // 대기/보류/처리중
-  error: badgeColors.danger,        // 오류/실패/거부
+  active: badgeColors.positive, pending: badgeColors.warning,
+  error: badgeColors.danger, inactive: badgeColors.neutral
+};
 
-  // 승인 상태
-  approved: badgeColors.positive,   // 승인됨
-  rejected: badgeColors.danger,     // 거부됨
-  review: badgeColors.warning,      // 검토중
-
-  // 트랜잭션 상태
-  completed: badgeColors.positive,  // 완료
-  failed: badgeColors.danger,       // 실패
-  processing: badgeColors.warning,  // 처리중
-
-  // 계좌/연결 상태
-  connected: badgeColors.positive,  // 연결됨
-  expired: badgeColors.warning,     // 만료됨
-  blocked: badgeColors.danger       // 차단됨
+// 승인/트랜잭션 상태
+const transactionColors = {
+  completed: badgeColors.positive, failed: badgeColors.danger,
+  processing: badgeColors.warning, review: badgeColors.warning
 };
 ```
 
-#### 우선순위/레벨 배지
+### 기본 컴포넌트 패턴
 
 ```typescript
-const priorityColors = {
-  critical: badgeColors.danger,     // 긴급/중요
-  high: badgeColors.highest,        // 높음
-  medium: badgeColors.high,         // 보통
-  low: badgeColors.neutral,         // 낮음
-
-  // 보안 레벨
-  level1: badgeColors.neutral,      // 기본
-  level2: badgeColors.medium,       // 중간
-  level3: badgeColors.high,         // 높음
-  level4: badgeColors.highest       // 최고
-};
-```
-
-#### 권한/기능 배지
-
-```typescript
-const permissionColors = {
-  granted: badgeColors.positive,    // 권한 있음
-  denied: badgeColors.neutral,      // 권한 없음
-  limited: badgeColors.warning,     // 제한적 권한
-
-  // 기능 상태
-  enabled: badgeColors.positive,    // 활성화
-  disabled: badgeColors.neutral,    // 비활성화
-  beta: badgeColors.medium,         // 베타 기능
-  new: badgeColors.high             // 신규 기능
-};
-```
-
-### 🎯 배지 컴포넌트 패턴
-
-#### 기본 배지
-
-```typescript
-// 기본 소형 배지 (텍스트 전용)
+// 기본 배지
 <span className="px-2 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-600">
   활성
 </span>
 
-// 테두리 포함 배지 (강조용)
+// 테두리 강조 배지
 <span className="px-2 py-1 text-xs font-semibold rounded-full border bg-indigo-50 text-indigo-600 border-indigo-200">
   관리자
 </span>
-
-// 아이콘 포함 배지
-<span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-600">
-  <CheckCircleIcon className="w-3 h-3 mr-1" />
-  승인됨
-</span>
 ```
 
-#### 크기 변형
+### 적용 원칙
 
-```typescript
-// 미니 배지
-<span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-600">
-
-// 일반 배지
-<span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-600">
-
-// 중형 배지
-<span className="px-3 py-1.5 text-sm font-semibold rounded-full bg-blue-50 text-blue-600">
-```
-
-### ⚙️ 적용 원칙
-
-#### 색상 선택 가이드
-
-1. **성공/긍정**: `positive` (하늘색) - 초록색 대신 사용
-2. **경고/대기**: `warning` (노란색) - 주의가 필요한 상태
-3. **오류/위험**: `danger` (빨간색) - 즉시 조치 필요
-4. **중성/기본**: `neutral` (회색) - 일반적인 상태
-5. **계층별**: `highest` > `high` > `medium` > `neutral`
-
-#### 시각적 일관성
-
-- **투명도**: 모든 배경은 50 레벨 사용 (`-50`)
-- **텍스트**: 600 레벨 사용 (`-600`)
-- **테두리**: 200 레벨 사용 (`-200`, 강조시만)
-- **폰트**: `text-xs font-semibold` 기본
-
-#### 접근성 고려사항
-
-- 충분한 색상 대비율 확보 (4.5:1 이상)
-- 색상만으로 정보 전달하지 않기 (텍스트/아이콘 병행)
-- 색맹 사용자 고려한 색상 조합
-
-### 🔄 마이그레이션 가이드
-
-현재 프로젝트에서 아래 색상들을 새로운 시스템으로 교체:
-
-```typescript
-// 교체 대상 (Old → New)
-'bg-green-100 text-green-800' → badgeColors.positive
-'bg-green-600 text-white' → '배경형 버튼으로 변경 권장'
-'bg-blue-100 text-blue-800' → badgeColors.high
-'bg-yellow-100 text-yellow-800' → badgeColors.warning
-'bg-red-100 text-red-800' → badgeColors.danger
-'bg-gray-100 text-gray-800' → badgeColors.neutral
-```
-
-### 📍 적용 우선순위
-
-필요할 때마다 점진적으로 적용:
-
-1. **사용자 관리** - ✅ 완료 (참조 기준)
-2. **출금/승인 시스템** - 승인 상태 배지
-3. **트랜잭션 관리** - 거래 상태 배지
-4. **주소 관리** - 권한/한도 상태 배지
-5. **보안 설정** - 인증/연결 상태 배지
-6. **알림 센터** - 우선순위/타입 배지
+- **색상 규칙**: 성공/긍정은 `positive` (하늘색, 초록색 대신), 위험은 `danger` (빨간색)
+- **일관성**: 배경 `-50`, 텍스트 `-600`, 테두리 `-200` 레벨 사용
+- **접근성**: 색상 대비율 4.5:1 이상, 색상+텍스트 병행 사용

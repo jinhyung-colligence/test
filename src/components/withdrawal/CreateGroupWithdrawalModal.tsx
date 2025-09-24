@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Modal } from "@/components/common/Modal";
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
 interface NewRequest {
   title: string;
@@ -269,22 +270,10 @@ export function CreateGroupWithdrawalModal({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <img
-                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${address.coin.toLowerCase()}.png`}
-                          alt={address.coin}
-                          className="w-5 h-5 rounded-full mr-2"
-                          onError={(e) => {
-                            (
-                              e.target as HTMLImageElement
-                            ).src = `data:image/svg+xml;base64,${btoa(`
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-                              <circle cx="10" cy="10" r="10" fill="#f3f4f6"/>
-                              <text x="10" y="14" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#6b7280">
-                                ${address.coin}
-                              </text>
-                            </svg>
-                          `)}`;
-                          }}
+                        <CryptoIcon
+                          symbol={address.coin}
+                          size={20}
+                          className="mr-2 flex-shrink-0"
                         />
                         <div>
                           <div className="font-medium text-gray-900 text-sm">

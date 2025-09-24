@@ -98,11 +98,11 @@ export default function DepositStatistics({ deposits }: DepositStatisticsProps) 
     subValue?: string;
     icon: React.ReactNode;
     trend?: "up" | "down" | "neutral";
-    color?: "primary" | "green" | "blue" | "yellow";
+    color?: "primary" | "positive" | "blue" | "yellow";
   }) => {
     const colorClasses = {
       primary: "bg-primary-50 text-primary-600",
-      green: "bg-green-50 text-green-600",
+      positive: "bg-sky-50 text-sky-600",
       blue: "bg-blue-50 text-blue-600",
       yellow: "bg-yellow-50 text-yellow-600"
     };
@@ -123,7 +123,7 @@ export default function DepositStatistics({ deposits }: DepositStatisticsProps) 
             <span className="text-sm text-gray-500 mb-1">{unit}</span>
             {trend && (
               <div className={`flex items-center ${
-                trend === 'up' ? 'text-green-500' : 
+                trend === 'up' ? 'text-sky-500' : 
                 trend === 'down' ? 'text-red-500' : 'text-gray-500'
               }`}>
                 <ArrowTrendingUpIcon className={`h-4 w-4 ${trend === 'down' ? 'rotate-180' : ''}`} />
@@ -148,7 +148,7 @@ export default function DepositStatistics({ deposits }: DepositStatisticsProps) 
           unit="건"
           subValue={`₩${stats.todayTotal.amountKRW.toLocaleString()}`}
           icon={<CurrencyDollarIcon className="h-5 w-5" />}
-          color="green"
+          color="positive"
         />
         
         <StatCard
