@@ -10,6 +10,7 @@ import {
   PencilIcon,
   TrashIcon,
   ClockIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -47,10 +48,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
   const [filterRole, setFilterRole] = useState<UserRole | "all">("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [permissionEditingUser, setPermissionEditingUser] = useState<User | null>(null);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -58,7 +57,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
   const [successMessageData, setSuccessMessageData] = useState<{
     name: string;
     email: string;
-    type: "add" | "edit" | "deactivate" | "permission";
+    type: "add" | "edit" | "deactivate";
   } | null>(null);
 
   // 새 사용자 생성 폼 데이터
@@ -72,8 +71,6 @@ export default function UserManagement({ plan }: UserManagementProps) {
     permissions: getDefaultPermissionsForRole("viewer"),
   });
 
-  // 권한 편집 관련 상태
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   // Mock 권한 변경 이력
   const [permissionLogs] = useState<PermissionChangeLog[]>([
@@ -183,7 +180,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
       ...user,
       phone: user.phone || '',
       department: user.department || '',
-      position: user.position || ''
+      position: user.position || '',
+      permissions: user.permissions || getDefaultPermissionsForRole(user.role)
     });
     setShowEditModal(true);
   };
@@ -193,8 +191,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
 
     setIsSubmitting(true);
     try {
-      // 실제로는 API 호출
-      console.log('Updating user:', editingUser);
+      // 실제로는 API 호출 - 기본 정보와 권한 모두 저장
+      console.log('Updating user with permissions:', editingUser);
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Mock: 사용자 목록 업데이트
@@ -223,43 +221,9 @@ export default function UserManagement({ plan }: UserManagementProps) {
     }
   };
 
-  const handleEditPermissions = (user: User) => {
-    setPermissionEditingUser(user);
-    setSelectedPermissions(user.permissions || getDefaultPermissionsForRole(user.role));
-    setShowPermissionModal(true);
-  };
-
-  const handlePermissionUpdate = async () => {
-    if (!permissionEditingUser) return;
-
-    setIsSubmitting(true);
-    try {
-      // 실제로는 API 호출
-      console.log("Updating permissions for:", permissionEditingUser.id);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      setSuccessMessageData({
-        name: permissionEditingUser.name,
-        email: permissionEditingUser.email,
-        type: "permission",
-      });
-      setShowPermissionModal(false);
-      setPermissionEditingUser(null);
-      setShowSuccessMessage(true);
-
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-        setSuccessMessageData(null);
-      }, 5000);
-    } catch (error) {
-      console.error("Failed to update permissions:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleShowHistory = (user: User) => {
-    setPermissionEditingUser(user);
+    setEditingUser(user);
     setShowHistoryModal(true);
   };
 
@@ -444,18 +408,10 @@ export default function UserManagement({ plan }: UserManagementProps) {
                       <button
                         onClick={() => handleEditUser(user)}
                         className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="사용자 정보 수정"
+                        title="사용자 정보 및 권한 수정"
                         disabled={user.status === 'inactive'}
                       >
                         <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditPermissions(user)}
-                        className="text-sky-600 hover:text-sky-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="권한 관리"
-                        disabled={user.status === 'inactive'}
-                      >
-                        <ShieldCheckIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleShowHistory(user)}
@@ -490,11 +446,17 @@ export default function UserManagement({ plan }: UserManagementProps) {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
       >
-        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-medium text-gray-900">새 사용자 추가</h3>
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* 기본 정보 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -585,87 +547,106 @@ export default function UserManagement({ plan }: UserManagementProps) {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
       >
-        <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">사용자 정보 수정</h3>
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-medium text-gray-900">사용자 정보 및 권한 수정</h3>
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
           </div>
           {editingUser && (
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    이름 *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingUser.name}
-                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, name: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="홍길동"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    이메일 *
-                  </label>
-                  <input
-                    type="email"
-                    value={editingUser.email}
-                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="hong@company.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    전화번호 *
-                  </label>
-                  <input
-                    type="tel"
-                    value={editingUser.phone || ''}
-                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="010-1234-5678"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    부서
-                  </label>
-                  <input
-                    type="text"
-                    value={editingUser.department || ''}
-                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, department: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="재무팀"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    직책
-                  </label>
-                  <input
-                    type="text"
-                    value={editingUser.position || ''}
-                    onChange={(e) => setEditingUser(prev => prev ? { ...prev, position: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
-                    placeholder="대리"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    역할
-                  </label>
-                  <div className={`px-3 py-2 border border-gray-200 rounded-md bg-gray-50 ${getRoleColor(editingUser.role)}`}>
-                    <span className="text-sm font-medium">
-                      {ROLE_NAMES[editingUser.role]}
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1">
-                      역할 변경은 권한 관리에서 가능합니다.
-                    </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* 기본 정보 섹션 */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 className="text-md font-medium text-gray-900 mb-4">기본 정보</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      이름 *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.name}
+                      onChange={(e) => setEditingUser(prev => prev ? { ...prev, name: e.target.value } : null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="홍길동"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      이메일 *
+                    </label>
+                    <input
+                      type="email"
+                      value={editingUser.email}
+                      onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="hong@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      전화번호 *
+                    </label>
+                    <input
+                      type="tel"
+                      value={editingUser.phone || ''}
+                      onChange={(e) => setEditingUser(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="010-1234-5678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      부서
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.department || ''}
+                      onChange={(e) => setEditingUser(prev => prev ? { ...prev, department: e.target.value } : null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="재무팀"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      직책
+                    </label>
+                    <input
+                      type="text"
+                      value={editingUser.position || ''}
+                      onChange={(e) => setEditingUser(prev => prev ? { ...prev, position: e.target.value } : null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                      placeholder="대리"
+                    />
                   </div>
                 </div>
               </div>
+
+              {/* 권한 관리 섹션 */}
+              <UserPermissionEditor
+                selectedRole={editingUser.role}
+                onRoleChange={(role) => {
+                  setEditingUser(prev => prev ? {
+                    ...prev,
+                    role,
+                    permissions: getDefaultPermissionsForRole(role)
+                  } : null);
+                }}
+                customPermissions={editingUser.permissions || []}
+                onPermissionsChange={(permissions) => {
+                  setEditingUser(prev => prev ? { ...prev, permissions } : null);
+                }}
+              />
+
+              {/* 권한 미리보기 */}
+              <PermissionPreview
+                role={editingUser.role}
+                permissions={editingUser.permissions || []}
+              />
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button
@@ -687,68 +668,27 @@ export default function UserManagement({ plan }: UserManagementProps) {
         </div>
       </Modal>
 
-      {/* 권한 편집 모달 */}
-      <Modal
-        isOpen={showPermissionModal}
-        onClose={() => setShowPermissionModal(false)}
-      >
-        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">
-              {permissionEditingUser?.name} 권한 관리
-            </h3>
-          </div>
-          {permissionEditingUser && (
-            <div className="p-6 space-y-6">
-            <UserPermissionEditor
-              selectedRole={permissionEditingUser.role}
-              onRoleChange={(role) => {
-                setPermissionEditingUser(prev => prev ? { ...prev, role } : null);
-                setSelectedPermissions(getDefaultPermissionsForRole(role));
-              }}
-              customPermissions={selectedPermissions}
-              onPermissionsChange={setSelectedPermissions}
-            />
-
-            <PermissionPreview
-              role={permissionEditingUser.role}
-              permissions={selectedPermissions}
-            />
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => setShowPermissionModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handlePermissionUpdate}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
-                >
-                  {isSubmitting ? "저장 중..." : "권한 저장"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Modal>
 
       {/* 권한 변경 이력 모달 */}
       <Modal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
       >
-        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-medium text-gray-900">
-              {permissionEditingUser?.name} 권한 변경 이력
+              {editingUser?.name} 권한 변경 이력
             </h3>
+            <button
+              onClick={() => setShowHistoryModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
           </div>
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto p-6">
             <PermissionHistory
-              logs={permissionLogs.filter(log => log.userId === permissionEditingUser?.id)}
+              logs={permissionLogs.filter(log => log.userId === editingUser?.id)}
             />
           </div>
         </div>
@@ -760,8 +700,14 @@ export default function UserManagement({ plan }: UserManagementProps) {
         onClose={() => setShowDeactivateModal(false)}
       >
         <div className="bg-white rounded-lg max-w-md w-full mx-4">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-medium text-gray-900">사용자 비활성화</h3>
+            <button
+              onClick={() => setShowDeactivateModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
           </div>
           {deactivatingUser && (
             <div className="p-6">
@@ -833,8 +779,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 <div className="ml-3 w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     {successMessageData.type === "add" && "사용자가 추가되었습니다"}
-                    {successMessageData.type === "edit" && "사용자 정보가 수정되었습니다"}
-                    {successMessageData.type === "permission" && "권한이 업데이트되었습니다"}
+                    {successMessageData.type === "edit" && "사용자 정보 및 권한이 수정되었습니다"}
                     {successMessageData.type === "deactivate" && "사용자가 비활성화되었습니다"}
                   </p>
                   <p className="text-sm text-gray-500">
