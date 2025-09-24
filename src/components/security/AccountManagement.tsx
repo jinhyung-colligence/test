@@ -195,7 +195,7 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
   const getStatusIcon = (status: ConnectedAccount['status']) => {
     switch (status) {
       case 'connected':
-        return <CheckCircleIcon className="h-5 w-5 text-green-600" />;
+        return <CheckCircleIcon className="h-5 w-5 text-sky-600" />;
       case 'pending':
         return <ClockIcon className="h-5 w-5 text-yellow-600" />;
       case 'expired':
@@ -224,7 +224,7 @@ export default function AccountManagement({ plan }: AccountManagementProps) {
   const getStatusColor = (status: ConnectedAccount['status']) => {
     switch (status) {
       case 'connected':
-        return 'bg-green-100 text-green-800';
+        return 'bg-sky-100 text-sky-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'expired':
