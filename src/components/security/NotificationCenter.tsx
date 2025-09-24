@@ -6,6 +6,7 @@ import { MOCK_NOTIFICATION_LOGS, MOCK_NOTIFICATION_TEMPLATES } from "@/data/noti
 import { MOCK_USERS, getActiveUsers } from '@/data/userMockData';
 import { formatUserDisplay } from '@/utils/userHelpers';
 import { Modal } from "@/components/common/Modal";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 interface NotificationCenterProps {
   initialSubtab?: 'logs' | 'templates' | 'settings';
@@ -13,7 +14,7 @@ interface NotificationCenterProps {
 
 export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'logs' | 'templates' | 'settings'>(initialSubtab || 'logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'templates' | 'settings'>(initialSubtab || 'templates');
   const [notificationSystem] = useState(() => new NotificationSystem(DEFAULT_CONFIG));
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
@@ -53,6 +54,9 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   // 필터 상태
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [templateFilter, setTemplateFilter] = useState<string>('all');
+
+  // 로그 검색 상태
+  const [logSearchTerm, setLogSearchTerm] = useState("");
 
   // 템플릿 필터링 상태
   const [templateSearchTerm, setTemplateSearchTerm] = useState("");
@@ -173,7 +177,14 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   const filteredLogs = logs.filter(log => {
     const statusMatch = statusFilter === 'all' || log.status === statusFilter;
     const templateMatch = templateFilter === 'all' || log.template === templateFilter;
-    return statusMatch && templateMatch;
+
+    // 검색어 매칭 (수신자, 템플릿명, 실패사유에서 검색)
+    const searchMatch = logSearchTerm === "" ||
+      log.recipient.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
+      getTemplateDisplay(log.template).toLowerCase().includes(logSearchTerm.toLowerCase()) ||
+      (log.failureReason && log.failureReason.toLowerCase().includes(logSearchTerm.toLowerCase()));
+
+    return statusMatch && templateMatch && searchMatch;
   });
 
   // 페이징 계산
@@ -211,6 +222,11 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
   useEffect(() => {
     setTemplateCurrentPage(1);
   }, [templateSearchTerm, templateTypeFilter, templateStatusFilter]);
+
+  // 로그 검색어 변경시 페이지를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [logSearchTerm]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
@@ -375,6 +391,50 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
     }
   };
 
+  // CSV 다운로드 함수
+  const downloadCSV = () => {
+    // CSV 헤더
+    const headers = ['상태', '수신자', '템플릿', '발송시간', '재시도', '실패사유'];
+
+    // 데이터 변환
+    const csvData = filteredLogs.map(log => [
+      getStatusDisplay(log.status).label,
+      log.recipient,
+      getTemplateDisplay(log.template),
+      formatDate(log.sentAt),
+      log.retryCount > 0 ? `${log.retryCount}회` : '-',
+      log.failureReason || '-'
+    ]);
+
+    // CSV 문자열 생성 (각 필드를 따옴표로 감싸서 쉼표가 포함된 데이터 처리)
+    const csvContent = [
+      headers,
+      ...csvData
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    // UTF-8 BOM 추가 (한글 깨짐 방지)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // 파일명 생성 (현재 시간 포함)
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, '').slice(0, 15);
+
+    // 다운로드 실행
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `notification_logs_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 메모리 정리
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -387,9 +447,9 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
           {[
-            { key: 'logs', label: '알림 로그' },
             { key: 'templates', label: '템플릿 관리' },
-            { key: 'settings', label: '설정' }
+            { key: 'settings', label: '설정' },
+            { key: 'logs', label: '알림 로그' }
           ].map(tab => (
             <button
               key={tab.key}
@@ -419,38 +479,54 @@ export function NotificationCenter({ initialSubtab }: NotificationCenterProps) {
               </h3>
               {/* 필터 */}
               <div className="flex flex-col sm:flex-row gap-4">
+                {/* 검색 입력 */}
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="수신자, 템플릿, 실패사유로 검색..."
+                    value={logSearchTerm}
+                    onChange={(e) => setLogSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
                 {/* 상태 필터 */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                <div className="sm:w-40">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="all">전체 상태</option>
                   <option value="sent">발송 완료</option>
                   <option value="failed">발송 실패</option>
                   <option value="retry">재발송 중</option>
                 </select>
+                </div>
 
                 {/* 템플릿 필터 */}
-                <select
-                  value={templateFilter}
-                  onChange={(e) => handleFilterChange('template', e.target.value)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
+                <div className="sm:w-48">
+                  <select
+                    value={templateFilter}
+                    onChange={(e) => handleFilterChange('template', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
                   <option value="all">전체 템플릿</option>
                   <option value="approval_pending">승인 대기 알림</option>
                   <option value="approval_overdue">승인 지연 알림</option>
                   <option value="approval_completed">승인 완료 알림</option>
                   <option value="approval_rejected">승인 반려 알림</option>
                   <option value="emergency_approval">긴급 승인 알림</option>
-                </select>
+                  </select>
+                </div>
 
-                {/* 새로고침 버튼 */}
+                {/* CSV 다운로드 버튼 */}
                 <button
-                  onClick={() => setLogs(MOCK_NOTIFICATION_LOGS)}
-                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  onClick={downloadCSV}
+                  className="inline-flex items-center px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
-                  새로고침
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  CSV 다운로드
                 </button>
               </div>
             </div>
