@@ -99,8 +99,8 @@ export function validateEmailDomain(
  * 도메인 배열에서 중복 제거 및 정리
  */
 export function normalizeDomains(domains: string[]): string[] {
-  return [...new Set(domains
+  const processedDomains = domains
     .map(domain => domain.trim().toLowerCase())
-    .filter(domain => domain.length > 0 && isValidDomain(domain))
-  )];
+    .filter(domain => domain.length > 0 && isValidDomain(domain));
+  return Array.from(new Set(processedDomains));
 }

@@ -37,6 +37,8 @@ import PermissionPreview from "@/components/user/PermissionPreview";
 import PermissionHistory from "@/components/user/PermissionHistory";
 import { PermissionChangeLog } from "@/types/permission";
 import { useCompany } from "@/contexts/CompanyContext";
+import { EmailValidationResult } from "@/types/company";
+import { validateEmailDomain } from "@/utils/emailValidation";
 
 interface UserManagementProps {
   plan: ServicePlan;
@@ -60,10 +62,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
   } | null>(null);
 
   // 이메일 검증 상태
-  const [emailValidation, setEmailValidation] = useState<{
-    isValid: boolean;
-    message?: string;
-  }>({ isValid: true });
+  const [emailValidation, setEmailValidation] = useState<EmailValidationResult>({ valid: true });
 
   // 새 사용자 생성 폼 데이터
   const [newUser, setNewUser] = useState({
@@ -100,7 +99,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
   ]);
 
   const { t, language } = useLanguage();
-  const { validateEmailDomain } = useCompany();
+  const { companySettings } = useCompany();
 
   const getStatusColor = (status: UserStatus) => {
     const colors = {
@@ -140,16 +139,20 @@ export default function UserManagement({ plan }: UserManagementProps) {
     setNewUser(prev => ({ ...prev, email }));
 
     if (email.trim()) {
-      const validation = validateEmailDomain(email);
+      const validation = validateEmailDomain(
+        email,
+        companySettings?.allowedEmailDomains || [],
+        companySettings?.isEmailDomainRequired || false
+      );
       setEmailValidation(validation);
     } else {
-      setEmailValidation({ isValid: true });
+      setEmailValidation({ valid: true });
     }
   };
 
   const handleAddUser = async () => {
     // 이메일 검증 확인
-    if (!emailValidation.isValid) {
+    if (!emailValidation.valid) {
       alert(emailValidation.message || "이메일 주소를 확인해주세요.");
       return;
     }
@@ -177,7 +180,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
         department: "",
         position: "",
       });
-      setEmailValidation({ isValid: true });
+      setEmailValidation({ valid: true });
 
       setTimeout(() => {
         setShowSuccessMessage(false);
@@ -494,13 +497,13 @@ export default function UserManagement({ plan }: UserManagementProps) {
                 value={newUser.email}
                 onChange={(e) => handleEmailChange(e.target.value)}
                 className={`w-full px-3 py-2 border rounded-md focus:ring-sky-500 ${
-                  !emailValidation.isValid
+                  !emailValidation.valid
                     ? "border-red-300 focus:border-red-500 bg-red-50"
                     : "border-gray-300 focus:border-sky-500"
                 }`}
                 placeholder="hong@company.com"
               />
-              {!emailValidation.isValid && emailValidation.message && (
+              {!emailValidation.valid && emailValidation.message && (
                 <p className="mt-1 text-sm text-red-600">
                   {emailValidation.message}
                 </p>
@@ -589,7 +592,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
                   !newUser.name ||
                   !newUser.email ||
                   !newUser.phone ||
-                  !emailValidation.isValid
+                  !emailValidation.valid
                 }
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
               >
