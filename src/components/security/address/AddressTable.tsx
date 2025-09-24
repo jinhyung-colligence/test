@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { TrashIcon, WalletIcon, BuildingOfficeIcon, UserIcon } from "@heroicons/react/24/outline";
 import { WhitelistedAddress } from "@/types/address";
 import { getDailyLimitStatus, formatKRW, getProgressPercentage } from "@/utils/addressHelpers";
+import CryptoIcon from "@/components/ui/CryptoIcon";
 
 interface AddressTableProps {
   addresses: WhitelistedAddress[];
@@ -75,6 +76,16 @@ export default function AddressTable({ addresses, onDelete, getAssetColor }: Add
     }
   };
 
+  const formatDate = (timestamp: string) => {
+    return new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(timestamp));
+  };
+
   if (addresses.length === 0) {
     return (
       <div className="text-center py-8">
@@ -135,13 +146,16 @@ export default function AddressTable({ addresses, onDelete, getAssetColor }: Add
                 </div>
               </td>
               <td className="px-6 py-4">
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAssetColor(
-                    addr.coin
-                  )}`}
-                >
-                  {addr.coin}
-                </span>
+                <div className="flex items-center">
+                  <CryptoIcon
+                    symbol={addr.coin}
+                    size={24}
+                    className="mr-2 flex-shrink-0"
+                  />
+                  <span className="text-gray-900 font-semibold">
+                    {addr.coin}
+                  </span>
+                </div>
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center space-x-2">
@@ -186,7 +200,7 @@ export default function AddressTable({ addresses, onDelete, getAssetColor }: Add
                 </div>
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
-                {new Date(addr.addedAt).toLocaleDateString("ko-KR")}
+                {formatDate(addr.addedAt)}
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
                 {addr.txCount}회
