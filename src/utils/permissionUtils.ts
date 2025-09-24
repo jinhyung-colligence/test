@@ -88,9 +88,36 @@ export function checkPermission(
 }
 
 /**
+ * 시스템의 모든 권한 목록을 가져오기
+ */
+export function getAllPermissions(): string[] {
+  return [
+    'permission.assets.view',
+    'permission.assets.view_transactions',
+    'permission.assets.create_transactions',
+    'permission.users.view',
+    'permission.users.create',
+    'permission.users.edit',
+    'permission.users.manage_permissions',
+    'permission.policies.view',
+    'permission.policies.create',
+    'permission.policies.edit',
+    'permission.system.view_audit',
+    'permission.system.notifications',
+    'permission.system.security_settings',
+    'permission.system.admin'
+  ];
+}
+
+/**
  * 역할별 기본 권한을 가져오기
  */
 export function getDefaultPermissionsForRole(role: UserRole): string[] {
+  // 관리자는 모든 권한을 개별적으로 보유
+  if (role === 'admin') {
+    return getAllPermissions();
+  }
+
   return [...DEFAULT_PERMISSIONS_BY_ROLE[role]];
 }
 
@@ -215,9 +242,9 @@ export function generatePermissionPreview(
  */
 export function getRoleColor(role: UserRole): string {
   const colors = {
-    admin: 'text-red-600 bg-red-50 border-red-200',
+    admin: 'text-indigo-600 bg-indigo-50 border-indigo-200',
     manager: 'text-blue-600 bg-blue-50 border-blue-200',
-    operator: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+    operator: 'text-purple-600 bg-purple-50 border-purple-200',
     viewer: 'text-gray-600 bg-gray-50 border-gray-200'
   };
   return colors[role] || colors.viewer;

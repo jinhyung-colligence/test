@@ -105,72 +105,82 @@ export default function PermissionPreview({
         </p>
       </div>
 
-      {isAdmin ? (
-        // 관리자 권한 표시
-        <div className="text-center py-6">
-          <ShieldCheckIcon className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-lg font-medium text-gray-900 mb-2">전체 시스템 관리 권한</p>
-          <p className="text-sm text-gray-600">
-            관리자는 모든 기능에 대한 완전한 접근 권한을 보유합니다.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* 권한별 상세 */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-3">보유 권한</h4>
-            <div className="space-y-3">
-              {Object.entries(groupedPermissions).map(([category, categoryPermissions]) => {
-                const IconComponent = CATEGORY_ICONS[category] || CogIcon;
-                const categoryName = getPermissionCategoryName(category);
-
-                return (
-                  <div key={category} className="bg-white border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-center mb-2">
-                      <IconComponent className="w-4 h-4 text-gray-600 mr-2" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {categoryName}
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      {categoryPermissions.map((permission) => (
-                        <div key={permission} className="flex items-center text-xs">
-                          <span className={`mr-2 ${getPermissionStatusColor(true)}`}>
-                            {getPermissionStatusIcon(true)}
-                          </span>
-                          <span className="text-gray-600">
-                            {PERMISSION_DESCRIPTIONS[permission] || permission}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+      <div className="space-y-6">
+        {/* 관리자 안내 메시지 */}
+        {isAdmin && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+            <div className="flex items-center">
+              <ShieldCheckIcon className="w-5 h-5 text-indigo-600 mr-2" />
+              <p className="text-sm font-medium text-indigo-800">
+                관리자는 아래 모든 권한을 자동으로 보유합니다
+              </p>
             </div>
           </div>
+        )}
 
+        {/* 권한별 상세 */}
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">보유 권한</h4>
+          <div className="space-y-3">
+            {Object.entries(groupedPermissions).map(([category, categoryPermissions]) => {
+              const IconComponent = CATEGORY_ICONS[category] || CogIcon;
+              const categoryName = getPermissionCategoryName(category);
 
-          {/* 제한사항 */}
-          {limitations.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-900 mb-3">제한사항</h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <div className="space-y-1">
-                  {limitations.map((limitation, index) => (
-                    <div key={index} className="flex items-center text-xs">
-                      <span className="mr-2 text-gray-400">
-                        {getPermissionStatusIcon(false)}
-                      </span>
-                      <span className="text-gray-600">{limitation}</span>
-                    </div>
-                  ))}
+              return (
+                <div key={category} className={`border border-gray-200 rounded-lg p-3 ${
+                  isAdmin ? 'bg-indigo-50 border-indigo-200' : 'bg-white'
+                }`}>
+                  <div className="flex items-center mb-2">
+                    <IconComponent className={`w-4 h-4 mr-2 ${
+                      isAdmin ? 'text-indigo-600' : 'text-gray-600'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      isAdmin ? 'text-indigo-900' : 'text-gray-900'
+                    }`}>
+                      {categoryName}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {categoryPermissions.map((permission) => (
+                      <div key={permission} className="flex items-center text-xs">
+                        <span className={`mr-2 ${
+                          isAdmin ? 'text-indigo-600' : getPermissionStatusColor(true)
+                        }`}>
+                          {getPermissionStatusIcon(true)}
+                        </span>
+                        <span className={`${
+                          isAdmin ? 'text-indigo-700' : 'text-gray-600'
+                        }`}>
+                          {PERMISSION_DESCRIPTIONS[permission] || permission}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 제한사항 (관리자가 아닌 경우만) */}
+        {!isAdmin && limitations.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">제한사항</h4>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="space-y-1">
+                {limitations.map((limitation, index) => (
+                  <div key={index} className="flex items-center text-xs">
+                    <span className="mr-2 text-gray-400">
+                      {getPermissionStatusIcon(false)}
+                    </span>
+                    <span className="text-gray-600">{limitation}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* 요약 정보 */}
       <div className="mt-6 pt-4 border-t border-gray-200">
