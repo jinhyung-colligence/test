@@ -36,6 +36,7 @@ import {
 import PermissionPreview from "@/components/user/PermissionPreview";
 import PermissionHistory from "@/components/user/PermissionHistory";
 import { PermissionChangeLog } from "@/types/permission";
+import { useCompany } from "@/contexts/CompanyContext";
 
 interface UserManagementProps {
   plan: ServicePlan;
@@ -57,6 +58,12 @@ export default function UserManagement({ plan }: UserManagementProps) {
     email: string;
     type: "add" | "edit" | "deactivate";
   } | null>(null);
+
+  // 이메일 검증 상태
+  const [emailValidation, setEmailValidation] = useState<{
+    isValid: boolean;
+    message?: string;
+  }>({ isValid: true });
 
   // 새 사용자 생성 폼 데이터
   const [newUser, setNewUser] = useState({
@@ -93,6 +100,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
   ]);
 
   const { t, language } = useLanguage();
+  const { validateEmailDomain } = useCompany();
 
   const getStatusColor = (status: UserStatus) => {
     const colors = {
@@ -127,8 +135,25 @@ export default function UserManagement({ plan }: UserManagementProps) {
     }));
   };
 
+  // 이메일 변경 시 실시간 검증
+  const handleEmailChange = (email: string) => {
+    setNewUser(prev => ({ ...prev, email }));
+
+    if (email.trim()) {
+      const validation = validateEmailDomain(email);
+      setEmailValidation(validation);
+    } else {
+      setEmailValidation({ isValid: true });
+    }
+  };
 
   const handleAddUser = async () => {
+    // 이메일 검증 확인
+    if (!emailValidation.isValid) {
+      alert(emailValidation.message || "이메일 주소를 확인해주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // 실제로는 API 호출
@@ -152,6 +177,7 @@ export default function UserManagement({ plan }: UserManagementProps) {
         department: "",
         position: "",
       });
+      setEmailValidation({ isValid: true });
 
       setTimeout(() => {
         setShowSuccessMessage(false);
@@ -466,10 +492,19 @@ export default function UserManagement({ plan }: UserManagementProps) {
               <input
                 type="email"
                 value={newUser.email}
-                onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                onChange={(e) => handleEmailChange(e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:ring-sky-500 ${
+                  !emailValidation.isValid
+                    ? "border-red-300 focus:border-red-500 bg-red-50"
+                    : "border-gray-300 focus:border-sky-500"
+                }`}
                 placeholder="hong@company.com"
               />
+              {!emailValidation.isValid && emailValidation.message && (
+                <p className="mt-1 text-sm text-red-600">
+                  {emailValidation.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -549,7 +584,13 @@ export default function UserManagement({ plan }: UserManagementProps) {
               </button>
               <button
                 onClick={handleAddUser}
-                disabled={isSubmitting || !newUser.name || !newUser.email || !newUser.phone}
+                disabled={
+                  isSubmitting ||
+                  !newUser.name ||
+                  !newUser.email ||
+                  !newUser.phone ||
+                  !emailValidation.isValid
+                }
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50"
               >
                 {isSubmitting ? "생성 중..." : "사용자 생성"}

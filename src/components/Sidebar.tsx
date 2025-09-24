@@ -14,7 +14,8 @@ import {
   ArrowUpOnSquareIcon,
   ArrowDownOnSquareIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -22,6 +23,7 @@ import { ServicePlan } from '@/app/page'
 import { DashboardTab } from '@/types/dashboard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface SidebarProps {
   plan: ServicePlan
@@ -35,6 +37,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   const router = useRouter()
   const pathname = usePathname()
   const { isCollapsed, toggleSidebar } = useSidebar()
+  const { user } = useAuth()
   const [showPlanDropdown, setShowPlanDropdown] = useState(false)
   
   // Get active tab from current pathname
@@ -51,6 +54,9 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
     }
     if (pathname.startsWith('/security')) {
       return 'security'
+    }
+    if (pathname.startsWith('/admin/company-settings')) {
+      return 'company-settings'
     }
 
     // Handle static routes
@@ -200,6 +206,13 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       icon: ShieldCheckIcon,
       path: '/security',
       available: true
+    },
+    {
+      id: 'company-settings' as DashboardTab,
+      name: '회사 설정',
+      icon: WrenchScrewdriverIcon,
+      path: '/admin/company-settings',
+      available: user?.role === 'admin'
     }
   ]
 
@@ -280,7 +293,12 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
                   onClick={(e) => {
                     e.preventDefault()
                     if (!isActive) {
-                      onTabChange(item.id)
+                      // 회사 설정의 경우 직접 라우팅
+                      if (item.id === 'company-settings') {
+                        router.push(item.path)
+                      } else {
+                        onTabChange(item.id)
+                      }
                     }
                   }}
                   className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-left rounded-lg transition-colors ${

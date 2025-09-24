@@ -4,6 +4,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ServicePlanProvider } from "@/contexts/ServicePlanContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CompanyProvider } from "@/contexts/CompanyContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ErrorGuard from "@/components/ErrorGuard";
 import MetaMaskErrorHandler from "@/components/MetaMaskErrorHandler";
@@ -124,9 +125,11 @@ export default function RootLayout({
             <MetaMaskErrorHandler />
             <LanguageProvider>
               <AuthProvider>
-                <ServicePlanProvider>
-                  <SidebarProvider>{children}</SidebarProvider>
-                </ServicePlanProvider>
+                <CompanyProvider>
+                  <ServicePlanProvider>
+                    <SidebarProvider>{children}</SidebarProvider>
+                  </ServicePlanProvider>
+                </CompanyProvider>
               </AuthProvider>
             </LanguageProvider>
           </ErrorGuard>

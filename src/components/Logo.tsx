@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface LogoProps {
   className?: string;
@@ -8,6 +9,7 @@ interface LogoProps {
 
 export default function Logo({ className = '', showText = true, size = 'md' }: LogoProps) {
   const { t } = useLanguage();
+  const { companySettings } = useCompany();
 
   const sizeClasses = {
     sm: 'h-6 w-6',
@@ -21,29 +23,39 @@ export default function Logo({ className = '', showText = true, size = 'md' }: L
     lg: 'text-2xl'
   };
 
+  // 회사 설정에서 브랜딩 정보 가져오기
+  const companyName = companySettings.companyName || t('header.title');
+  const companySubtitle = companySettings.companySubtitle || t('header.subtitle');
+  const logoUrl = companySettings.logoUrl;
+  const logoText = companySettings.logoText || companyName.charAt(0) || 'A';
+
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
-      {/* 기존 icon.svg 사용 */}
+      {/* 로고 이미지 또는 기본 아이콘 */}
       <div className={`${sizeClasses[size]} relative flex-shrink-0`}>
-        <svg
-          viewBox="0 0 32 32"
-          fill="none"
-          className="w-full h-full"
-        >
-          <rect width="32" height="32" rx="6" fill="#2563eb"/>
-          <path d="M16 8L24 12V20L16 24L8 20V12L16 8Z" stroke="white" strokeWidth="2" fill="none"/>
-          <circle cx="16" cy="16" r="3" fill="white"/>
-        </svg>
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt={`${companyName} 로고`}
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <div className="w-full h-full bg-primary-600 rounded flex items-center justify-center text-white font-bold">
+            <span className={size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-lg'}>
+              {logoText}
+            </span>
+          </div>
+        )}
       </div>
 
       {showText && (
         <div>
           <h1 className={`${textSizeClasses[size]} font-bold text-gray-900 leading-tight`}>
-            {t('header.title')}
+            {companyName}
           </h1>
-          {size !== 'sm' && (
+          {size !== 'sm' && companySubtitle && (
             <p className="text-sm text-gray-600 leading-tight">
-              {t('header.subtitle')}
+              {companySubtitle}
             </p>
           )}
         </div>
