@@ -154,72 +154,191 @@ import CryptoIcon from "@/components/ui/CryptoIcon";
 - **외부 CDN URL 사용 금지**: GitHub raw URL 등 외부 링크 사용 금지
 - **하드코딩된 아이콘 URL 금지**: 동적 아이콘 로딩을 위해 CryptoIcon 컴포넌트 활용
 
-## 배지 및 상태 표시 컬러 시스템
+## 통합 배지 시스템 (Badge System)
 
-### 역할 배지 컬러 (사용자 관리 페이지 기준)
+사용자 관리 페이지의 배지 디자인을 기준으로 한 프로젝트 전체 배지 시스템. 일관된 시각적 계층과 눈의 피로감 완화를 목적으로 설계되었습니다.
 
-사용자 역할에 따른 배지 색상 체계로, 계층적 시각 구분과 눈의 피로감 완화를 목적으로 설계
+### 🎨 핵심 배지 컬러 팔레트
+
+#### 계층별 색상 (우선순위/중요도 순)
 
 ```typescript
-// 역할별 배지 색상 (getRoleColor 함수 참조)
+const badgeColors = {
+  // 최고 우선순위 - 관리자/긴급/중요
+  highest: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+
+  // 높은 우선순위 - 매니저/승인 필요/주의
+  high: 'text-blue-600 bg-blue-50 border-blue-200',
+
+  // 중간 우선순위 - 운영자/처리중/보통
+  medium: 'text-purple-600 bg-purple-50 border-purple-200',
+
+  // 성공/활성/긍정 상태 (초록색 대체)
+  positive: 'text-sky-600 bg-sky-50 border-sky-200',
+
+  // 경고/대기/보류 상태
+  warning: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+
+  // 오류/거부/위험 상태
+  danger: 'text-red-600 bg-red-50 border-red-200',
+
+  // 중성/비활성/기본 상태
+  neutral: 'text-gray-600 bg-gray-50 border-gray-200'
+};
+```
+
+### 📋 용도별 배지 매핑
+
+#### 사용자 역할 배지
+
+```typescript
 const roleColors = {
-  admin: 'text-indigo-600 bg-indigo-50 border-indigo-200',    // 관리자: 보라-파랑 계열
-  manager: 'text-blue-600 bg-blue-50 border-blue-200',        // 매니저: 파란 계열
-  operator: 'text-purple-600 bg-purple-50 border-purple-200', // 운영자: 보라 계열
-  viewer: 'text-gray-600 bg-gray-50 border-gray-200'          // 뷰어: 회색 계열
+  admin: badgeColors.highest,     // 관리자
+  manager: badgeColors.high,      // 매니저
+  operator: badgeColors.medium,   // 운영자
+  viewer: badgeColors.neutral     // 뷰어
 };
 ```
 
-### 상태 배지 컬러
-
-사용자 활동 상태에 따른 배지 색상 체계
+#### 상태 배지
 
 ```typescript
-// 상태별 배지 색상 (getStatusColor 함수 참조)
 const statusColors = {
-  active: 'text-sky-600 bg-sky-50',      // 활성: 하늘색 (초록색 대체)
-  inactive: 'text-gray-600 bg-gray-50',  // 비활성: 회색
-  pending: 'text-yellow-600 bg-yellow-50' // 대기: 노란색
+  // 일반 상태
+  active: badgeColors.positive,     // 활성/연결됨/성공
+  inactive: badgeColors.neutral,    // 비활성/연결끊김
+  pending: badgeColors.warning,     // 대기/보류/처리중
+  error: badgeColors.danger,        // 오류/실패/거부
+
+  // 승인 상태
+  approved: badgeColors.positive,   // 승인됨
+  rejected: badgeColors.danger,     // 거부됨
+  review: badgeColors.warning,      // 검토중
+
+  // 트랜잭션 상태
+  completed: badgeColors.positive,  // 완료
+  failed: badgeColors.danger,       // 실패
+  processing: badgeColors.warning,  // 처리중
+
+  // 계좌/연결 상태
+  connected: badgeColors.positive,  // 연결됨
+  expired: badgeColors.warning,     // 만료됨
+  blocked: badgeColors.danger       // 차단됨
 };
 ```
 
-### 권한 상태 표시 컬러
-
-권한 보유 여부에 따른 표시 색상
+#### 우선순위/레벨 배지
 
 ```typescript
-// 권한 상태 색상 (getPermissionStatusColor 함수 참조)
-const permissionStatusColors = {
-  hasPermission: 'text-sky-600',  // 권한 보유: 하늘색
-  noPermission: 'text-gray-400'   // 권한 없음: 회색
+const priorityColors = {
+  critical: badgeColors.danger,     // 긴급/중요
+  high: badgeColors.highest,        // 높음
+  medium: badgeColors.high,         // 보통
+  low: badgeColors.neutral,         // 낮음
+
+  // 보안 레벨
+  level1: badgeColors.neutral,      // 기본
+  level2: badgeColors.medium,       // 중간
+  level3: badgeColors.high,         // 높음
+  level4: badgeColors.highest       // 최고
 };
 ```
 
-### 적용 원칙
-
-- **계층적 구분**: 역할의 중요도에 따라 색상 강도 차별화 (admin > manager > operator > viewer)
-- **눈의 피로감 완화**: 모든 배지는 50 투명도 배경 사용으로 부드러운 시각 효과
-- **접근성 고려**: 충분한 대비율 확보로 가독성 보장
-- **일관성 유지**: 프로젝트 전반에서 동일한 색상 체계 사용
-
-### 사용 예시
+#### 권한/기능 배지
 
 ```typescript
-// 역할 배지 적용
-<span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getRoleColor(user.role)}`}>
-  {getRoleName(user.role)}
+const permissionColors = {
+  granted: badgeColors.positive,    // 권한 있음
+  denied: badgeColors.neutral,      // 권한 없음
+  limited: badgeColors.warning,     // 제한적 권한
+
+  // 기능 상태
+  enabled: badgeColors.positive,    // 활성화
+  disabled: badgeColors.neutral,    // 비활성화
+  beta: badgeColors.medium,         // 베타 기능
+  new: badgeColors.high             // 신규 기능
+};
+```
+
+### 🎯 배지 컴포넌트 패턴
+
+#### 기본 배지
+
+```typescript
+// 기본 소형 배지 (텍스트 전용)
+<span className="px-2 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-600">
+  활성
 </span>
 
-// 상태 배지 적용
-<span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
-  {getStatusName(user.status)}
+// 테두리 포함 배지 (강조용)
+<span className="px-2 py-1 text-xs font-semibold rounded-full border bg-indigo-50 text-indigo-600 border-indigo-200">
+  관리자
+</span>
+
+// 아이콘 포함 배지
+<span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-sky-50 text-sky-600">
+  <CheckCircleIcon className="w-3 h-3 mr-1" />
+  승인됨
 </span>
 ```
 
-### 확장 가능성
+#### 크기 변형
 
-이 컬러 시스템은 다른 컴포넌트에서도 활용 가능:
-- 정책 승인 상태 배지
-- 트랜잭션 상태 표시
-- 알림 우선순위 배지
-- 계좌 연결 상태 표시
+```typescript
+// 미니 배지
+<span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-600">
+
+// 일반 배지
+<span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-600">
+
+// 중형 배지
+<span className="px-3 py-1.5 text-sm font-semibold rounded-full bg-blue-50 text-blue-600">
+```
+
+### ⚙️ 적용 원칙
+
+#### 색상 선택 가이드
+
+1. **성공/긍정**: `positive` (하늘색) - 초록색 대신 사용
+2. **경고/대기**: `warning` (노란색) - 주의가 필요한 상태
+3. **오류/위험**: `danger` (빨간색) - 즉시 조치 필요
+4. **중성/기본**: `neutral` (회색) - 일반적인 상태
+5. **계층별**: `highest` > `high` > `medium` > `neutral`
+
+#### 시각적 일관성
+
+- **투명도**: 모든 배경은 50 레벨 사용 (`-50`)
+- **텍스트**: 600 레벨 사용 (`-600`)
+- **테두리**: 200 레벨 사용 (`-200`, 강조시만)
+- **폰트**: `text-xs font-semibold` 기본
+
+#### 접근성 고려사항
+
+- 충분한 색상 대비율 확보 (4.5:1 이상)
+- 색상만으로 정보 전달하지 않기 (텍스트/아이콘 병행)
+- 색맹 사용자 고려한 색상 조합
+
+### 🔄 마이그레이션 가이드
+
+현재 프로젝트에서 아래 색상들을 새로운 시스템으로 교체:
+
+```typescript
+// 교체 대상 (Old → New)
+'bg-green-100 text-green-800' → badgeColors.positive
+'bg-green-600 text-white' → '배경형 버튼으로 변경 권장'
+'bg-blue-100 text-blue-800' → badgeColors.high
+'bg-yellow-100 text-yellow-800' → badgeColors.warning
+'bg-red-100 text-red-800' → badgeColors.danger
+'bg-gray-100 text-gray-800' → badgeColors.neutral
+```
+
+### 📍 적용 우선순위
+
+필요할 때마다 점진적으로 적용:
+
+1. **사용자 관리** - ✅ 완료 (참조 기준)
+2. **출금/승인 시스템** - 승인 상태 배지
+3. **트랜잭션 관리** - 거래 상태 배지
+4. **주소 관리** - 권한/한도 상태 배지
+5. **보안 설정** - 인증/연결 상태 배지
+6. **알림 센터** - 우선순위/타입 배지
