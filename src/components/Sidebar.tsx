@@ -55,8 +55,8 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
     if (pathname.startsWith('/security')) {
       return 'security'
     }
-    if (pathname.startsWith('/admin/company-settings')) {
-      return 'company-settings'
+    if (pathname.startsWith('/setting')) {
+      return 'setting'
     }
 
     // Handle static routes
@@ -208,10 +208,10 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       available: true
     },
     {
-      id: 'company-settings' as DashboardTab,
+      id: 'setting' as DashboardTab,
       name: '회사 설정',
       icon: WrenchScrewdriverIcon,
-      path: '/admin/company-settings',
+      path: '/setting',
       available: user?.role === 'admin'
     }
   ]
@@ -294,7 +294,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
                     e.preventDefault()
                     if (!isActive) {
                       // 회사 설정의 경우 직접 라우팅
-                      if (item.id === 'company-settings') {
+                      if (item.id === 'setting') {
                         router.push(item.path)
                       } else {
                         onTabChange(item.id)

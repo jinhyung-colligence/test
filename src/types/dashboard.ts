@@ -1,1 +1,1 @@
-export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'deposit' | 'withdrawal' | 'services' | 'security' | 'company-settings'
+export type DashboardTab = 'overview' | 'transactions' | 'users' | 'groups' | 'deposit' | 'withdrawal' | 'services' | 'security' | 'setting'

@@ -28,7 +28,7 @@ export default function PageLayout({ children, activeTab }: PageLayoutProps) {
       withdrawal: '/withdrawal',
       services: '/services',
       security: '/security',
-      'company-settings': '/company-settings'
+      setting: '/setting'
     }
 
     const path = routes[tab]

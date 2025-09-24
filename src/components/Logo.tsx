@@ -13,7 +13,7 @@ export default function Logo({ className = '', showText = true, size = 'md' }: L
 
   const sizeClasses = {
     sm: 'h-6 w-6',
-    md: 'h-8 w-8',
+    md: 'h-9 w-9',
     lg: 'h-12 w-12'
   };
 

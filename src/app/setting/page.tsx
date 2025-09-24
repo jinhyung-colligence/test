@@ -3,9 +3,9 @@
 import PageLayout from '@/components/PageLayout'
 import CompanySettings from '@/components/admin/CompanySettings'
 
-export default function CompanySettingsPage() {
+export default function SettingPage() {
   return (
-    <PageLayout activeTab="company-settings">
+    <PageLayout activeTab="setting">
       <CompanySettings />
     </PageLayout>
   )

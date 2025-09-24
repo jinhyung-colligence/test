@@ -50,7 +50,7 @@ export default function CompanySettings() {
       }
 
       // 파일 형식 확인
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
         setSaveMessage("이미지 파일만 업로드 가능합니다.");
         setTimeout(() => setSaveMessage(null), 3000);
         return;
@@ -203,7 +203,7 @@ export default function CompanySettings() {
                 <input
                   type="file"
                   id="logoFile"
-                  accept="image/*"
+                  accept="image/*,.svg"
                   onChange={handleLogoFileChange}
                   className="hidden"
                 />
@@ -215,7 +215,8 @@ export default function CompanySettings() {
                   {logoPreview ? "로고 변경" : "로고 업로드"}
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  PNG, JPG, GIF 파일 (최대 5MB)
+                  PNG, JPG, GIF, SVG 파일 (최대 5MB)<br />
+                  권장 사이즈: 36px × 36px 또는 비율 1:1
                 </p>
               </div>
             </div>
