@@ -1,54 +1,74 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   UserCircleIcon,
   ClockIcon,
   ChevronDownIcon,
-  ArrowRightOnRectangleIcon
-} from '@heroicons/react/24/outline'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { useAuth } from '@/contexts/AuthContext'
-import LanguageToggle from './LanguageToggle'
-import Logo from './Logo'
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import LanguageToggle from "./LanguageToggle";
+import Logo from "./Logo";
 
 export default function Header() {
-  const { t } = useLanguage()
-  const { user, logout } = useAuth()
-  // UI/UX 기획을 위해 세션 타이머 비활성화
-  const [sessionTime] = useState(1800) // 고정값으로 설정
-  const [showExtensionModal, setShowExtensionModal] = useState(false)
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+  const { t } = useLanguage();
+  const { user, logout } = useAuth();
+  const [sessionTime, setSessionTime] = useState(1800); // 30분 = 1800초
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
-  // UI/UX 기획을 위해 세션 타이머 로직 비활성화
+  // UI/UX용 세션 타이머 - 실제 서버 연동 없이 클라이언트에서만 동작
   useEffect(() => {
-    // 세션 타이머 로직 제거 - UI만 유지
-  }, [])
-  
+    const timer = setInterval(() => {
+      setSessionTime((prev) => {
+        if (prev <= 1) {
+          // 시간이 끝나면 로그아웃 (UI/UX용)
+          logout();
+          return 0;
+        }
+
+        // 5분 남았을 때 경고 모달 표시
+        if (prev === 301) {
+          // 5분 1초일 때 (다음 초에 5분이 됨)
+          setShowExtensionModal(true);
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [logout]);
+
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const extendSession = () => {
-    // UI/UX 기획을 위해 세션 연장 로직 비활성화 - UI만 유지
-    setShowExtensionModal(false)
-  }
-  
+    // UI/UX용 세션 연장 - 30분 추가
+    setSessionTime(1800); // 30분으로 재설정
+    setShowExtensionModal(false);
+  };
+
   const getTimeColor = () => {
-    if (sessionTime <= 300) return 'text-red-600' // 5분 이하
-    if (sessionTime <= 600) return 'text-yellow-600' // 10분 이하
-    return 'text-gray-600'
-  }
-  
+    if (sessionTime <= 300) return "text-red-600"; // 5분 이하
+    if (sessionTime <= 600) return "text-yellow-600"; // 10분 이하
+    return "text-gray-600";
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Logo />
-            
+
             <div className="flex items-center space-x-4">
               {/* 세션 타이머 */}
               <div className="flex items-center space-x-3">
@@ -77,21 +97,21 @@ export default function Header() {
                 >
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">
-                      {user?.name || '관리자'}
+                      {user?.name || "관리자"}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {user?.department || t('header.admin')}
+                      {user?.department || t("header.admin")}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-primary-600">
-                        {user?.name?.charAt(0) || 'A'}
+                        {user?.name?.charAt(0) || "A"}
                       </span>
                     </div>
                     <ChevronDownIcon
                       className={`h-4 w-4 text-gray-400 transition-transform ${
-                        showProfileDropdown ? 'rotate-180' : ''
+                        showProfileDropdown ? "rotate-180" : ""
                       }`}
                     />
                   </div>
@@ -113,15 +133,15 @@ export default function Header() {
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
                             <span className="text-lg font-semibold text-primary-600">
-                              {user?.name?.charAt(0) || 'A'}
+                              {user?.name?.charAt(0) || "A"}
                             </span>
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">
-                              {user?.name || '관리자'}
+                              {user?.name || "관리자"}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {user?.email || 'admin@company.com'}
+                              {user?.email || "admin@company.com"}
                             </p>
                           </div>
                         </div>
@@ -138,8 +158,8 @@ export default function Header() {
                       <div className="py-2">
                         <button
                           onClick={() => {
-                            setShowProfileDropdown(false)
-                            logout()
+                            setShowProfileDropdown(false);
+                            logout();
                           }}
                           className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                         >
@@ -158,7 +178,7 @@ export default function Header() {
           </div>
         </div>
       </header>
-      
+
       {/* 세션 만료 경고 모달 */}
       {showExtensionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
@@ -174,13 +194,13 @@ export default function Header() {
                 </p>
               </div>
             </div>
-            
+
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-red-800">
                 세션이 곧 만료됩니다. 작업을 계속하시려면 시간을 연장해주세요.
               </p>
             </div>
-            
+
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowExtensionModal(false)}
@@ -199,5 +219,5 @@ export default function Header() {
         </div>
       )}
     </>
-  )
+  );
 }
