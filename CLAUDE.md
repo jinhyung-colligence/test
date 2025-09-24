@@ -153,3 +153,73 @@ import CryptoIcon from "@/components/ui/CryptoIcon";
 - **직접 img 태그 사용 금지**: 가상자산 아이콘에 대해서는 반드시 CryptoIcon 컴포넌트 사용
 - **외부 CDN URL 사용 금지**: GitHub raw URL 등 외부 링크 사용 금지
 - **하드코딩된 아이콘 URL 금지**: 동적 아이콘 로딩을 위해 CryptoIcon 컴포넌트 활용
+
+## 배지 및 상태 표시 컬러 시스템
+
+### 역할 배지 컬러 (사용자 관리 페이지 기준)
+
+사용자 역할에 따른 배지 색상 체계로, 계층적 시각 구분과 눈의 피로감 완화를 목적으로 설계
+
+```typescript
+// 역할별 배지 색상 (getRoleColor 함수 참조)
+const roleColors = {
+  admin: 'text-indigo-600 bg-indigo-50 border-indigo-200',    // 관리자: 보라-파랑 계열
+  manager: 'text-blue-600 bg-blue-50 border-blue-200',        // 매니저: 파란 계열
+  operator: 'text-purple-600 bg-purple-50 border-purple-200', // 운영자: 보라 계열
+  viewer: 'text-gray-600 bg-gray-50 border-gray-200'          // 뷰어: 회색 계열
+};
+```
+
+### 상태 배지 컬러
+
+사용자 활동 상태에 따른 배지 색상 체계
+
+```typescript
+// 상태별 배지 색상 (getStatusColor 함수 참조)
+const statusColors = {
+  active: 'text-sky-600 bg-sky-50',      // 활성: 하늘색 (초록색 대체)
+  inactive: 'text-gray-600 bg-gray-50',  // 비활성: 회색
+  pending: 'text-yellow-600 bg-yellow-50' // 대기: 노란색
+};
+```
+
+### 권한 상태 표시 컬러
+
+권한 보유 여부에 따른 표시 색상
+
+```typescript
+// 권한 상태 색상 (getPermissionStatusColor 함수 참조)
+const permissionStatusColors = {
+  hasPermission: 'text-sky-600',  // 권한 보유: 하늘색
+  noPermission: 'text-gray-400'   // 권한 없음: 회색
+};
+```
+
+### 적용 원칙
+
+- **계층적 구분**: 역할의 중요도에 따라 색상 강도 차별화 (admin > manager > operator > viewer)
+- **눈의 피로감 완화**: 모든 배지는 50 투명도 배경 사용으로 부드러운 시각 효과
+- **접근성 고려**: 충분한 대비율 확보로 가독성 보장
+- **일관성 유지**: 프로젝트 전반에서 동일한 색상 체계 사용
+
+### 사용 예시
+
+```typescript
+// 역할 배지 적용
+<span className={`px-2 py-1 text-xs font-semibold rounded-full border ${getRoleColor(user.role)}`}>
+  {getRoleName(user.role)}
+</span>
+
+// 상태 배지 적용
+<span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
+  {getStatusName(user.status)}
+</span>
+```
+
+### 확장 가능성
+
+이 컬러 시스템은 다른 컴포넌트에서도 활용 가능:
+- 정책 승인 상태 배지
+- 트랜잭션 상태 표시
+- 알림 우선순위 배지
+- 계좌 연결 상태 표시
