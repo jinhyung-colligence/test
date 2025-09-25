@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  BuildingOfficeIcon,
-  PhotoIcon,
   PlusIcon,
   XMarkIcon,
   CheckIcon,
@@ -145,12 +143,9 @@ export default function CompanySettings() {
     <div className="space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <BuildingOfficeIcon className="w-8 h-8 text-gray-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">회사 설정 관리</h1>
-            <p className="text-sm text-gray-600">브랜딩 정보와 이메일 도메인을 관리하세요</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">회사 설정 관리</h1>
+          <p className="text-sm text-gray-600">브랜딩 정보와 이메일 도메인을 관리하세요</p>
         </div>
       </div>
 
@@ -164,8 +159,7 @@ export default function CompanySettings() {
 
       {/* 브랜딩 정보 섹션 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <PhotoIcon className="w-6 h-6 text-gray-600" />
+        <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900">브랜딩 정보</h2>
         </div>
 
@@ -194,7 +188,7 @@ export default function CompanySettings() {
                 </div>
               ) : (
                 <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50">
-                  <PhotoIcon className="w-8 h-8 text-gray-400" />
+                  <span className="text-gray-400 text-xs">로고</span>
                 </div>
               )}
 
@@ -211,7 +205,6 @@ export default function CompanySettings() {
                   htmlFor="logoFile"
                   className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <PhotoIcon className="w-4 h-4 mr-2" />
                   {logoPreview ? "로고 변경" : "로고 업로드"}
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
@@ -287,8 +280,7 @@ export default function CompanySettings() {
 
       {/* 이메일 도메인 관리 섹션 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <BuildingOfficeIcon className="w-6 h-6 text-gray-600" />
+        <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900">이메일 도메인 관리</h2>
         </div>
 
