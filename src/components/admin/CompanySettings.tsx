@@ -71,7 +71,7 @@ export default function CompanySettings() {
     setLogoPreview(null);
   };
 
-  // 브랜딩 정보 저장
+  // 회사 정보 저장
   const handleSaveBranding = async () => {
     setIsSaving(true);
     try {
@@ -90,7 +90,7 @@ export default function CompanySettings() {
       }
 
       await updateCompanySettings(updateData);
-      setSaveMessage("브랜딩 정보가 저장되었습니다.");
+      setSaveMessage("회사 정보가 저장되었습니다.");
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       setSaveMessage("저장 중 오류가 발생했습니다.");
@@ -157,10 +157,10 @@ export default function CompanySettings() {
         </div>
       )}
 
-      {/* 브랜딩 정보 섹션 */}
+      {/* 회사 정보 섹션 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">브랜딩 정보</h2>
+          <h2 className="text-lg font-semibold text-gray-900">회사 정보</h2>
         </div>
 
         <div className="space-y-4">
@@ -272,7 +272,7 @@ export default function CompanySettings() {
               disabled={isSaving}
               className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSaving ? "저장 중..." : "브랜딩 정보 저장"}
+              {isSaving ? "저장 중..." : "회사 정보 저장"}
             </button>
           </div>
         </div>
