@@ -325,6 +325,7 @@ export default function GroupWalletManagement({
         <GroupManagement
           showCreateModal={showCreateModal}
           onCloseCreateModal={() => setShowCreateModal(false)}
+          onOpenCreateModal={() => setShowCreateModal(true)}
           onCreateGroup={() => {
             // 그룹 생성 후 처리 로직
           }}

@@ -4,13 +4,21 @@ import {
   PlusIcon,
   UserIcon,
   UserGroupIcon,
+  PencilIcon,
+  PauseIcon,
+  PlayIcon,
+  TrashIcon,
+  EllipsisVerticalIcon,
+  EyeIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import {
   GroupType,
   CryptoCurrency,
   CryptoAmount,
   WalletGroup,
-  BudgetSetup
+  BudgetSetup,
+  GroupStatus
 } from "@/types/groups";
 import { User, ROLE_NAMES } from "@/types/user";
 import { Modal } from "@/components/common/Modal";
@@ -35,6 +43,7 @@ interface GroupManagementProps {
   onCreateGroup?: () => void;
   showCreateModal?: boolean;
   onCloseCreateModal?: () => void;
+  onOpenCreateModal?: () => void;
   onCreateGroupRequest?: (request: any) => void;
 }
 
@@ -157,9 +166,13 @@ const getCurrentYearName = (): string => {
   return `${currentYear}년도`;
 };
 
-export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal, onCreateGroupRequest }: GroupManagementProps) {
+export default function GroupManagement({ onCreateGroup, showCreateModal: externalShowCreateModal, onCloseCreateModal, onOpenCreateModal, onCreateGroupRequest }: GroupManagementProps) {
   const [internalShowCreateModal, setInternalShowCreateModal] = useState(false);
   const [groups, setGroups] = useState<WalletGroup[]>(mockGroups);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedGroupForDetail, setSelectedGroupForDetail] = useState<WalletGroup | null>(null);
 
   const showCreateModal = externalShowCreateModal !== undefined ? externalShowCreateModal : internalShowCreateModal;
 
@@ -299,16 +312,114 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     return totalDistributed === baseAmount;
   };
 
+  // 예산이 변경되었는지 확인하는 함수
+  const isBudgetChanged = (originalGroup: WalletGroup): boolean => {
+    if (!originalGroup) return false;
+
+    // budgetSetup 변경 확인
+    if (JSON.stringify(newGroup.budgetSetup) !== JSON.stringify(originalGroup.budgetSetup)) {
+      return true;
+    }
+
+    // 기존 예산 필드 변경 확인 (budgetSetup이 없는 경우)
+    if (!newGroup.budgetSetup) {
+      return (
+        newGroup.monthlyBudget.amount !== originalGroup.monthlyBudget.amount ||
+        newGroup.quarterlyBudget.amount !== originalGroup.quarterlyBudget.amount ||
+        newGroup.yearlyBudget.amount !== originalGroup.yearlyBudget.amount
+      );
+    }
+
+    return false;
+  };
+
   // 전체 폼 유효성 검사
   const isFormValid = (): boolean => {
     const validApprovers = requiredApprovers.filter(id => id !== "");
-    return (
+    const basicFieldsValid = (
       newGroup.name.trim() !== "" &&
       newGroup.description.trim() !== "" &&
-      newGroup.manager !== "" &&
-      validApprovers.length > 0 &&
       isBudgetValid()
     );
+
+    // 수정 모드일 때는 관리자와 결재자 검증 제외
+    if (isEditMode) {
+      return basicFieldsValid;
+    }
+
+    // 생성 모드일 때는 관리자와 결재자 필수
+    return basicFieldsValid && newGroup.manager !== "" && validApprovers.length > 0;
+  };
+
+  // 그룹 상세보기 열기
+  const handleShowGroupDetail = (group: WalletGroup) => {
+    setSelectedGroupForDetail(group);
+    setShowDetailModal(true);
+  };
+
+  // 상세보기에서 수정 모드 진입
+  const handleEditFromDetail = () => {
+    if (selectedGroupForDetail) {
+      setIsEditMode(true);
+      setEditingGroupId(selectedGroupForDetail.id);
+
+      // 기존 그룹 정보로 폼 채우기
+      setNewGroup({
+        name: selectedGroupForDetail.name,
+        type: selectedGroupForDetail.type,
+        description: selectedGroupForDetail.description,
+        currency: selectedGroupForDetail.balance.currency,
+        monthlyBudget: selectedGroupForDetail.monthlyBudget,
+        quarterlyBudget: selectedGroupForDetail.quarterlyBudget,
+        yearlyBudget: selectedGroupForDetail.yearlyBudget,
+        budgetSetup: selectedGroupForDetail.budgetSetup || null,
+        manager: selectedGroupForDetail.manager,
+      });
+
+      // 결재자 정보 설정
+      setRequiredApprovers(selectedGroupForDetail.requiredApprovals || ['']);
+
+      // 예산 설정이 있다면 해당 연도로 설정
+      if (selectedGroupForDetail.budgetSetup) {
+        setSelectedYear(selectedGroupForDetail.budgetSetup.year);
+      }
+
+      // 상세보기 모달 닫고 수정 모달 열기
+      setShowDetailModal(false);
+
+      if (externalShowCreateModal !== undefined && onOpenCreateModal) {
+        // 외부에서 모달 상태를 관리하는 경우 외부 콜백 호출
+        onOpenCreateModal();
+      } else {
+        setInternalShowCreateModal(true);
+      }
+    }
+  };
+
+  // 그룹 중지/재활성화
+  const handleToggleGroupStatus = (groupId: string, currentStatus: GroupStatus | undefined) => {
+    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    const statusText = newStatus === 'suspended' ? '중지' : '활성화';
+
+    if (confirm(`정말로 이 그룹을 ${statusText}하시겠습니까?`)) {
+      setGroups(prevGroups =>
+        prevGroups.map(group =>
+          group.id === groupId
+            ? { ...group, status: newStatus }
+            : group
+        )
+      );
+
+      alert(`그룹이 ${statusText}되었습니다.`);
+    }
+  };
+
+  // 그룹 삭제
+  const handleDeleteGroup = (groupId: string, groupName: string) => {
+    if (confirm(`정말로 "${groupName}" 그룹을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId));
+      alert('그룹이 삭제되었습니다.');
+    }
   };
 
 
@@ -341,48 +452,92 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
       return newGroup.yearlyBudget;
     };
 
-    // 그룹 생성 요청 생성
-    const groupRequest = {
-      id: `req-${Date.now()}`,
-      ...newGroup,
-      monthlyBudget: getCurrentMonthBudget(),
-      quarterlyBudget: getCurrentQuarterBudget(),
-      yearlyBudget: getYearlyBudget(),
-      status: "pending",
-      requestedBy: "현재사용자", // TODO: 실제 사용자 정보
-      requestedAt: new Date().toISOString(),
-      requiredApprovals: validApprovers,
-      approvals: [],
-      rejections: []
-    };
+    if (isEditMode && editingGroupId) {
+      // 수정 모드
+      setGroups(prevGroups =>
+        prevGroups.map(group => {
+          if (group.id === editingGroupId) {
+            const budgetHasChanged = isBudgetChanged(group);
+            const newStatus = budgetHasChanged ? 'budget_pending' : group.status;
 
-    console.log("Creating group approval request:", groupRequest);
+            return {
+              ...group,
+              name: newGroup.name,
+              type: newGroup.type,
+              description: newGroup.description,
+              monthlyBudget: getCurrentMonthBudget(),
+              quarterlyBudget: getCurrentQuarterBudget(),
+              yearlyBudget: getYearlyBudget(),
+              budgetSetup: newGroup.budgetSetup || undefined,
+              manager: newGroup.manager,
+              requiredApprovals: validApprovers,
+              status: newStatus,
+              // 예산 변경 시 추가 정보
+              ...(budgetHasChanged && {
+                budgetModifiedAt: new Date().toISOString(),
+                budgetModifiedBy: "현재사용자" // TODO: 실제 사용자 정보
+              })
+            };
+          }
+          return group;
+        })
+      );
 
-    // 임시로 새 그룹을 groups 상태에 추가 (실제로는 승인 후 추가되어야 함)
-    const newGroupForList: WalletGroup = {
-      ...groupRequest,
-      id: `group-${Date.now()}`,
-      balance: { amount: 0, currency: newGroup.currency },
-      budgetUsed: { amount: 0, currency: newGroup.currency },
-      quarterlyBudgetUsed: { amount: 0, currency: newGroup.currency },
-      yearlyBudgetUsed: { amount: 0, currency: newGroup.currency },
-      members: [],
-      createdAt: new Date().toISOString().split('T')[0],
-      status: 'pending',
-      requiredApprovals: validApprovers,
-      budgetSetup: newGroup.budgetSetup || undefined,
-    };
+      const originalGroup = groups.find(g => g.id === editingGroupId);
+      const budgetChanged = originalGroup && isBudgetChanged(originalGroup);
 
-    setGroups(prevGroups => [...prevGroups, newGroupForList]);
+      if (budgetChanged) {
+        alert("예산이 변경되어 재승인이 필요합니다. 승인이 완료될 때까지 기존 예산으로 운영됩니다.");
+      } else {
+        alert("그룹 정보가 수정되었습니다.");
+      }
+    } else {
+      // 생성 모드
+      const groupRequest = {
+        id: `req-${Date.now()}`,
+        ...newGroup,
+        monthlyBudget: getCurrentMonthBudget(),
+        quarterlyBudget: getCurrentQuarterBudget(),
+        yearlyBudget: getYearlyBudget(),
+        status: "pending",
+        requestedBy: "현재사용자", // TODO: 실제 사용자 정보
+        requestedAt: new Date().toISOString(),
+        requiredApprovals: validApprovers,
+        approvals: [],
+        rejections: []
+      };
 
-    if (onCreateGroupRequest) {
-      onCreateGroupRequest(groupRequest);
+      console.log("Creating group approval request:", groupRequest);
+
+      // 임시로 새 그룹을 groups 상태에 추가 (실제로는 승인 후 추가되어야 함)
+      const newGroupForList: WalletGroup = {
+        ...groupRequest,
+        id: `group-${Date.now()}`,
+        balance: { amount: 0, currency: newGroup.currency },
+        budgetUsed: { amount: 0, currency: newGroup.currency },
+        quarterlyBudgetUsed: { amount: 0, currency: newGroup.currency },
+        yearlyBudgetUsed: { amount: 0, currency: newGroup.currency },
+        members: [],
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        requiredApprovals: validApprovers,
+        budgetSetup: newGroup.budgetSetup || undefined,
+      };
+
+      setGroups(prevGroups => [...prevGroups, newGroupForList]);
+
+      if (onCreateGroupRequest) {
+        onCreateGroupRequest(groupRequest);
+      }
+
+      if (onCreateGroup) {
+        onCreateGroup();
+      }
+
+      alert("그룹 생성 요청이 승인 대기 상태로 등록되었습니다.");
     }
 
-    if (onCreateGroup) {
-      onCreateGroup();
-    }
-
+    // 초기화
     handleCloseModal();
     setSelectedYear(currentYear);
     setNewGroup({
@@ -398,12 +553,15 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     });
     // 필수 결재자 상태 초기화
     setRequiredApprovers(['']);
-
-    alert("그룹 생성 요청이 승인 대기 상태로 등록되었습니다.");
+    setIsEditMode(false);
+    setEditingGroupId(null);
   };
 
   const handleCloseModal = () => {
     setErrorMessage(null); // 에러 메시지 초기화
+    setIsEditMode(false);
+    setEditingGroupId(null);
+
     if (onCloseCreateModal) {
       onCloseCreateModal();
     } else {
@@ -411,27 +569,49 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
     }
   };
 
+  // 상세보기 모달 닫기
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedGroupForDetail(null);
+  };
+
   return (
     <>
       {/* 그룹 카드 목록 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {groups.filter(group => !group.status || group.status === 'active' || group.status === 'pending').map((group) => {
+        {groups.filter(group => !group.status || group.status === 'active' || group.status === 'pending' || group.status === 'budget_pending').map((group) => {
           const usagePercentage = getBudgetUsagePercentage(group);
           const isOverBudget = usagePercentage > 100;
           const isNearLimit = usagePercentage > 80;
           const isModerate = usagePercentage > 60;
-          
+          const isSuspended = group.status === 'suspended';
+          const isBudgetPending = group.status === 'budget_pending';
+
           return (
             <div
               key={group.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all ${
+                isSuspended
+                  ? 'border-gray-300 opacity-75'
+                  : isBudgetPending
+                  ? 'border-yellow-300 bg-yellow-50'
+                  : 'border-gray-200'
+              }`}
             >
               {/* 헤더 섹션 */}
-              <div className="p-4 bg-white border-b border-gray-100">
+              <div className={`p-4 border-b border-gray-100 ${
+                isSuspended
+                  ? 'bg-gray-50'
+                  : isBudgetPending
+                  ? 'bg-yellow-50'
+                  : 'bg-white'
+              }`}>
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <h3 className="font-bold text-lg text-gray-900">
+                      <h3 className={`font-bold text-lg ${
+                        isSuspended ? 'text-gray-500' : 'text-gray-900'
+                      }`}>
                         {group.name}
                       </h3>
                       <span
@@ -446,21 +626,22 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                           {group.budgetSetup.year}년 기준
                         </span>
                       )}
+                      {isSuspended && (
+                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                          중지됨
+                        </span>
+                      )}
+                      {isBudgetPending && (
+                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                          예산 수정 승인 대기
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600">{group.description}</p>
-                  </div>
-                  <div className={`p-2 rounded-lg ${
-                    isOverBudget ? 'bg-red-100' : 
-                    isNearLimit ? 'bg-orange-100' : 
-                    isModerate ? 'bg-yellow-100' : 
-                    'bg-green-100'
-                  }`}>
-                    <WalletIcon className={`h-6 w-6 ${
-                      isOverBudget ? 'text-red-600' : 
-                      isNearLimit ? 'text-orange-600' : 
-                      isModerate ? 'text-yellow-600' : 
-                      'text-green-600'
-                    }`} />
+                    <p className={`text-sm ${
+                      isSuspended ? 'text-gray-500' : 'text-gray-600'
+                    }`}>
+                      {group.description}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -687,6 +868,78 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                   )}
                 </div>
 
+                {/* 액션 버튼 영역 */}
+                <div className={`py-2 ${
+                  isSuspended
+                    ? 'bg-gray-50'
+                    : isBudgetPending
+                    ? 'bg-yellow-50'
+                    : 'bg-white'
+                }`}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* 상세보기 버튼 */}
+                    <button
+                      onClick={() => handleShowGroupDetail(group)}
+                      className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                        isSuspended
+                          ? 'border-gray-200 text-gray-500 bg-transparent hover:border-gray-300 hover:bg-gray-50'
+                          : 'border-gray-300 text-gray-700 bg-transparent hover:border-gray-400 hover:bg-gray-50'
+                      }`}
+                    >
+                      <EyeIcon className="h-4 w-4 mr-2" />
+                      상세보기
+                    </button>
+
+                    {/* 중지/재활성/승인상태 버튼 */}
+                    {isBudgetPending ? (
+                      <button
+                        onClick={() => {
+                          // 승인 탭으로 이동하는 함수가 필요
+                          alert("승인 탭으로 이동하여 승인 상태를 확인하세요.");
+                        }}
+                        className="flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg border border-yellow-300 text-yellow-700 bg-transparent hover:border-yellow-400 hover:bg-yellow-50 transition-colors"
+                      >
+                        <ClockIcon className="h-4 w-4 mr-2" />
+                        승인 상태
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleGroupStatus(group.id, group.status)}
+                        className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                          isSuspended
+                            ? 'border-gray-200 text-gray-500 bg-transparent hover:border-gray-300 hover:bg-gray-50'
+                            : 'border-gray-300 text-gray-700 bg-transparent hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        {isSuspended ? (
+                          <>
+                            <PlayIcon className="h-4 w-4 mr-2" />
+                            재활성화
+                          </>
+                        ) : (
+                          <>
+                            <PauseIcon className="h-4 w-4 mr-2" />
+                            중지
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 삭제 버튼 - 중지된 상태에서만 표시 */}
+                  {isSuspended && (
+                    <div className="mt-3">
+                      <button
+                        onClick={() => handleDeleteGroup(group.id, group.name)}
+                        className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-transparent border border-red-300 rounded-lg hover:border-red-400 hover:bg-red-50 transition-colors"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-2" />
+                        그룹 삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           );
@@ -699,7 +952,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
             {/* 고정 헤더 */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
               <h3 className="text-xl font-semibold text-gray-900">
-                새 그룹 생성
+                {isEditMode ? "그룹 정보 수정" : "새 그룹 생성"}
               </h3>
               <button
                 onClick={handleCloseModal}
@@ -809,7 +1062,12 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 <select
                   value={selectedYear}
                   onChange={(e) => handleYearChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  disabled={isEditMode}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${
+                    isEditMode
+                      ? 'bg-gray-50 text-gray-600 cursor-not-allowed'
+                      : 'focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+                  }`}
                 >
                   <option value={currentYear}>{currentYear}년</option>
                   <option value={currentYear + 1}>{currentYear + 1}년</option>
@@ -827,7 +1085,12 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                 <select
                   value={newGroup.manager}
                   onChange={(e) => setNewGroup({ ...newGroup, manager: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  disabled={isEditMode}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${
+                    isEditMode
+                      ? 'bg-gray-50 text-gray-600 cursor-not-allowed'
+                      : 'focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+                  }`}
                 >
                   <option value="">관리자 선택</option>
                   {getEligibleUsers().map(user => (
@@ -850,7 +1113,12 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                       <select
                         value={approverId}
                         onChange={(e) => handleApproverChange(index, e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        disabled={isEditMode}
+                        className={`flex-1 px-3 py-2 border border-gray-300 rounded-lg ${
+                          isEditMode
+                            ? 'bg-gray-50 text-gray-600 cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+                        }`}
                       >
                         <option value="">결재자 선택</option>
                         {getEligibleApprovers(false).filter(user =>
@@ -861,7 +1129,7 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                           </option>
                         ))}
                       </select>
-                      {requiredApprovers.length > 1 && (
+                      {requiredApprovers.length > 1 && !isEditMode && (
                         <button
                           type="button"
                           onClick={() => handleRemoveApprover(index)}
@@ -875,13 +1143,15 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                       )}
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={handleAddApprover}
-                    className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    + 결재자 추가
-                  </button>
+                  {!isEditMode && (
+                    <button
+                      type="button"
+                      onClick={handleAddApprover}
+                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      + 결재자 추가
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -959,16 +1229,189 @@ export default function GroupManagement({ onCreateGroup, showCreateModal: extern
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                   title={!isFormValid() ? (
-                    !newGroup.manager ? '관리자를 선택해주세요' :
-                    requiredApprovers.filter(id => id !== "").length === 0 ? '필수 결재자를 선택해주세요' :
+                    !isEditMode && !newGroup.manager ? '관리자를 선택해주세요' :
+                    !isEditMode && requiredApprovers.filter(id => id !== "").length === 0 ? '필수 결재자를 선택해주세요' :
                     !isBudgetValid() ? '예산 배분을 정확히 맞춰주세요' :
                     '모든 필수 항목을 입력해주세요'
                   ) : ''}
                 >
-                  승인 요청
+                  {isEditMode ? "수정 완료" : "승인 요청"}
                 </button>
               </div>
             </div>
+        </div>
+      </Modal>
+
+      {/* 그룹 상세보기 모달 */}
+      <Modal isOpen={showDetailModal}>
+        <div className="bg-white rounded-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+          {/* 고정 헤더 */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+            <h3 className="text-xl font-semibold text-gray-900">
+              그룹 상세 정보
+            </h3>
+            <button
+              onClick={handleCloseDetailModal}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* 스크롤 가능한 컨텐츠 영역 */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedGroupForDetail && (
+              <div className="divide-y divide-gray-200">
+                {/* 기본 정보 */}
+                <div className="p-6">
+                  <h4 className="text-xl font-bold text-gray-900 mb-6">기본 정보</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">그룹명</label>
+                      <p className="text-base font-semibold text-gray-900">{selectedGroupForDetail.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">그룹 유형</label>
+                      <p className="text-base font-semibold text-gray-900">{getTypeName(selectedGroupForDetail.type)}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-600 mb-2">설명</label>
+                      <p className="text-base text-gray-800 leading-relaxed">{selectedGroupForDetail.description}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">관리자</label>
+                      <p className="text-base font-semibold text-gray-900">{getUserNameById(selectedGroupForDetail.manager)}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-2">생성일</label>
+                      <p className="text-base font-semibold text-gray-900">{formatDate(selectedGroupForDetail.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 예산 정보 */}
+                <div className="p-6">
+                  <h4 className="text-xl font-bold text-gray-900 mb-6">예산 정보</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <label className="block text-sm font-medium text-gray-600 mb-2">월간 예산</label>
+                      <div className="text-lg font-bold text-gray-900">
+                        {formatCryptoAmountWithIcon(selectedGroupForDetail.monthlyBudget)}
+                      </div>
+                    </div>
+                    {selectedGroupForDetail.quarterlyBudget.amount > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-600 mb-2">분기 예산</label>
+                        <div className="text-lg font-bold text-gray-900">
+                          {formatCryptoAmountWithIcon(selectedGroupForDetail.quarterlyBudget)}
+                        </div>
+                      </div>
+                    )}
+                    {selectedGroupForDetail.yearlyBudget.amount > 0 && (
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-600 mb-2">연간 예산</label>
+                        <div className="text-lg font-bold text-gray-900">
+                          {formatCryptoAmountWithIcon(selectedGroupForDetail.yearlyBudget)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 결재자 정보 */}
+                <div className="p-6">
+                  <h4 className="text-xl font-bold text-gray-900 mb-6">결재자</h4>
+                  <div className="space-y-3">
+                    {selectedGroupForDetail.requiredApprovals?.map((approverId, index) => {
+                      // 해당 결재자의 승인 기록 찾기
+                      const approvalRecord = selectedGroupForDetail.approvals?.find(
+                        approval => approval.userId === approverId
+                      );
+
+                      return (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          <div className="flex items-center">
+                            <span className="flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold mr-3">
+                              {index + 1}
+                            </span>
+                            <span className="text-base font-semibold text-gray-900">{getUserNameById(approverId)}</span>
+                          </div>
+                          <div className="text-right">
+                            {approvalRecord ? (
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800">
+                                  승인완료
+                                </span>
+                                <span className="text-sm text-gray-600">
+                                  {formatDate(approvalRecord.approvedAt)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-600">
+                                승인대기
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 상태 정보 */}
+                {selectedGroupForDetail.status && selectedGroupForDetail.status !== 'active' && (
+                  <div className="p-6">
+                    <h4 className="text-xl font-bold text-gray-900 mb-6">상태</h4>
+                    <div className="inline-flex items-center">
+                      <span className={`inline-block px-4 py-2 text-base font-semibold rounded-lg ${
+                        selectedGroupForDetail.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                        selectedGroupForDetail.status === 'approved' ? 'bg-sky-100 text-sky-800 border border-sky-200' :
+                        selectedGroupForDetail.status === 'suspended' ? 'bg-red-100 text-red-800 border border-red-200' :
+                        'bg-red-100 text-red-800 border border-red-200'
+                      }`}>
+                        {selectedGroupForDetail.status === 'pending' ? '승인 대기' :
+                         selectedGroupForDetail.status === 'approved' ? '승인됨' :
+                         selectedGroupForDetail.status === 'suspended' ? '중지됨' : '반려됨'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 고정 푸터 - 액션 버튼들 */}
+          <div className="border-t border-gray-200 p-6 flex-shrink-0">
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={handleCloseDetailModal}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={handleEditFromDetail}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <PencilIcon className="h-4 w-4 mr-2 inline" />
+                수정하기
+              </button>
+            </div>
+          </div>
         </div>
       </Modal>
     </>

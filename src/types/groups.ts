@@ -1,6 +1,6 @@
 export type GroupType = "department" | "project" | "team";
 export type ExpenseStatus = "pending" | "approved" | "rejected" | "draft";
-export type GroupStatus = "pending" | "approved" | "rejected" | "active" | "archived";
+export type GroupStatus = "pending" | "approved" | "rejected" | "active" | "archived" | "suspended" | "budget_pending";
 export type CryptoCurrency = 'BTC' | 'ETH' | 'USDT' | 'USDC' | 'SOL';
 export type BudgetType = 'monthly' | 'quarterly' | 'yearly';
 

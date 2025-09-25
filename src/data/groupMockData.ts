@@ -31,6 +31,10 @@ export const mockGroups: WalletGroup[] = [
     manager: "9",
     createdAt: "2025-08-31",
     requiredApprovals: ["9", "2"],
+    approvals: [
+      { userId: "9", userName: "조운영", approvedAt: "2025-09-01T09:30:00Z" },
+      { userId: "2", userName: "한리스크", approvedAt: "2025-09-01T14:15:00Z" }
+    ],
   },
   {
     id: "2",
@@ -65,6 +69,11 @@ export const mockGroups: WalletGroup[] = [
     manager: "4",
     createdAt: "2025-08-31",
     requiredApprovals: ["3", "9", "2"],
+    approvals: [
+      { userId: "3", userName: "최관리", approvedAt: "2025-08-31T16:45:00Z" },
+      { userId: "9", userName: "조운영", approvedAt: "2025-09-01T08:20:00Z" },
+      { userId: "2", userName: "한리스크", approvedAt: "2025-09-01T10:30:00Z" }
+    ],
   },
   {
     id: "3",
@@ -103,6 +112,10 @@ export const mockGroups: WalletGroup[] = [
     manager: "3",
     createdAt: "2025-08-15",
     requiredApprovals: ["4", "2"],
+    approvals: [
+      { userId: "4", userName: "이기술", approvedAt: "2025-08-16T11:20:00Z" },
+      { userId: "2", userName: "한리스크", approvedAt: "2025-08-16T15:45:00Z" }
+    ],
   },
   {
     id: "4",
@@ -141,6 +154,49 @@ export const mockGroups: WalletGroup[] = [
     manager: "2",
     createdAt: "2025-08-20",
     requiredApprovals: ["2", "3"],
+    approvals: [
+      { userId: "2", userName: "한리스크", approvedAt: "2025-08-21T09:15:00Z" },
+      { userId: "3", userName: "최관리", approvedAt: "2025-08-21T13:40:00Z" }
+    ],
+  },
+  {
+    id: "5",
+    name: "솔라나 게임 프로젝트",
+    type: "project",
+    description: "일시 중지된 게임 개발 프로젝트 (SOL 기준 예산 관리)",
+    balance: { amount: 125.5, currency: 'SOL' },
+    monthlyBudget: { amount: 50, currency: 'SOL' },
+    quarterlyBudget: { amount: 150, currency: 'SOL' },
+    yearlyBudget: { amount: 600, currency: 'SOL' },
+    budgetUsed: { amount: 25.5, currency: 'SOL' },
+    quarterlyBudgetUsed: { amount: 75.5, currency: 'SOL' },
+    yearlyBudgetUsed: { amount: 225.5, currency: 'SOL' },
+    budgetSetup: {
+      year: 2025,
+      baseType: 'quarterly',
+      baseAmount: 150,
+      currency: 'SOL',
+      selectedQuarter: 3,
+      quarterlyBudgets: [{ quarter: 3, amount: 150 }],
+      monthlyBudgets: [
+        { month: 7, amount: 50 },
+        { month: 8, amount: 50 },
+        { month: 9, amount: 50 }
+      ],
+      remainingMonths: [7, 8, 9],
+      remainingQuarters: [3],
+      startDate: '2025-07-01',
+      endDate: '2025-09-30'
+    },
+    members: ["이기술", "조운영"],
+    manager: "4",
+    createdAt: "2025-07-01",
+    requiredApprovals: ["3", "9"],
+    approvals: [
+      { userId: "3", userName: "최관리", approvedAt: "2025-07-02T10:00:00Z" },
+      { userId: "9", userName: "조운영", approvedAt: "2025-07-02T14:25:00Z" }
+    ],
+    status: 'suspended'
   },
 ];
 
