@@ -1851,8 +1851,7 @@ export default function GroupManagement({
                               : selectedGroupForDetail.status ===
                                 "budget_pending"
                               ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                              : selectedGroupForDetail.status === "approved" ||
-                                selectedGroupForDetail.status === "active"
+                              : selectedGroupForDetail.status === "approved"
                               ? "bg-sky-100 text-sky-800 border border-sky-200"
                               : selectedGroupForDetail.status === "suspended"
                               ? "bg-gray-100 text-gray-800 border border-gray-200"
@@ -1863,8 +1862,7 @@ export default function GroupManagement({
                             ? "승인 대기"
                             : selectedGroupForDetail.status === "budget_pending"
                             ? "예산 수정 승인 대기"
-                            : selectedGroupForDetail.status === "approved" ||
-                              selectedGroupForDetail.status === "active"
+                            : selectedGroupForDetail.status === "approved"
                             ? "활성"
                             : selectedGroupForDetail.status === "suspended"
                             ? "중지됨"

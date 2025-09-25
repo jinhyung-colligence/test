@@ -6,6 +6,7 @@ import {
   formatDateTime,
   getStatusInfo,
 } from "@/utils/withdrawalHelpers";
+import { exportWithdrawalAuditToCsv } from "@/utils/csvExport";
 import { BlockchainInfo } from "./BlockchainInfo";
 
 interface AuditTabProps {
@@ -96,6 +97,12 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
 
   const paginatedData = getPaginatedAuditRequests();
 
+  // CSV 내보내기 핸들러
+  const handleCsvExport = () => {
+    const filteredRequests = getFilteredAuditRequests();
+    exportWithdrawalAuditToCsv(filteredRequests);
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -105,7 +112,8 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
               출금 감사 추적
             </h3>
             {/* 검색 및 필터 */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex flex-col sm:flex-row gap-4">
               {/* 검색 */}
               <div className="relative">
                 <input
@@ -158,6 +166,27 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                 <option value="month">최근 30일</option>
                 <option value="quarter">최근 3개월</option>
               </select>
+              </div>
+              {/* CSV 내보내기 버튼 */}
+              <button
+                onClick={handleCsvExport}
+                className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>CSV 내보내기</span>
+              </button>
             </div>
           </div>
         </div>
