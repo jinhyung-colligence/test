@@ -78,6 +78,14 @@ export interface WalletGroup {
   budgetSetup?: BudgetSetup;
   budgetPeriods?: BudgetPeriod[];
 
+  // Pending budget changes (for approval process)
+  pendingMonthlyBudget?: CryptoAmount;
+  pendingQuarterlyBudget?: CryptoAmount;
+  pendingYearlyBudget?: CryptoAmount;
+  pendingBudgetSetup?: BudgetSetup;
+  budgetModifiedAt?: string;
+  budgetModifiedBy?: string;
+
   members: string[];
   manager: string;
   createdAt: string;
