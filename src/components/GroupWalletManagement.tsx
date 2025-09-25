@@ -15,6 +15,7 @@ import {
   UserIcon,
   CogIcon,
   ArrowUpOnSquareIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -36,6 +37,7 @@ import GroupManagement from "@/components/groups/GroupManagement";
 import GroupApprovalTab from "@/components/groups/GroupApprovalTab";
 import BudgetStatus from "@/components/groups/BudgetStatus";
 import RejectedManagementTab from "@/components/groups/RejectedManagementTab";
+import GroupAuditTab from "@/components/groups/GroupAuditTab";
 import { CreateGroupWithdrawalModal } from "@/components/withdrawal/CreateGroupWithdrawalModal";
 import { networkAssets, whitelistedAddresses } from "@/data/mockWithdrawalData";
 import {
@@ -62,7 +64,8 @@ interface GroupWalletManagementProps {
     | "groups"
     | "approval"
     | "budget"
-    | "rejected";
+    | "rejected"
+    | "audit";
 }
 
 // 가상자산 아이콘 컴포넌트
@@ -148,7 +151,7 @@ export default function GroupWalletManagement({
     priority: "medium" as "low" | "medium" | "high" | "critical",
   });
   const [activeTab, setActiveTab] = useState<
-    "groups" | "approval" | "budget" | "rejected"
+    "groups" | "approval" | "budget" | "rejected" | "audit"
   >(initialTab || "groups");
 
   // 그룹 생성 요청 상태 관리 (localStorage와 동기화)
@@ -188,6 +191,7 @@ export default function GroupWalletManagement({
       | "approval"
       | "budget"
       | "rejected"
+      | "audit"
   ) => {
     setActiveTab(newTab);
     router.push(`/groups/${newTab}`);
@@ -292,6 +296,7 @@ export default function GroupWalletManagement({
               ).length,
             },
             { id: "budget", name: "예산 현황", icon: ChartBarIcon },
+            { id: "audit", name: "감사 추적", icon: DocumentTextIcon },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -380,6 +385,9 @@ export default function GroupWalletManagement({
           onArchive={handleArchiveRequest}
         />
       )}
+
+      {/* 감사 추적 탭 */}
+      {activeTab === "audit" && <GroupAuditTab />}
 
       {/* 출금 신청 모달 */}
       <CreateGroupWithdrawalModal

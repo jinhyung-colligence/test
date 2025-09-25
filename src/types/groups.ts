@@ -155,3 +155,44 @@ export interface ExpenseRequest {
     reason: string;
   }>;
 }
+
+// 그룹 감사 추적을 위한 타입 정의
+export type GroupAuditAction =
+  | 'CREATE'
+  | 'APPROVE'
+  | 'REJECT'
+  | 'MODIFY'
+  | 'BUDGET_MODIFY'
+  | 'SUSPEND'
+  | 'ARCHIVE'
+  | 'REAPPLY';
+
+export interface GroupAuditEntry {
+  id: string;
+  groupId: string;
+  groupName: string;
+  timestamp: string;
+  action: GroupAuditAction;
+  userId: string;
+  userName: string;
+  details?: string;
+  changes?: {
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }[];
+  metadata?: {
+    reason?: string;
+    ipAddress?: string;
+    approvers?: string[];
+  };
+}
+
+export interface GroupAuditTrail {
+  groupId: string;
+  groupName: string;
+  groupType: GroupType;
+  status: GroupStatus;
+  createdAt: string;
+  entries: GroupAuditEntry[];
+}
