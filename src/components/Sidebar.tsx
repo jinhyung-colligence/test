@@ -209,7 +209,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
     },
     {
       id: 'setting' as DashboardTab,
-      name: '회사 설정',
+      name: '설정 및 구독',
       icon: WrenchScrewdriverIcon,
       path: '/setting',
       available: user?.role === 'admin'

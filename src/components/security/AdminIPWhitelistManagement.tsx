@@ -161,8 +161,8 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
 
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
-      case 'single': return 'bg-blue-100 text-blue-800'
-      case 'range': return 'bg-green-100 text-green-800'
+      case 'single': return 'bg-sky-100 text-sky-800'
+      case 'range': return 'bg-indigo-100 text-indigo-800'
       case 'cidr': return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
     }
@@ -261,7 +261,7 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
                         className="flex items-center"
                       >
                         {entry.isActive ? (
-                          <EyeIcon className="h-5 w-5 text-green-600" title="활성화됨" />
+                          <EyeIcon className="h-5 w-5 text-sky-600" title="활성화됨" />
                         ) : (
                           <EyeSlashIcon className="h-5 w-5 text-gray-400" title="비활성화됨" />
                         )}
@@ -295,8 +295,8 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
                           onClick={() => handleToggleActive(entry.id)}
                           className={`text-sm px-2 py-1 rounded ${
                             entry.isActive
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              : 'bg-sky-100 text-sky-700 hover:bg-sky-200'
                           }`}
                         >
                           {entry.isActive ? '비활성화' : '활성화'}
@@ -326,12 +326,12 @@ export default function AdminIPWhitelistManagement({ isVisible, onClose }: Admin
         )}
 
         {/* 경고 메시지 */}
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
           <div className="flex items-start">
-            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+            <InformationCircleIcon className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-yellow-800 mb-1">관리자 접근 제어 주의사항</p>
-              <ul className="text-yellow-700 space-y-1 list-disc list-inside">
+              <p className="font-medium text-gray-800 mb-1">관리자 접근 제어 주의사항</p>
+              <ul className="text-gray-700 space-y-1 list-disc list-inside">
                 <li>모든 IP 대역을 삭제하면 관리자 접근이 불가능할 수 있습니다.</li>
                 <li>CIDR 표기법을 사용하여 네트워크 대역을 효율적으로 관리하세요.</li>
                 <li>VPN이나 프록시 서버 IP도 고려하여 설정하세요.</li>

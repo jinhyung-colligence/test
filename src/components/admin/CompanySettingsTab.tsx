@@ -10,7 +10,7 @@ import { useCompany } from "@/contexts/CompanyContext";
 import { CompanyBrandingForm, DomainSettingsForm } from "@/types/company";
 import { normalizeDomains } from "@/utils/emailValidation";
 
-export default function CompanySettings() {
+export default function CompanySettingsTab() {
   const { companySettings, updateCompanySettings } = useCompany();
 
   // 브랜딩 폼 상태
