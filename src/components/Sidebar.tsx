@@ -220,11 +220,10 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
       {/* Logo 영역 */}
-      <div className={`flex items-center justify-center h-20 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+      <div className={`flex items-center h-20 ${isCollapsed ? 'justify-center px-2' : 'px-4'}`}>
         <Logo
           showText={!isCollapsed}
           size={isCollapsed ? 'sm' : 'md'}
-          className={isCollapsed ? 'justify-center' : ''}
         />
       </div>
 

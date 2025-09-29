@@ -25,9 +25,9 @@ export default function Logo({ className = '', showText = true, size = 'md' }: L
 
   // 회사 설정에서 브랜딩 정보 가져오기
   const companyName = companySettings.companyName || t('header.title');
-  const companySubtitle = companySettings.companySubtitle || t('header.subtitle');
+  const companySubtitle = companySettings.companySubtitle || '';
   const logoUrl = companySettings.logoUrl;
-  const logoText = companySettings.logoText || companyName.charAt(0) || 'A';
+  const logoText = companySettings.logoText || (companySettings.companyName ? companySettings.companyName.charAt(0) : t('header.title').charAt(0));
 
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
@@ -53,7 +53,7 @@ export default function Logo({ className = '', showText = true, size = 'md' }: L
           <h1 className={`${textSizeClasses[size]} font-bold text-gray-900 leading-tight`}>
             {companyName}
           </h1>
-          {size !== 'sm' && companySubtitle && (
+          {size !== 'sm' && companySubtitle && companySubtitle.trim() && (
             <p className="text-sm text-gray-600 leading-tight">
               {companySubtitle}
             </p>
