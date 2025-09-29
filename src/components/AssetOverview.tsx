@@ -29,7 +29,7 @@ interface AssetOverviewProps {
 export default function AssetOverview({ plan }: AssetOverviewProps) {
   const [showBalances, setShowBalances] = useState(true)
   const [selectedAssetIndex, setSelectedAssetIndex] = useState(0)
-  const [activeWalletTab, setActiveWalletTab] = useState<'all' | 'hot' | 'cold'>('all')
+  // 탭 기능 제거 - All 데이터만 사용
   const [timePeriod, setTimePeriod] = useState<'hour' | 'day' | 'month'>('month')
   const { t, language } = useLanguage()
   const router = useRouter()
@@ -84,40 +84,16 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
 
   const chartData = getChartData(timePeriod)
 
-  // 지갑 유형별 자산 데이터 (색상은 고정)
-  const getWalletData = (type: 'all' | 'hot' | 'cold') => {
-    const colors = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'] // 고정된 색상
-    
-    switch (type) {
-      case 'all':
-        return mockAssets.map((asset, index) => ({
-          name: asset.symbol,
-          value: asset.value,
-          color: colors[index]
-        }))
-      case 'hot':
-        return mockAssets.map((asset, index) => ({
-          name: asset.symbol,
-          value: asset.value * 0.2, // 20%
-          color: colors[index]
-        }))
-      case 'cold':
-        return mockAssets.map((asset, index) => ({
-          name: asset.symbol,
-          value: asset.value * 0.8, // 80%
-          color: colors[index]
-        }))
-    }
-  }
+  // 자산 데이터 (All 데이터만 사용)
+  const colors = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b'] // 고정된 색상
+  const pieData = mockAssets.map((asset, index) => ({
+    name: asset.symbol,
+    value: asset.value,
+    color: colors[index]
+  }))
 
-  const pieData = getWalletData(activeWalletTab)
-
-  // 현재 탭에 따른 총 자산 가치 계산
-  const getCurrentTotalValue = () => {
-    return pieData.reduce((sum, item) => sum + item.value, 0)
-  }
-
-  const totalValue = getCurrentTotalValue()
+  // 총 자산 가치 계산
+  const totalValue = pieData.reduce((sum, item) => sum + item.value, 0)
   const selectedAsset = pieData[selectedAssetIndex]
   const selectedPercentage = selectedAsset ? ((selectedAsset.value / totalValue) * 100).toFixed(1) : '0'
 
@@ -384,31 +360,9 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('overview.asset_distribution')}</h3>
-              
-              {/* 지갑 유형 탭을 제목 아래로 이동 */}
-              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-                {[
-                  { id: 'all', name: 'All', desc: '전체 자산' },
-                  { id: 'hot', name: 'Hot', desc: '온라인 지갑 (20%)' },
-                  { id: 'cold', name: 'Cold', desc: '오프라인 지갑 (80%)' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveWalletTab(tab.id as typeof activeWalletTab)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                      activeWalletTab === tab.id
-                        ? 'bg-white text-primary-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    title={tab.desc}
-                  >
-                    {tab.name}
-                  </button>
-                ))}
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900">{t('overview.asset_distribution')}</h3>
             </div>
-            
+
             {/* 전체 자산을 오른쪽 위에 심플하게 배치 */}
             <div className="text-right">
               <div className="text-2xl font-bold text-gray-900">
@@ -497,17 +451,6 @@ export default function AssetOverview({ plan }: AssetOverviewProps) {
             </div>
           </div>
 
-          {/* 알림 메시지 */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <svg className="w-4 h-4 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm text-blue-800">
-                "All, Hot, Cold"는 나중에 ABC 관리자 에서 노출할 예정이며, 기업용 관리자 대시보드에서는 All 하나만 노출 예정입니다.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

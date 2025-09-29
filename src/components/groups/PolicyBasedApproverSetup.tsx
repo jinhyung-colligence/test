@@ -80,8 +80,9 @@ export default function PolicyBasedApproverSetup({
         setCurrentBudgetAmount(budgetAmount);
 
         // 자동 설정된 결재자로 초기화 (사용자 정의 모드가 아닌 경우에만)
-        if (!showCustomization || !policyMatch) {
+        if (!showCustomization) {
           const approverIds = selectDynamicApprovers(budgetAmount, currency);
+          console.log('자동 선택된 결재자 IDs:', approverIds);
           setCustomApprovers(approverIds);
           onApproversChange(approverIds);
         }
