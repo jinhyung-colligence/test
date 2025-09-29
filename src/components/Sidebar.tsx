@@ -13,8 +13,6 @@ import {
   UserGroupIcon,
   ArrowUpOnSquareIcon,
   ArrowDownOnSquareIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
@@ -24,6 +22,7 @@ import { DashboardTab } from '@/types/dashboard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { useAuth } from '@/contexts/AuthContext'
+import Logo from './Logo'
 
 interface SidebarProps {
   plan: ServicePlan
@@ -217,69 +216,19 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
   ]
 
   return (
-    <div className={`fixed left-0 top-16 bottom-0 bg-white shadow-sm border-r border-gray-200 flex flex-col z-40 transition-all duration-300 ${
+    <div className={`fixed left-0 top-0 bottom-0 bg-white shadow-sm border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
-      {/* Toggle Button */}
-      <div className="absolute -right-3 top-10 z-50">
-        <button
-          onClick={toggleSidebar}
-          className="bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:bg-gray-50 transition-colors"
-        >
-          {isCollapsed ? (
-            <ChevronRightIcon className="h-4 w-4 text-gray-600" />
-          ) : (
-            <ChevronLeftIcon className="h-4 w-4 text-gray-600" />
-          )}
-        </button>
+      {/* Logo 영역 */}
+      <div className={`flex items-center justify-center h-20 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        <Logo
+          showText={!isCollapsed}
+          size={isCollapsed ? 'sm' : 'md'}
+          className={isCollapsed ? 'justify-center' : ''}
+        />
       </div>
 
-      <div className={`pt-10 px-6 pb-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
-        <button
-          onClick={() => !isCollapsed && setShowPlanDropdown(!showPlanDropdown)}
-          className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
-        >
-          <div className="flex items-center">
-            <PlanIcon className={`h-8 w-8 ${isCollapsed ? '' : 'mr-3'}`} />
-            {!isCollapsed && (
-              <div>
-                <p className="font-semibold text-sm">{planInfo.name}</p>
-              </div>
-            )}
-          </div>
-          {!isCollapsed && (
-            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
-          )}
-        </button>
-
-        {/* Plan Dropdown */}
-        {showPlanDropdown && !isCollapsed && (
-          <div className="absolute top-full left-6 right-6 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-            {allPlans.map((planOption) => {
-              const OptionIcon = planOption.icon
-              return (
-                <button
-                  key={planOption.id}
-                  onClick={() => handlePlanSelect(planOption.id)}
-                  className={`w-full flex items-center p-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                    plan === planOption.id ? 'bg-gray-50' : ''
-                  }`}
-                >
-                  <OptionIcon className="h-6 w-6 mr-3 text-gray-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-sm text-gray-900">{planOption.name}</p>
-                    {plan === planOption.id && (
-                      <p className="text-xs text-primary-600">{t('plan.active')}</p>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      <nav className={`flex-1 flex flex-col ${isCollapsed ? 'px-2' : 'px-4'}`}>
+      <nav className={`flex-1 flex flex-col ${isCollapsed ? 'px-2' : 'px-4'} pt-6`}>
         <ul className="space-y-1">
           {menuItems.map((item) => {
             if (!item.available) return null
@@ -315,8 +264,61 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
             )
           })}
         </ul>
-
       </nav>
+
+      {/* 버전 정보 */}
+      {!isCollapsed && (
+        <div className="px-4 pb-2">
+          <div className="text-xs text-gray-400 text-center">
+            v.1.0.0
+          </div>
+        </div>
+      )}
+
+      <div className={`px-6 pb-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
+        <button
+          onClick={() => !isCollapsed && setShowPlanDropdown(!showPlanDropdown)}
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 rounded-lg transition-colors hover:opacity-90 ${planInfo.color}`}
+        >
+          <div className="flex items-center">
+            <PlanIcon className={`h-8 w-8 ${isCollapsed ? '' : 'mr-3'}`} />
+            {!isCollapsed && (
+              <div>
+                <p className="font-semibold text-sm">{planInfo.name}</p>
+              </div>
+            )}
+          </div>
+          {!isCollapsed && (
+            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showPlanDropdown ? 'rotate-180' : ''}`} />
+          )}
+        </button>
+
+        {/* Plan Dropdown */}
+        {showPlanDropdown && !isCollapsed && (
+          <div className="absolute bottom-full left-6 right-6 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            {allPlans.map((planOption) => {
+              const OptionIcon = planOption.icon
+              return (
+                <button
+                  key={planOption.id}
+                  onClick={() => handlePlanSelect(planOption.id)}
+                  className={`w-full flex items-center p-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                    plan === planOption.id ? 'bg-gray-50' : ''
+                  }`}
+                >
+                  <OptionIcon className="h-6 w-6 mr-3 text-gray-600" />
+                  <div className="text-left">
+                    <p className="font-medium text-sm text-gray-900">{planOption.name}</p>
+                    {plan === planOption.id && (
+                      <p className="text-xs text-primary-600">{t('plan.active')}</p>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

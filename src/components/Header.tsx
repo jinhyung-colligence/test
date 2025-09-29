@@ -6,15 +6,17 @@ import {
   ClockIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 import LanguageToggle from "./LanguageToggle";
-import Logo from "./Logo";
 
 export default function Header() {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
+  const { toggleSidebar, isCollapsed } = useSidebar();
   const [sessionTime, setSessionTime] = useState(1800); // 30분 = 1800초
   const [showExtensionModal, setShowExtensionModal] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -64,10 +66,19 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Logo />
+      <header className={`fixed top-0 right-0 z-30 bg-white shadow-sm border-b border-gray-200 h-20 transition-all duration-300 ${
+        isCollapsed ? 'left-16' : 'left-64'
+      }`}>
+        <div className="px-4 h-full flex items-center">
+          <div className="w-full flex items-center justify-between">
+            {/* 햄버거 메뉴 버튼 */}
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="메뉴 토글"
+            >
+              <Bars3Icon className="h-5 w-5 text-gray-600" />
+            </button>
 
             <div className="flex items-center space-x-4">
               {/* 세션 타이머 */}

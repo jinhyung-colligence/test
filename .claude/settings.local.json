@@ -48,7 +48,8 @@
       "WebSearch",
       "Bash(timeout 30s npx next build --debug)",
       "Bash(npx:*)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "WebFetch(domain:themewagon.github.io)"
     ],
     "deny": [],
     "ask": []
