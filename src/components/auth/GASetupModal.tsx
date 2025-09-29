@@ -104,10 +104,10 @@ export default function GASetupModal({
           <div className="flex items-start">
             <ShieldCheckIcon className="h-5 w-5 text-sky-600 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-sky-800">
+              <p className="text-sm font-medium text-slate-700">
                 보안 강화를 위해 Google Authenticator 설정이 필요합니다
               </p>
-              <p className="text-sm text-sky-700 mt-1">
+              <p className="text-sm text-slate-600 mt-1">
                 설정 완료 후 대시보드에 접근할 수 있습니다.
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function GASetupModal({
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 1단계: QR 코드 스캔
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-500">
                 Google Authenticator 앱으로 아래 QR 코드를 스캔하세요
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function GASetupModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-900">수동 입력</p>
-                  <p className="text-sm text-gray-600">QR 코드를 스캔할 수 없는 경우</p>
+                  <p className="text-sm text-slate-500">QR 코드를 스캔할 수 없는 경우</p>
                 </div>
                 <button
                   onClick={copySecretKey}
@@ -176,7 +176,7 @@ export default function GASetupModal({
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 2단계: 인증번호 확인
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-500">
                 Google Authenticator 앱에 표시된 6자리 인증번호를 입력하세요
               </p>
             </div>
@@ -197,11 +197,11 @@ export default function GASetupModal({
                 />
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
                 <div className="flex items-start">
-                  <InformationCircleIcon className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" />
-                  <p className="text-sm text-yellow-800">
-                    테스트용으로 <code className="font-mono bg-yellow-100 px-1 rounded">123456</code>을 입력하세요.
+                  <InformationCircleIcon className="h-5 w-5 text-slate-500 mr-2 flex-shrink-0" />
+                  <p className="text-sm text-slate-600">
+                    테스트용으로 <code className="font-mono bg-slate-100 px-1 rounded text-slate-700">123456</code>을 입력하세요.
                   </p>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function GASetupModal({
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 설정 완료!
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-500">
                 백업 코드를 안전한 곳에 저장하세요
               </p>
             </div>
@@ -241,10 +241,10 @@ export default function GASetupModal({
               <div className="flex items-start">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-red-800 mb-1">
+                  <p className="text-sm font-medium text-rose-700 mb-1">
                     중요: 백업 코드 보관
                   </p>
-                  <p className="text-sm text-red-700">
+                  <p className="text-sm text-rose-600">
                     기기를 분실했을 때 이 코드로 계정에 접근할 수 있습니다.
                     안전한 곳에 보관하고 타인과 공유하지 마세요.
                   </p>
