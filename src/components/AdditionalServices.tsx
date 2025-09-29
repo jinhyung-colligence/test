@@ -21,6 +21,7 @@ import { mockConnectedAccounts } from "@/data/mockAccounts";
 import { RepaymentModal } from "./lending/RepaymentModal";
 import { AddCollateralModal } from "./lending/AddCollateralModal";
 import { RepaymentRequest, CollateralAddition } from "./lending/types";
+import LoanApplicationButton from "./lending/LoanApplicationButton";
 
 interface AdditionalServicesProps {
   plan: ServicePlan;
@@ -146,6 +147,13 @@ export default function AdditionalServices({
   const handleCollateralClick = (loan: BankLoan) => {
     setSelectedLoan(loan);
     setCollateralModalOpen(true);
+  };
+
+  // 대출 신청 핸들러
+  const handleLoanApplication = (product: BankLoanProduct) => {
+    console.log("대출 신청:", product);
+    // 대출 신청 모달을 열거나 신청 페이지로 이동
+    alert(`${product.productName} 신청을 시작합니다.`);
   };
 
   const handleRepaymentSubmit = (request: RepaymentRequest) => {
@@ -880,16 +888,12 @@ export default function AdditionalServices({
                       </span>
                     </td>
                     <td className="px-3 md:px-6 py-4 whitespace-nowrap">
-                      <button
-                        className={`px-2 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
-                          hasJeonbukAccount
-                            ? "bg-primary-600 text-white hover:bg-primary-700"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        }`}
-                        disabled={!hasJeonbukAccount}
-                      >
-                        {hasJeonbukAccount ? "신청" : "계좌필요"}
-                      </button>
+                      <LoanApplicationButton
+                        product={product}
+                        hasJeonbukAccount={hasJeonbukAccount}
+                        availableCollateral={availableCollateral}
+                        onApplicationClick={handleLoanApplication}
+                      />
                     </td>
                   </tr>
                 ))}
