@@ -275,6 +275,8 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         </div>
       )}
 
+      {/* 기업용 커스터디 플랜 드롭다운 UI - 주석처리 */}
+      {/*
       <div className={`px-6 pb-6 relative plan-dropdown-container ${isCollapsed ? 'px-3' : ''}`}>
         <button
           onClick={() => !isCollapsed && setShowPlanDropdown(!showPlanDropdown)}
@@ -294,6 +296,7 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
         </button>
 
         {/* Plan Dropdown */}
+        {/*
         {showPlanDropdown && !isCollapsed && (
           <div className="absolute bottom-full left-6 right-6 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
             {allPlans.map((planOption) => {
@@ -318,7 +321,10 @@ export default function Sidebar({ plan, activeTab, onTabChange, onPlanChange }: 
             })}
           </div>
         )}
+        */}
+      {/*
       </div>
+      */}
     </div>
   )
 }
