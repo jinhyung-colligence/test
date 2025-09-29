@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: '관리자',
     email: 'admin@company.com',
     department: 'IT 보안팀',
+    position: '관리자',
     phone: '010-1234-5678',
     role: 'admin',
     status: 'active',

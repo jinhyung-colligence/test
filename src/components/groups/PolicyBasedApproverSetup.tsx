@@ -8,12 +8,12 @@ import { CryptoCurrency } from "@/types/groups";
 import { User, ROLE_NAMES } from "@/types/user";
 import { MOCK_USERS } from "@/data/userMockData";
 import {
-  matchPolicyByBudget,
-  PolicyMatchResult,
+  selectApproversByPolicy,
   formatCurrencyKRW,
   getRiskLevelColor,
-  shouldRematchPolicy
-} from "@/utils/policyMatcher";
+  convertToKRW
+} from "@/utils/dynamicApproverSelector";
+import { PolicyMatchResult } from "@/types/approval";
 
 interface PolicyBasedApproverSetupProps {
   budgetAmount: number;
@@ -35,7 +35,7 @@ export default function PolicyBasedApproverSetup({
   const [policyMatch, setPolicyMatch] = useState<PolicyMatchResult | null>(null);
   const [customApprovers, setCustomApprovers] = useState<string[]>([]);
   const [showCustomization, setShowCustomization] = useState(false);
-  const [currentPolicyId, setCurrentPolicyId] = useState<string | undefined>();
+  const [currentBudgetAmount, setCurrentBudgetAmount] = useState<number>(0);
 
   // 결재자로 선택 가능한 사용자 필터링
   const getEligibleApprovers = (excludeCurrentSelection: boolean = true) => {
@@ -52,40 +52,47 @@ export default function PolicyBasedApproverSetup({
     );
   };
 
-  // 결재자 이름을 사용자 ID로 매핑하는 함수
-  const mapApproverNamesToIds = (approverNames: string[]): string[] => {
-    return approverNames.map(name => {
-      const user = MOCK_USERS.find(user => user.name === name);
-      return user ? user.id : "";
-    }).filter(id => id !== "");
+  // 동적 결재자 선택 함수 (새로운 시스템 사용)
+  const selectDynamicApprovers = (amount: number, curr: CryptoCurrency): string[] => {
+    const result = selectApproversByPolicy(amount, curr);
+    return result.selectedApprovers.map(approver => approver.userId);
   };
 
   // 예산이 변경될 때마다 정책 매칭
   useEffect(() => {
     if (budgetAmount > 0) {
-      // 기존 정책에서 변경이 필요한지 확인
-      const needsRematch = shouldRematchPolicy(currentPolicyId, budgetAmount, currency);
+      // 예산 변경 감지
+      const needsUpdate = budgetAmount !== currentBudgetAmount || !policyMatch;
 
-      if (needsRematch || !policyMatch) {
-        const match = matchPolicyByBudget(budgetAmount, currency);
-        setPolicyMatch(match);
-        setCurrentPolicyId(match.policyId);
+      if (needsUpdate) {
+        const result = selectApproversByPolicy(budgetAmount, currency);
+
+        // PolicyMatchResult 형태로 변환
+        const krwAmount = convertToKRW(budgetAmount, currency);
+        const matchResult: PolicyMatchResult = {
+          policy: result.policy,
+          selectedApprovers: result.selectedApprovers,
+          missingRequirements: result.missingRequirements,
+          warnings: result.warnings
+        };
+
+        setPolicyMatch(matchResult);
+        setCurrentBudgetAmount(budgetAmount);
 
         // 자동 설정된 결재자로 초기화 (사용자 정의 모드가 아닌 경우에만)
         if (!showCustomization || !policyMatch) {
-          // 결재자 이름을 사용자 ID로 변환
-          const approverIds = mapApproverNamesToIds(match.requiredApprovers);
+          const approverIds = selectDynamicApprovers(budgetAmount, currency);
           setCustomApprovers(approverIds);
           onApproversChange(approverIds);
         }
       }
     } else {
       setPolicyMatch(null);
-      setCurrentPolicyId(undefined);
+      setCurrentBudgetAmount(0);
       setCustomApprovers([]);
       onApproversChange([]);
     }
-  }, [budgetAmount, currency, onApproversChange, showCustomization, policyMatch, currentPolicyId]);
+  }, [budgetAmount, currency, onApproversChange, showCustomization, policyMatch, currentBudgetAmount]);
 
   // 결재자 변경 핸들러
   const handleApproverChange = (index: number, userId: string) => {
@@ -115,7 +122,7 @@ export default function PolicyBasedApproverSetup({
     if (showCustomization) {
       // 기본값으로 되돌리기
       if (policyMatch) {
-        const approverIds = mapApproverNamesToIds(policyMatch.requiredApprovers);
+        const approverIds = selectDynamicApprovers(budgetAmount, currency);
         setCustomApprovers(approverIds);
         onApproversChange(approverIds);
       }
@@ -130,8 +137,8 @@ export default function PolicyBasedApproverSetup({
   const isPolicyBasedApprover = (approverId: string): boolean => {
     if (showCustomization || !policyMatch) return false;
 
-    // 정책의 결재자 이름을 ID로 변환하여 비교
-    const policyApproverIds = mapApproverNamesToIds(policyMatch.requiredApprovers);
+    // 동적으로 선택된 결재자 ID 목록과 비교
+    const policyApproverIds = policyMatch.selectedApprovers.map(approver => approver.userId);
     return policyApproverIds.includes(approverId);
   };
 
@@ -139,7 +146,7 @@ export default function PolicyBasedApproverSetup({
   const isPolicyMismatched = (): boolean => {
     if (!policyMatch || !showCustomization) return false;
     const validApprovers = customApprovers.filter(id => id !== "");
-    return validApprovers.length !== policyMatch.requiredApprovers.length;
+    return validApprovers.length !== policyMatch.selectedApprovers.length;
   };
 
   // 정책 매칭이 안된 경우 처리
@@ -190,14 +197,19 @@ export default function PolicyBasedApproverSetup({
               정책 기반 자동 설정
             </h4>
             <div className="mt-1 text-sm text-blue-600 space-y-1">
-              <p>예산 금액: <span className="font-medium">{formatCurrencyKRW(policyMatch.budgetAmountKRW)}</span></p>
-              <p>적용 정책: <span className="font-medium">{policyMatch.matchedPolicy?.description}</span></p>
+              <p>예산 금액: <span className="font-medium">{formatCurrencyKRW(convertToKRW(budgetAmount, currency))}</span></p>
+              <p>적용 정책: <span className="font-medium">{policyMatch.policy?.description}</span></p>
               <p>
-                위험도: <span className={`font-medium ${getRiskLevelColor(policyMatch.riskLevel)}`}>
-                  {policyMatch.riskLevel}
+                위험도: <span className={`font-medium ${getRiskLevelColor(policyMatch.policy?.riskLevel || 'low')}`}>
+                  {policyMatch.policy?.riskLevel || 'low'}
                 </span>
-                (필요 결재자 {policyMatch.requiredApprovers.length}명)
+                (필요 결재자 {policyMatch.selectedApprovers.length}명)
               </p>
+              {policyMatch.warnings.length > 0 && (
+                <div className="text-yellow-600 text-xs">
+                  경고: {policyMatch.warnings.join(', ')}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -210,7 +222,7 @@ export default function PolicyBasedApproverSetup({
             필수 결재자
             {policyMatch && (
               <span className="text-gray-500 font-normal">
-                (정책 기준 {policyMatch.requiredApprovers.length}명)
+                (정책 기준 {policyMatch.selectedApprovers.length}명)
               </span>
             )}
           </label>
@@ -297,7 +309,7 @@ export default function PolicyBasedApproverSetup({
             </svg>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                <span className="font-medium">정책 불일치:</span> 정책 권장 결재자 수({policyMatch.requiredApprovers.length}명)와 다릅니다.
+                <span className="font-medium">정책 불일치:</span> 정책 권장 결재자 수({policyMatch.selectedApprovers.length}명)와 다릅니다.
                 현재: {customApprovers.filter(id => id).length}명
               </p>
               <p className="text-xs text-yellow-600 mt-1">
@@ -316,26 +328,28 @@ export default function PolicyBasedApproverSetup({
         <div className="mt-2 p-3 bg-gray-50 rounded-lg space-y-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-gray-600">정책 ID:</span>
-              <span className="ml-2 font-mono text-xs">{policyMatch.policyId}</span>
+              <span className="text-gray-600">위험도 등급:</span>
+              <span className={`ml-2 font-medium ${getRiskLevelColor(policyMatch.policy?.riskLevel || 'low')}`}>
+                {policyMatch.policy?.riskLevel || 'low'}
+              </span>
             </div>
             <div>
               <span className="text-gray-600">환산 비율:</span>
-              <span className="ml-2">{budgetAmount} {currency} → {formatCurrencyKRW(policyMatch.budgetAmountKRW)}</span>
+              <span className="ml-2">{budgetAmount} {currency} → {formatCurrencyKRW(convertToKRW(budgetAmount, currency))}</span>
             </div>
           </div>
           <div>
             <span className="text-gray-600">정책 범위:</span>
             <span className="ml-2">
-              {formatCurrencyKRW(policyMatch.matchedPolicy?.minAmount || 0)} ~ {formatCurrencyKRW(policyMatch.matchedPolicy?.maxAmount || 0)}
+              {formatCurrencyKRW(policyMatch.policy?.minAmount || 0)} ~ {formatCurrencyKRW(policyMatch.policy?.maxAmount || 0)}
             </span>
           </div>
           <div>
             <span className="text-gray-600">정책 기반 결재자:</span>
             <div className="ml-2 mt-1">
-              {policyMatch.requiredApprovers.map((approver, index) => (
-                <span key={index} className="inline-block mr-2 mb-1 px-2 py-1 bg-gray-200 rounded text-xs">
-                  {index + 1}. {approver}
+              {policyMatch.selectedApprovers.map((approver, index) => (
+                <span key={approver.userId} className="inline-block mr-2 mb-1 px-2 py-1 bg-gray-200 rounded text-xs">
+                  {index + 1}. {approver.userName} ({approver.department})
                 </span>
               ))}
             </div>

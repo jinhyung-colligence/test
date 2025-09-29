@@ -10,8 +10,8 @@ export interface User {
   status: UserStatus;
   lastLogin: string;
   permissions: string[];
-  department?: string;
-  position?: string;
+  department: string;
+  position: string;
 }
 
 // 5개 권한 카테고리별 권한 정의
