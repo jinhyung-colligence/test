@@ -90,7 +90,7 @@ const translations = {
     "plan.enterprise.features.0": "키 분산 저장",
     "plan.enterprise.features.1": "다중 승인",
     "plan.enterprise.features.2": "감사 대응",
-    "plan.enterprise.features.3": "렌딩 서비스",
+    "plan.enterprise.features.3": "대출 서비스",
     "plan.enterprise.features.4": "원화 출금",
     "plan.enterprise.features.5": "외부 감사 대응",
     "plan.enterprise.features.6": "전용 포털 (웹)",
@@ -100,7 +100,7 @@ const translations = {
     "plan.premium.pricing": "월 구독료 + 서비스 수수료",
     "plan.premium.features.0": "정책 기반 출금",
     "plan.premium.features.1": "트랜잭션 정책 설정",
-    "plan.premium.features.2": "렌딩 서비스",
+    "plan.premium.features.2": "대출 서비스",
     "plan.premium.features.3": "OTC 연동",
     "plan.premium.features.4": "세무 리포트",
     "plan.premium.features.5": "모바일/웹 포털",
@@ -126,7 +126,7 @@ const translations = {
     "transaction.type.deposit": "입금",
     "transaction.type.withdrawal": "출금",
     "transaction.type.swap": "교환",
-    "transaction.type.lending": "렌딩",
+    "transaction.type.lending": "대출",
     "transaction.type.staking": "스테이킹",
 
     // Transaction Status

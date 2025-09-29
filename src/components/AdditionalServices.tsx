@@ -257,13 +257,13 @@ export default function AdditionalServices({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">렌딩 서비스</h2>
+          <h2 className="text-2xl font-bold text-gray-900">대출 서비스</h2>
           <p className="text-gray-600">
             자산을 대출하여 이자 수익을 창출하세요
           </p>
         </div>
         <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-          <PlusIcon className="h-5 w-5 mr-2" />새 렌딩
+          <PlusIcon className="h-5 w-5 mr-2" />새 대출
         </button>
       </div>
 
@@ -271,7 +271,7 @@ export default function AdditionalServices({
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">총 렌딩 자산</p>
+              <p className="text-gray-600 text-sm font-medium">총 대출 자산</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
                 {formatCurrency(75000 * 1300)}
               </p>
@@ -307,7 +307,7 @@ export default function AdditionalServices({
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">렌딩 포지션</h3>
+          <h3 className="text-lg font-semibold text-gray-900">대출 포지션</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -786,7 +786,7 @@ export default function AdditionalServices({
 
   const tabs = [
     { id: "staking", name: "스테이킹", icon: ChartBarIcon },
-    { id: "lending", name: "렌딩", icon: BanknotesIcon },
+    { id: "lending", name: "대출", icon: BanknotesIcon },
     { id: "swap", name: "교환", icon: ArrowsRightLeftIcon },
     { id: "krw", name: "구매 대행", icon: CurrencyDollarIcon },
   ];
