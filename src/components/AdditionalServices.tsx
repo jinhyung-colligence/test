@@ -210,12 +210,12 @@ export default function AdditionalServices({
     },
   ];
 
-  // 헬스팩터 레벨 정의
+  // 헬스팩터 레벨 정의 (눈의 피로를 줄이는 부드러운 색상)
   const healthFactorLevels: HealthFactorLevel[] = [
-    { min: 1.5, max: Infinity, status: "safe", color: "text-green-600", bgColor: "bg-green-50", label: "안전" },
-    { min: 1.2, max: 1.5, status: "warning", color: "text-yellow-600", bgColor: "bg-yellow-50", label: "주의" },
+    { min: 1.5, max: Infinity, status: "safe", color: "text-sky-600", bgColor: "bg-sky-50", label: "안전" },
+    { min: 1.2, max: 1.5, status: "warning", color: "text-amber-600", bgColor: "bg-amber-50", label: "주의" },
     { min: 1.0, max: 1.2, status: "danger", color: "text-orange-600", bgColor: "bg-orange-50", label: "위험" },
-    { min: 0, max: 1.0, status: "liquidation", color: "text-red-600", bgColor: "bg-red-50", label: "청산" }
+    { min: 0, max: 1.0, status: "liquidation", color: "text-rose-600", bgColor: "bg-rose-50", label: "청산" }
   ];
 
   // 전북은행 대출 상품 목록
@@ -750,13 +750,31 @@ export default function AdditionalServices({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">평균 헬스팩터</p>
-                <p className={`text-2xl font-bold mt-1 ${
-                  averageHealthFactor >= 1.5 ? 'text-green-600' :
-                  averageHealthFactor >= 1.2 ? 'text-yellow-600' :
-                  averageHealthFactor >= 1.0 ? 'text-orange-600' : 'text-red-600'
-                }`}>
-                  {averageHealthFactor.toFixed(2)}
-                </p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <p className={`text-2xl font-bold ${
+                    averageHealthFactor >= 1.5 ? 'text-green-600' :
+                    averageHealthFactor >= 1.2 ? 'text-yellow-600' :
+                    averageHealthFactor >= 1.0 ? 'text-orange-600' : 'text-red-600'
+                  }`}>
+                    {averageHealthFactor.toFixed(2)}
+                  </p>
+                  <div className="relative group">
+                    <InformationCircleIcon className={`h-5 w-5 cursor-help ${
+                      averageHealthFactor >= 1.5 ? 'text-green-600' :
+                      averageHealthFactor >= 1.2 ? 'text-yellow-600' :
+                      averageHealthFactor >= 1.0 ? 'text-orange-600' : 'text-red-600'
+                    }`} />
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      <div className="space-y-1">
+                        <div>안전: 1.5 이상</div>
+                        <div>주의: 1.2~1.5</div>
+                        <div>위험: 1.0~1.2</div>
+                        <div>청산: 1.0 미만</div>
+                      </div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
                 averageHealthFactor >= 1.5 ? 'bg-green-600' :
