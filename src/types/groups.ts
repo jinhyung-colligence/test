@@ -37,6 +37,15 @@ export interface QuarterlyBudget {
   amount: number;
 }
 
+export interface PolicyMatchInfo {
+  matchedPolicyId?: string;
+  budgetAmountKRW: number;
+  riskLevel: string;
+  autoAssignedApprovers: string[];
+  customApprovers?: string[];
+  isCustomized: boolean;
+}
+
 export interface BudgetSetup {
   year: number;
   baseType: 'yearly' | 'quarterly' | 'monthly'; // 기준 예산 타입
@@ -85,6 +94,9 @@ export interface WalletGroup {
   pendingBudgetSetup?: BudgetSetup;
   budgetModifiedAt?: string;
   budgetModifiedBy?: string;
+
+  // Policy-based approver assignment
+  policyMatchInfo?: PolicyMatchInfo;
 
   members: string[];
   manager: string;

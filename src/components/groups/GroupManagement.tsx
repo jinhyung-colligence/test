@@ -26,6 +26,7 @@ import { mockGroups } from "@/data/groupMockData";
 import { MOCK_USERS } from "@/data/userMockData";
 import BudgetSetupForm from "./BudgetSetupForm";
 import BudgetDistribution from "./BudgetDistribution";
+import PolicyBasedApproverSetup from "./PolicyBasedApproverSetup";
 import {
   getCryptoIconUrl,
   getCurrencyDecimals,
@@ -386,9 +387,16 @@ export default function GroupManagement({
       return basicFieldsValid;
     }
 
-    // 생성 모드일 때는 관리자와 결재자 필수
+    // 생성 모드일 때는 관리자, 예산, 결재자 필수
+    // 예산이 설정된 경우에만 결재자가 자동으로 설정됨
+    const hasValidBudget = newGroup.budgetSetup && newGroup.budgetSetup.baseAmount > 0;
+    const hasValidApprovers = hasValidBudget ? validApprovers.length > 0 : false;
+
     return (
-      basicFieldsValid && newGroup.manager !== "" && validApprovers.length > 0
+      basicFieldsValid &&
+      newGroup.manager !== "" &&
+      !!hasValidBudget &&
+      hasValidApprovers
     );
   };
 
@@ -1345,96 +1353,14 @@ export default function GroupManagement({
                 </select>
               </div>
 
-              {/* 필수 결재자 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  필수 결재자 *
-                </label>
-                <div className="space-y-2">
-                  {requiredApprovers.map((approverId, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500 w-6">
-                        {index + 1}.
-                      </span>
-                      <select
-                        value={approverId}
-                        onChange={(e) =>
-                          handleApproverChange(index, e.target.value)
-                        }
-                        disabled={isEditMode}
-                        className={`flex-1 px-3 py-2 border border-gray-300 rounded-lg ${
-                          isEditMode
-                            ? "bg-gray-50 text-gray-600 cursor-not-allowed"
-                            : "focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        }`}
-                      >
-                        <option value="">결재자 선택</option>
-                        {getEligibleApprovers(false)
-                          .filter(
-                            (user) =>
-                              !requiredApprovers.includes(user.id) ||
-                              user.id === approverId
-                          )
-                          .map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.name} ({user.department}) -{" "}
-                              {ROLE_NAMES[user.role]}
-                            </option>
-                          ))}
-                      </select>
-                      {requiredApprovers.length > 1 && !isEditMode && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveApprover(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="결재자 제거"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {!isEditMode && (
-                    <button
-                      type="button"
-                      onClick={handleAddApprover}
-                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      + 결재자 추가
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 에러 메시지 */}
-              {errorMessage && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                  <div className="text-sm text-red-700 font-medium">
-                    {errorMessage}
-                  </div>
-                </div>
-              )}
-
-              {/* 예산 설정 */}
+              {/* 예산 설정 - 필수 결재자보다 먼저 */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-gray-900">
                     예산 설정
                   </h4>
                   <p className="text-xs text-gray-500">
-                    기준 예산을 설정하면 자동으로 하위 기간별 예산이 분배됩니다
+                    기준 예산을 설정하면 자동으로 하위 기간별 예산이 분배되고, 금액에 따른 필수 결재자가 자동으로 설정됩니다
                   </p>
                 </div>
 
@@ -1467,6 +1393,28 @@ export default function GroupManagement({
                   )}
                 </div>
               </div>
+
+              {/* 정책 기반 필수 결재자 설정 */}
+              {newGroup.budgetSetup && newGroup.budgetSetup.baseAmount > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <PolicyBasedApproverSetup
+                    budgetAmount={newGroup.budgetSetup.baseAmount}
+                    currency={newGroup.currency}
+                    onApproversChange={(approvers) => setRequiredApprovers(approvers)}
+                    managerId={newGroup.manager}
+                    disabled={isEditMode}
+                  />
+                </div>
+              )}
+
+              {/* 에러 메시지 */}
+              {errorMessage && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                  <div className="text-sm text-red-700 font-medium">
+                    {errorMessage}
+                  </div>
+                </div>
+              )}
             </form>
           </div>
 
@@ -1498,11 +1446,13 @@ export default function GroupManagement({
                   !isFormValid()
                     ? !isEditMode && !newGroup.manager
                       ? "관리자를 선택해주세요"
-                      : !isEditMode &&
-                        requiredApprovers.filter((id) => id !== "").length === 0
-                      ? "필수 결재자를 선택해주세요"
+                      : !isEditMode && (!newGroup.budgetSetup || newGroup.budgetSetup.baseAmount <= 0)
+                      ? "예산을 먼저 설정해주세요"
                       : !isBudgetValid()
                       ? "예산 배분을 정확히 맞춰주세요"
+                      : !isEditMode &&
+                        requiredApprovers.filter((id) => id !== "").length === 0
+                      ? "필수 결재자가 설정되지 않았습니다"
                       : "모든 필수 항목을 입력해주세요"
                     : ""
                 }

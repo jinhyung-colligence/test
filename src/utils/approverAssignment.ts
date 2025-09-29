@@ -19,35 +19,35 @@ export const APPROVAL_POLICIES: ApprovalPolicy[] = [
     minAmount: 0,
     maxAmount: 1000000, // 100만원
     currency: "KRW",
-    requiredApprovers: ["박재무", "윤보안"],
+    requiredApprovers: ["박재무", "한리스크"],
     description: "소액 거래 (100만원 미만)"
   },
   {
     minAmount: 1000000, // 100만원
     maxAmount: 10000000, // 1천만원
     currency: "KRW",
-    requiredApprovers: ["박재무", "윤보안", "이기술"],
+    requiredApprovers: ["박재무", "한리스크", "이기술"],
     description: "일반 거래 (100만원~1천만원)"
   },
   {
     minAmount: 10000000, // 1천만원
     maxAmount: 100000000, // 1억원
     currency: "KRW",
-    requiredApprovers: ["박재무", "윤보안", "이기술", "송컴플"],
+    requiredApprovers: ["박재무", "한리스크", "이기술", "송컴플"],
     description: "중액 거래 (1천만원~1억원)"
   },
   {
     minAmount: 100000000, // 1억원
     maxAmount: 1000000000, // 10억원
     currency: "KRW",
-    requiredApprovers: ["박재무", "윤보안", "이기술", "송컴플", "김대표"],
+    requiredApprovers: ["박재무", "한리스크", "이기술", "송컴플", "김대표"],
     description: "고액 거래 (1억원~10억원)"
   },
   {
     minAmount: 1000000000, // 10억원
     maxAmount: Infinity,
     currency: "KRW",
-    requiredApprovers: ["박재무", "윤보안", "이기술", "송컴플", "김대표", "홍감사"],
+    requiredApprovers: ["박재무", "한리스크", "이기술", "송컴플", "김대표", "김매니저"],
     description: "초고액 거래 (10억원 이상)"
   }
 ];
