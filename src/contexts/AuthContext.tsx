@@ -5,15 +5,20 @@ import { useRouter } from 'next/navigation'
 import { User } from '@/types/user'
 import { getUserByEmail } from '@/data/userMockData'
 import { verifyOTP, verifySMSCode, sendSMSCode } from '@/utils/authenticationHelpers'
+import { useSecurityPolicy, AuthStepType } from '@/contexts/SecurityPolicyContext'
 
 interface AuthStep {
-  step: 'email' | 'otp' | 'sms' | 'completed' | 'blocked'
+  step: 'email' | 'otp' | 'sms' | 'ga_setup' | 'completed' | 'blocked'
   email?: string
   user?: User
   attempts: number
   maxAttempts: number
   blockedUntil?: number
   blockReason?: string
+  requiredSteps?: AuthStepType[]  // 현재 정책에 따른 필요한 단계들
+  currentStepIndex?: number       // 현재 진행 중인 단계의 인덱스
+  isFirstTimeUser?: boolean       // 신규 사용자 여부
+  skipOTP?: boolean              // OTP 단계 스킵 여부
 }
 
 interface AuthContextType {
@@ -24,6 +29,7 @@ interface AuthContextType {
   verifyOtp: (otp: string) => Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }>
   verifySms: (code: string) => Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }>
   sendSms: () => Promise<{ success: boolean; message?: string }>
+  completeGASetup: () => void
   logout: () => void
   resetAuth: () => void
 }
@@ -82,6 +88,7 @@ const checkBlockStatus = (email: string) => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
+  const { policy, getRequiredAuthSteps, getSessionTimeoutMs, isFirstTimeUser } = useSecurityPolicy()
 
   // UI/UX 기획을 위해 더미 사용자 데이터 설정
   const dummyUser: User = {
@@ -94,7 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: 'admin',
     status: 'active',
     permissions: ['permission.all'],
-    lastLogin: new Date().toISOString()
+    lastLogin: new Date().toISOString(),
+    hasGASetup: true,
+    gaSetupDate: '2025-09-10T14:20:00Z',
+    isFirstLogin: false
   }
 
   const [user, setUser] = useState<User | null>(dummyUser)
@@ -102,8 +112,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authStep, setAuthStep] = useState<AuthStep>({
     step: 'email', // UI/UX 확인을 위해 이메일 단계부터 시작
     attempts: 0,
-    maxAttempts: 5
+    maxAttempts: policy.maxAttempts,
+    requiredSteps: getRequiredAuthSteps(),
+    currentStepIndex: 0
   })
+
+  // 다음 단계 결정 함수
+  const getNextStep = (currentIndex: number, requiredSteps: AuthStepType[]): AuthStepType | 'completed' => {
+    const nextIndex = currentIndex + 1
+    if (nextIndex >= requiredSteps.length) {
+      return 'completed'
+    }
+    return requiredSteps[nextIndex]
+  }
+
+  // 현재 단계가 필요한지 확인
+  const isStepRequired = (step: AuthStepType): boolean => {
+    return authStep.requiredSteps?.includes(step) || false
+  }
+
+  // 정책 변경 시 authStep 업데이트
+  useEffect(() => {
+    const requiredSteps = getRequiredAuthSteps()
+    setAuthStep(prev => ({
+      ...prev,
+      maxAttempts: policy.maxAttempts,
+      requiredSteps,
+      // 현재 단계가 더 이상 필요하지 않으면 다음 단계로 이동
+      step: requiredSteps.includes(prev.step as AuthStepType) ? prev.step : requiredSteps[0] || 'email',
+      currentStepIndex: requiredSteps.findIndex(step => step === prev.step) !== -1
+        ? requiredSteps.findIndex(step => step === prev.step)
+        : 0
+    }))
+  }, [policy, getRequiredAuthSteps])
 
   // UI/UX 기획을 위해 세션 체크 비활성화
   useEffect(() => {
@@ -186,15 +227,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 성공 시 저장된 실패 기록 초기화
     setStoredAttempts(email, 0)
 
+    // 신규 사용자인지 확인하고 적절한 인증 단계 결정
+    const isNewUser = isFirstTimeUser(foundUser)
+    const requiredSteps = getRequiredAuthSteps(foundUser)
+    const nextStep = getNextStep(0, requiredSteps)
+
+    if (nextStep === 'completed') {
+      // 이메일만 필요한 경우 바로 완료
+      setUser(foundUser)
+      setIsAuthenticated(true)
+      setAuthStep({
+        step: 'completed',
+        user: foundUser,
+        attempts: 0,
+        maxAttempts: policy.maxAttempts,
+        requiredSteps,
+        currentStepIndex: requiredSteps.length
+      })
+
+      // 세션 저장
+      const sessionTimeout = getSessionTimeoutMs()
+      const sessionData = {
+        user: foundUser,
+        timestamp: Date.now()
+      }
+
+      localStorage.setItem('auth_session', JSON.stringify(sessionData))
+      document.cookie = `auth_session=${JSON.stringify(sessionData)}; path=/; max-age=${sessionTimeout / 1000}; SameSite=Lax`
+
+      router.push('/overview')
+      return { success: true, message: '로그인에 성공했습니다.' }
+    }
+
     setAuthStep({
-      step: 'otp',
+      step: nextStep as 'otp' | 'sms',
       email,
       user: foundUser,
       attempts: 0,
-      maxAttempts: 5
+      maxAttempts: policy.maxAttempts,
+      requiredSteps,
+      currentStepIndex: 1,
+      isFirstTimeUser: isNewUser,
+      skipOTP: isNewUser
     })
 
-    return { success: true, message: 'OTP 코드를 입력해주세요.' }
+    const stepMessage = nextStep === 'otp' ? 'OTP 코드를 입력해주세요.' : 'SMS 인증 코드를 입력해주세요.'
+    return { success: true, message: stepMessage }
   }
 
   const verifyOtp = async (otp: string): Promise<{ success: boolean; message?: string; isBlocked?: boolean; blockedUntil?: number; blockReason?: string }> => {
@@ -226,12 +304,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isValid = await verifyOTP(otp, 'login-session')
 
       if (isValid) {
+        // 다음 단계 결정
+        const nextStep = getNextStep(authStep.currentStepIndex || 0, authStep.requiredSteps || [])
+
+        if (nextStep === 'completed') {
+          // OTP가 마지막 단계인 경우
+          setUser(authStep.user)
+          setIsAuthenticated(true)
+          setAuthStep(prev => ({
+            ...prev,
+            step: 'completed',
+            attempts: 0,
+            currentStepIndex: (prev.requiredSteps?.length || 0)
+          }))
+
+          // 세션 저장
+          const sessionTimeout = getSessionTimeoutMs()
+          const sessionData = {
+            user: authStep.user,
+            timestamp: Date.now()
+          }
+
+          localStorage.setItem('auth_session', JSON.stringify(sessionData))
+          document.cookie = `auth_session=${JSON.stringify(sessionData)}; path=/; max-age=${sessionTimeout / 1000}; SameSite=Lax`
+
+          router.push('/overview')
+          return { success: true, message: '로그인에 성공했습니다.' }
+        }
+
         setAuthStep(prev => ({
           ...prev,
-          step: 'sms',
-          attempts: 0
+          step: nextStep as 'sms',
+          attempts: 0,
+          currentStepIndex: (prev.currentStepIndex || 0) + 1
         }))
-        return { success: true, message: 'SMS 인증 코드를 발송했습니다.' }
+
+        const stepMessage = nextStep === 'sms' ? 'SMS 인증 코드를 발송했습니다.' : '다음 단계로 진행합니다.'
+        return { success: true, message: stepMessage }
       } else {
         const newAttempts = authStep.attempts + 1
         setAuthStep(prev => ({ ...prev, attempts: newAttempts }))
@@ -310,7 +419,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isValid = await verifySMSCode(code, 'login-session')
 
       if (isValid) {
-        // 로그인 성공
+        // 신규 사용자인 경우 GA 설정 단계로 이동
+        if (authStep.isFirstTimeUser && !authStep.user.hasGASetup) {
+          setAuthStep({
+            step: 'ga_setup',
+            user: authStep.user,
+            attempts: 0,
+            maxAttempts: 5,
+            isFirstTimeUser: true
+          })
+
+          return { success: true, message: 'Google Authenticator 설정이 필요합니다.' }
+        }
+
+        // 기존 사용자 - 로그인 성공
         setUser(authStep.user)
         setIsAuthenticated(true)
         setAuthStep({
@@ -320,7 +442,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           maxAttempts: 5
         })
 
-        // 세션 저장 (30분 유효)
+        // 세션 저장 (정책 기반 타임아웃)
+        const sessionTimeout = getSessionTimeoutMs()
         const sessionData = {
           user: authStep.user,
           timestamp: Date.now()
@@ -329,7 +452,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_session', JSON.stringify(sessionData))
 
         // 쿠키에도 저장 (middleware에서 사용)
-        document.cookie = `auth_session=${JSON.stringify(sessionData)}; path=/; max-age=1800; SameSite=Lax`
+        document.cookie = `auth_session=${JSON.stringify(sessionData)}; path=/; max-age=${sessionTimeout / 1000}; SameSite=Lax`
 
         // 로그인 성공 후 overview로 이동
         router.push('/overview')
@@ -384,11 +507,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const resetAuth = () => {
+    const requiredSteps = getRequiredAuthSteps()
     setAuthStep({
       step: 'email',
       attempts: 0,
+      maxAttempts: policy.maxAttempts,
+      requiredSteps,
+      currentStepIndex: 0
+    })
+  }
+
+  const completeGASetup = () => {
+    if (!authStep.user) return
+
+    // 사용자 GA 설정 상태 업데이트 (실제로는 서버 API 호출)
+    const updatedUser = {
+      ...authStep.user,
+      hasGASetup: true,
+      gaSetupDate: new Date().toISOString(),
+      isFirstLogin: false
+    }
+
+    // 로그인 완료 처리
+    setUser(updatedUser)
+    setIsAuthenticated(true)
+    setAuthStep({
+      step: 'completed',
+      user: updatedUser,
+      attempts: 0,
       maxAttempts: 5
     })
+
+    // 세션 저장
+    const sessionTimeout = getSessionTimeoutMs()
+    const sessionData = {
+      user: updatedUser,
+      timestamp: Date.now()
+    }
+
+    localStorage.setItem('auth_session', JSON.stringify(sessionData))
+    document.cookie = `auth_session=${JSON.stringify(sessionData)}; path=/; max-age=${sessionTimeout / 1000}; SameSite=Lax`
+
+    // 대시보드로 이동
+    router.push('/overview')
   }
 
   return (
@@ -401,6 +562,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyOtp,
         verifySms,
         sendSms,
+        completeGASetup,
         logout,
         resetAuth
       }}

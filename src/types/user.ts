@@ -12,6 +12,9 @@ export interface User {
   permissions: string[];
   department: string;
   position: string;
+  hasGASetup: boolean;          // GA 설정 완료 여부
+  gaSetupDate?: string;         // GA 설정 완료 일시
+  isFirstLogin: boolean;        // 최초 로그인 여부
 }
 
 // 5개 권한 카테고리별 권한 정의

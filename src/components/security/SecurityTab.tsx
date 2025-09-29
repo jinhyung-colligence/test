@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
+import { useSecurityPolicy } from "@/contexts/SecurityPolicyContext";
 import AdminIPWhitelistManagement from "./AdminIPWhitelistManagement";
 import AuthenticatorManagement from "./AuthenticatorManagement";
 import AdminAccessMonitoring from "./AdminAccessMonitoring";
@@ -14,19 +16,39 @@ interface SecurityTabProps {
 }
 
 export default function SecurityTab({ plan }: SecurityTabProps) {
-  // 정책 설정 (시스템 전체)
-  const [authenticatorPolicyEnabled, setAuthenticatorPolicyEnabled] = useState(true);
-  const [smsPolicyEnabled, setSmsPolicyEnabled] = useState(true);
-  const [ipWhitelistEnabled, setIpWhitelistEnabled] = useState(
-    plan === "enterprise"
-  );
-  const [sessionTimeout, setSessionTimeout] = useState("30");
+  const { policy, updatePolicy } = useSecurityPolicy();
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
-  // 개인 설정 (현재 관리자) - Google Authenticator만
-  const [authenticatorPersonalEnabled, setAuthenticatorPersonalEnabled] = useState(true);
+  // 엔터프라이즈 플랜인 경우 IP 화이트리스트 기본 활성화
+  useEffect(() => {
+    if (plan === "enterprise" && !policy.ipWhitelistEnabled) {
+      updatePolicy({ ipWhitelistEnabled: true });
+    }
+  }, [plan, policy.ipWhitelistEnabled, updatePolicy]);
+
+  // 경고 메시지 표시 및 자동 사라짐
+  useEffect(() => {
+    if (warningMessage) {
+      const timer = setTimeout(() => {
+        setWarningMessage(null);
+      }, 3000); // 3초 후 자동 사라짐
+      return () => clearTimeout(timer);
+    }
+  }, [warningMessage]);
+
 
   return (
     <div className="space-y-6">
+      {/* 경고 메시지 */}
+      {warningMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2 flex-shrink-0" />
+            <span className="text-sm text-red-800">{warningMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* 보안 설정 옵션 */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -45,26 +67,13 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
                 <label className="text-sm font-medium text-gray-900">
                   Google Authenticator 정책
                 </label>
-                {authenticatorPolicyEnabled && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                    필수 적용
-                  </span>
-                )}
+                <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-sky-50 text-sky-600 border border-sky-200">
+                  필수 적용
+                </span>
               </div>
               <p className="text-sm text-gray-600">
                 모든 관리자에게 Google Authenticator 설정을 필수로 요구
               </p>
-            </div>
-            <div className="flex items-center">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={authenticatorPolicyEnabled}
-                  onChange={(e) => setAuthenticatorPolicyEnabled(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-              </label>
             </div>
           </div>
 
@@ -75,26 +84,13 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
                 <label className="text-sm font-medium text-gray-900">
                   SMS 인증 정책
                 </label>
-                {smsPolicyEnabled && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                    필수 적용
-                  </span>
-                )}
+                <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-sky-50 text-sky-600 border border-sky-200">
+                  필수 적용
+                </span>
               </div>
               <p className="text-sm text-gray-600">
                 로그인 시 모든 관리자에게 SMS 인증을 요구
               </p>
-            </div>
-            <div className="flex items-center">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={smsPolicyEnabled}
-                  onChange={(e) => setSmsPolicyEnabled(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-              </label>
             </div>
           </div>
 
@@ -104,7 +100,7 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
                 <label className="text-sm font-medium text-gray-900">
                   관리자 IP 접근 제어
                 </label>
-                {ipWhitelistEnabled && (
+                {policy.ipWhitelistEnabled && (
                   <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                     활성화됨
                   </span>
@@ -118,8 +114,8 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={ipWhitelistEnabled}
-                  onChange={(e) => setIpWhitelistEnabled(e.target.checked)}
+                  checked={policy.ipWhitelistEnabled}
+                  onChange={(e) => updatePolicy({ ipWhitelistEnabled: e.target.checked })}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
@@ -137,8 +133,8 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
               </p>
             </div>
             <select
-              value={sessionTimeout}
-              onChange={(e) => setSessionTimeout(e.target.value)}
+              value={policy.sessionTimeout.toString()}
+              onChange={(e) => updatePolicy({ sessionTimeout: parseInt(e.target.value) })}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="15">15분</option>
@@ -154,9 +150,9 @@ export default function SecurityTab({ plan }: SecurityTabProps) {
       <AuthenticatorManagement
         isVisible={true}
         onClose={() => {}}
-        initialEnabled={authenticatorPersonalEnabled}
-        onStatusChange={setAuthenticatorPersonalEnabled}
-        policyEnabled={authenticatorPolicyEnabled}
+        initialEnabled={true}
+        onStatusChange={() => {}}
+        policyEnabled={policy.authenticatorRequired}
       />
 
 

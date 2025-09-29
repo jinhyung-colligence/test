@@ -11,7 +11,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-15T10:30:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.admin,
     department: '경영진',
-    position: 'CEO'
+    position: 'CEO',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-10T14:20:00Z',
+    isFirstLogin: false
   },
   {
     id: '2',
@@ -23,7 +26,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-14T09:15:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: '재무팀',
-    position: 'CFO'
+    position: 'CFO',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-12T16:30:00Z',
+    isFirstLogin: false
   },
   {
     id: '3',
@@ -35,7 +41,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-13T08:45:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: '기술팀',
-    position: 'CTO'
+    position: 'CTO',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-11T10:15:00Z',
+    isFirstLogin: false
   },
   {
     id: '4',
@@ -47,7 +56,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-12T07:30:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: 'IT팀',
-    position: '관리자'
+    position: '관리자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-08T09:45:00Z',
+    isFirstLogin: false
   },
   {
     id: '5',
@@ -59,7 +71,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-11T16:45:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: 'IT팀',
-    position: '부관리자'
+    position: '부관리자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-07T14:20:00Z',
+    isFirstLogin: false
   },
   {
     id: '6',
@@ -71,7 +86,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-10T15:20:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '리스크팀',
-    position: '리스크관리자'
+    position: '리스크관리자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-06T11:30:00Z',
+    isFirstLogin: false
   },
   {
     id: '7',
@@ -83,7 +101,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-09T14:10:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '컴플라이언스팀',
-    position: '컴플라이언스'
+    position: '컴플라이언스',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-05T16:45:00Z',
+    isFirstLogin: false
   },
   {
     id: '8',
@@ -95,7 +116,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-08T13:30:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '운영팀',
-    position: '운영관리자'
+    position: '운영관리자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-04T12:10:00Z',
+    isFirstLogin: false
   },
   {
     id: '9',
@@ -107,7 +131,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-07T12:15:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.manager,
     department: '재무팀',
-    position: '매니저'
+    position: '매니저',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-03T15:20:00Z',
+    isFirstLogin: false
   },
   {
     id: '10',
@@ -119,7 +146,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-06T11:00:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer,
     department: '회계팀',
-    position: '조회자'
+    position: '조회자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-02T10:30:00Z',
+    isFirstLogin: false
   },
   {
     id: '11',
@@ -131,7 +161,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-05T10:30:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '운영팀',
-    position: '신청자'
+    position: '신청자',
+    hasGASetup: true,
+    gaSetupDate: '2025-09-01T13:45:00Z',
+    isFirstLogin: false
   },
   {
     id: '12',
@@ -143,7 +176,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-04T09:45:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '보안팀',
-    position: '승인자'
+    position: '승인자',
+    hasGASetup: true,
+    gaSetupDate: '2025-08-31T08:20:00Z',
+    isFirstLogin: false
   },
   {
     id: '13',
@@ -155,7 +191,10 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-03T17:20:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '보안팀',
-    position: 'CISO'
+    position: 'CISO',
+    hasGASetup: true,
+    gaSetupDate: '2025-08-30T14:15:00Z',
+    isFirstLogin: false
   },
   {
     id: '14',
@@ -167,7 +206,9 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-02T00:00:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.viewer,
     department: '인사팀',
-    position: '신입사원'
+    position: '신입사원',
+    hasGASetup: false,
+    isFirstLogin: true
   },
   {
     id: '15',
@@ -179,7 +220,25 @@ export const MOCK_USERS: User[] = [
     lastLogin: '2025-09-01T15:00:00Z',
     permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
     department: '운영팀',
-    position: '전 운영자'
+    position: '전 운영자',
+    hasGASetup: true,
+    gaSetupDate: '2025-08-29T11:30:00Z',
+    isFirstLogin: false
+  },
+  // 신규 사용자 추가 (테스트용)
+  {
+    id: '16',
+    name: '새신입',
+    email: 'new@company.com',
+    phone: '+82 010-3333-0001',
+    role: 'operator',
+    status: 'active',
+    lastLogin: '2025-09-29T00:00:00Z',
+    permissions: DEFAULT_PERMISSIONS_BY_ROLE.operator,
+    department: '운영팀',
+    position: '신입',
+    hasGASetup: false,
+    isFirstLogin: true
   }
 ];
 

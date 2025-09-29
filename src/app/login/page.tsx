@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSecurityPolicy, AuthStepType } from '@/contexts/SecurityPolicyContext'
 import {
   ArrowRightIcon,
   KeyIcon,
@@ -12,10 +13,12 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import AttemptLimitMessage from '@/components/auth/AttemptLimitMessage'
+import GASetupModal from '@/components/auth/GASetupModal'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { authStep, login, verifyOtp, verifySms, sendSms, resetAuth } = useAuth()
+  const { authStep, login, verifyOtp, verifySms, sendSms, resetAuth, completeGASetup } = useAuth()
+  const { getRequiredAuthSteps } = useSecurityPolicy()
   const [email, setEmail] = useState('ceo@company.com')
   const [otpCode, setOtpCode] = useState('123456')
   const [smsCode, setSmsCode] = useState('987654')
@@ -145,18 +148,25 @@ export default function LoginPage() {
   }
 
   const renderStepIndicator = () => {
-    const steps = [
-      { key: 'email', label: '이메일', icon: EnvelopeIcon },
-      { key: 'otp', label: 'OTP 인증', icon: KeyIcon },
-      { key: 'sms', label: 'SMS 인증', icon: DevicePhoneMobileIcon },
-    ]
+    const requiredSteps = authStep.requiredSteps || getRequiredAuthSteps()
 
+    const stepConfig = {
+      email: { label: '이메일', icon: EnvelopeIcon },
+      otp: { label: 'OTP 인증', icon: KeyIcon },
+      sms: { label: 'SMS 인증', icon: DevicePhoneMobileIcon },
+    }
+
+    const steps = requiredSteps.map(stepKey => ({
+      key: stepKey,
+      ...stepConfig[stepKey]
+    }))
 
     return (
       <div className="flex items-center justify-center mb-8">
         {steps.map((step, index) => {
+          const currentStepIndex = requiredSteps.findIndex(s => s === authStep.step)
           const isActive = authStep.step === step.key
-          const isCompleted = steps.findIndex(s => s.key === authStep.step) > index
+          const isCompleted = currentStepIndex > index
           const Icon = step.icon
 
           return (
@@ -429,6 +439,16 @@ export default function LoginPage() {
         </div>
 
       </div>
+
+      {/* GA 설정 모달 */}
+      <GASetupModal
+        isOpen={authStep.step === 'ga_setup'}
+        user={{
+          name: authStep.user?.name || '',
+          email: authStep.user?.email || ''
+        }}
+        onComplete={completeGASetup}
+      />
     </div>
   )
 }
