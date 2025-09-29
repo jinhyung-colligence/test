@@ -18,6 +18,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
 import { mockConnectedAccounts } from "@/data/mockAccounts";
+import { RepaymentModal } from "./lending/RepaymentModal";
+import { AddCollateralModal } from "./lending/AddCollateralModal";
+import { RepaymentRequest, CollateralAddition } from "./lending/types";
 
 interface AdditionalServicesProps {
   plan: ServicePlan;
@@ -116,6 +119,11 @@ export default function AdditionalServices({
   // 대출 페이지 페이징 상태
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 모달 상태 관리
+  const [repaymentModalOpen, setRepaymentModalOpen] = useState(false);
+  const [collateralModalOpen, setCollateralModalOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState<BankLoan | null>(null);
+
   // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
     if (initialTab) {
@@ -127,6 +135,39 @@ export default function AdditionalServices({
   const handleTabChange = (newTab: "staking" | "lending" | "swap" | "krw") => {
     setActiveTab(newTab);
     router.push(`/services/${newTab}`);
+  };
+
+  // 모달 핸들러 함수들
+  const handleRepaymentClick = (loan: BankLoan) => {
+    setSelectedLoan(loan);
+    setRepaymentModalOpen(true);
+  };
+
+  const handleCollateralClick = (loan: BankLoan) => {
+    setSelectedLoan(loan);
+    setCollateralModalOpen(true);
+  };
+
+  const handleRepaymentSubmit = (request: RepaymentRequest) => {
+    console.log("상환 신청:", request);
+    // 실제 상환 로직 구현
+    alert(`대출 상환이 신청되었습니다. (${request.type === "full" ? "전액" : "부분"} 상환)`);
+    setRepaymentModalOpen(false);
+    setSelectedLoan(null);
+  };
+
+  const handleCollateralSubmit = (addition: CollateralAddition) => {
+    console.log("담보 추가:", addition);
+    // 실제 담보 추가 로직 구현
+    alert(`담보가 추가되었습니다. (${addition.assets.length}개 자산)`);
+    setCollateralModalOpen(false);
+    setSelectedLoan(null);
+  };
+
+  const closeModals = () => {
+    setRepaymentModalOpen(false);
+    setCollateralModalOpen(false);
+    setSelectedLoan(null);
   };
 
   const stakingPositions: StakingPosition[] = [
@@ -996,9 +1037,19 @@ export default function AdditionalServices({
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">상환</button>
+                            <button
+                              onClick={() => handleRepaymentClick(loan)}
+                              className="text-blue-600 hover:text-blue-900 transition-colors"
+                            >
+                              상환
+                            </button>
                             {loan.healthFactor < 1.2 && (
-                              <button className="text-orange-600 hover:text-orange-900">담보추가</button>
+                              <button
+                                onClick={() => handleCollateralClick(loan)}
+                                className="text-orange-600 hover:text-orange-900 transition-colors"
+                              >
+                                담보추가
+                              </button>
                             )}
                           </div>
                         </td>
@@ -1523,6 +1574,22 @@ export default function AdditionalServices({
         {activeTab === "swap" && renderSwap()}
         {activeTab === "krw" && renderKRW()}
       </div>
+
+      {/* 대출 관련 모달들 */}
+      <RepaymentModal
+        isOpen={repaymentModalOpen}
+        onClose={closeModals}
+        loan={selectedLoan}
+        onSubmit={handleRepaymentSubmit}
+      />
+
+      <AddCollateralModal
+        isOpen={collateralModalOpen}
+        onClose={closeModals}
+        loan={selectedLoan}
+        availableAssets={availableCollateral}
+        onSubmit={handleCollateralSubmit}
+      />
     </div>
   );
 }
