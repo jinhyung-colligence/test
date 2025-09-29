@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -71,6 +71,7 @@ export default function LoanApplicationButton({
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0, placement: 'bottom' });
   const [isTooltipMounted, setIsTooltipMounted] = useState(false);
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +83,7 @@ export default function LoanApplicationButton({
     const tooltipWidth = 320; // w-80 = 320px
     // 실제 툴팁 높이를 측정하거나 기본값 사용
     const tooltipHeight = tooltipRef.current?.offsetHeight || 250;
-    const spacing = 8;
+    const spacing = 12; // 증가된 간격으로 충돌 방지
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -115,15 +116,15 @@ export default function LoanApplicationButton({
       left = viewportWidth - tooltipWidth - 10;
     }
 
-    // 양쪽 모두 공간이 부족한 경우 우측/좌측에 표시
+    // 양쪽 모두 공간이 부족한 경우 우측/좌측에 표시 (추가 간격 적용)
     if (placement === 'bottom' && top + tooltipHeight > viewportHeight - 10) {
       top = buttonRect.top + buttonRect.height / 2 - tooltipHeight / 2;
-      left = buttonRect.right + spacing;
+      left = buttonRect.right + spacing + 4; // 추가 간격
       placement = 'right';
 
       // 우측에도 공간이 부족하면 좌측에
       if (left + tooltipWidth > viewportWidth - 10) {
-        left = buttonRect.left - tooltipWidth - spacing;
+        left = buttonRect.left - tooltipWidth - spacing - 4; // 추가 간격
         placement = 'left';
       }
     }
@@ -131,16 +132,30 @@ export default function LoanApplicationButton({
     setTooltipPosition({ top, left, placement });
   };
 
-  // 툴팁 표시/숨김 처리
-  const handleMouseEnter = () => {
-    calculateTooltipPosition();
-    setShowTooltip(true);
-  };
+  // 툴팁 표시/숨김 처리 (지연 추가로 깜빡거림 방지)
+  const handleMouseEnter = useCallback(() => {
+    // 기존 타이머가 있다면 제거
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+    }
 
-  const handleMouseLeave = () => {
+    const timer = setTimeout(() => {
+      calculateTooltipPosition();
+      setShowTooltip(true);
+    }, 100);
+    setHoverTimer(timer);
+  }, [hoverTimer]);
+
+  const handleMouseLeave = useCallback(() => {
+    // 타이머 제거
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      setHoverTimer(null);
+    }
+
     setShowTooltip(false);
     setIsTooltipMounted(false);
-  };
+  }, [hoverTimer]);
 
   // 툴팁이 마운트된 후 위치 재계산
   useEffect(() => {
@@ -316,7 +331,8 @@ export default function LoanApplicationButton({
           ref={tooltipRef}
           id={`tooltip-${product.id}`}
           className="fixed w-80 bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-[9999]
-                   transition-all duration-200 ease-out transform opacity-100 scale-100"
+                   transition-all duration-200 ease-out transform opacity-100 scale-100
+                   pointer-events-none"
           style={{
             top: tooltipPosition.top,
             left: tooltipPosition.left,
