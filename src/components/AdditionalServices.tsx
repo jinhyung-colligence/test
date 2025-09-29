@@ -22,6 +22,7 @@ import { RepaymentModal } from "./lending/RepaymentModal";
 import { AddCollateralModal } from "./lending/AddCollateralModal";
 import { RepaymentRequest, CollateralAddition } from "./lending/types";
 import LoanApplicationButton from "./lending/LoanApplicationButton";
+import LoanApplicationModal from "./lending/LoanApplicationModal";
 
 interface AdditionalServicesProps {
   plan: ServicePlan;
@@ -123,7 +124,9 @@ export default function AdditionalServices({
   // 모달 상태 관리
   const [repaymentModalOpen, setRepaymentModalOpen] = useState(false);
   const [collateralModalOpen, setCollateralModalOpen] = useState(false);
+  const [loanApplicationModalOpen, setLoanApplicationModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<BankLoan | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<BankLoanProduct | null>(null);
 
   // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
@@ -151,9 +154,8 @@ export default function AdditionalServices({
 
   // 대출 신청 핸들러
   const handleLoanApplication = (product: BankLoanProduct) => {
-    console.log("대출 신청:", product);
-    // 대출 신청 모달을 열거나 신청 페이지로 이동
-    alert(`${product.productName} 신청을 시작합니다.`);
+    setSelectedProduct(product);
+    setLoanApplicationModalOpen(true);
   };
 
   const handleRepaymentSubmit = (request: RepaymentRequest) => {
@@ -175,7 +177,16 @@ export default function AdditionalServices({
   const closeModals = () => {
     setRepaymentModalOpen(false);
     setCollateralModalOpen(false);
+    setLoanApplicationModalOpen(false);
     setSelectedLoan(null);
+    setSelectedProduct(null);
+  };
+
+  // 대출 신청 완료 핸들러
+  const handleLoanApplicationSubmit = (product: BankLoanProduct) => {
+    console.log("대출 신청 완료:", product);
+    // 실제 대출 신청 API 호출
+    alert(`${product.productName} 신청이 완료되었습니다. 심사 결과는 1-2일 내에 안내해드립니다.`);
   };
 
   const stakingPositions: StakingPosition[] = [
@@ -1593,6 +1604,14 @@ export default function AdditionalServices({
         loan={selectedLoan}
         availableAssets={availableCollateral}
         onSubmit={handleCollateralSubmit}
+      />
+
+      <LoanApplicationModal
+        isOpen={loanApplicationModalOpen}
+        onClose={closeModals}
+        product={selectedProduct}
+        availableCollateral={availableCollateral}
+        onSubmit={handleLoanApplicationSubmit}
       />
     </div>
   );

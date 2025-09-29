@@ -16,6 +16,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.0.0",
     "autoprefixer": "^10.4.0",
     "clsx": "^2.0.0",
