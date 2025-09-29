@@ -909,7 +909,7 @@ export default function AdditionalServices({
 
         {/* 활성 대출 관리 */}
         {activeBankLoans.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">활성 대출 관리</h3>
               <p className="text-sm text-gray-600 mt-1">현재 진행 중인 대출을 관리하세요</p>
@@ -1012,7 +1012,7 @@ export default function AdditionalServices({
         )}
 
         {/* 실시간 가격 피드 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">실시간 가격 정보</h3>
             <p className="text-sm text-gray-600 mt-1">업비트 · 빗썸 평균 가격 기준</p>
