@@ -11,8 +11,13 @@ import {
   ArrowTrendingUpIcon,
   ClockIcon,
   CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { ServicePlan } from "@/app/page";
+import { mockConnectedAccounts } from "@/data/mockAccounts";
 
 interface AdditionalServicesProps {
   plan: ServicePlan;
@@ -39,6 +44,65 @@ interface LendingPosition {
   status: "active" | "completed";
 }
 
+// 은행 대출 서비스 타입 정의
+interface BankLoanProduct {
+  id: string;
+  productName: string;
+  bankName: string;
+  collateralAsset: string;
+  loanTerm: string;
+  ltv: number;
+  interestRate: number;
+  minLoanAmount: number;
+  maxLoanAmount: number;
+  earlyRepaymentFee: string;
+  additionalCollateralAllowed: boolean;
+  features: string[];
+  description: string;
+}
+
+interface CollateralAsset {
+  asset: string;
+  amount: number;
+  currentPrice: number;
+  value: number;
+  volatility: number;
+  supportedLTV: number;
+}
+
+interface BankLoan {
+  id: string;
+  product: BankLoanProduct;
+  collateralAsset: CollateralAsset;
+  loanAmount: number;
+  interestRate: number;
+  healthFactor: number;
+  liquidationThreshold: number;
+  createdAt: string;
+  lastUpdated: string;
+  status: "active" | "warning" | "danger" | "liquidation" | "liquidated";
+  accruedInterest: number;
+  nextPaymentDate?: string;
+}
+
+interface HealthFactorLevel {
+  min: number;
+  max: number;
+  status: "safe" | "warning" | "danger" | "liquidation";
+  color: string;
+  bgColor: string;
+  label: string;
+}
+
+interface PriceFeed {
+  asset: string;
+  upbitPrice: number;
+  bithumbPrice: number;
+  averagePrice: number;
+  change24h: number;
+  lastUpdated: string;
+}
+
 export default function AdditionalServices({
   plan,
   initialTab,
@@ -48,6 +112,9 @@ export default function AdditionalServices({
   const [activeTab, setActiveTab] = useState<
     "staking" | "lending" | "swap" | "krw"
   >(initialTab || "staking");
+
+  // 대출 페이지 페이징 상태
+  const [currentPage, setCurrentPage] = useState(1);
 
   // initialTab이 변경되면 activeTab 업데이트
   useEffect(() => {
@@ -83,6 +150,254 @@ export default function AdditionalServices({
     },
   ];
 
+  // 헬스팩터 레벨 정의
+  const healthFactorLevels: HealthFactorLevel[] = [
+    { min: 1.5, max: Infinity, status: "safe", color: "text-green-600", bgColor: "bg-green-50", label: "안전" },
+    { min: 1.2, max: 1.5, status: "warning", color: "text-yellow-600", bgColor: "bg-yellow-50", label: "주의" },
+    { min: 1.0, max: 1.2, status: "danger", color: "text-orange-600", bgColor: "bg-orange-50", label: "위험" },
+    { min: 0, max: 1.0, status: "liquidation", color: "text-red-600", bgColor: "bg-red-50", label: "청산" }
+  ];
+
+  // 전북은행 대출 상품 목록
+  const bankLoanProducts: BankLoanProduct[] = [
+    {
+      id: "jb-btc-short",
+      productName: "비트코인 담보 단기대출",
+      bankName: "전북은행",
+      collateralAsset: "BTC",
+      loanTerm: "1개월",
+      ltv: 60,
+      interestRate: 3.5,
+      minLoanAmount: 1000000,
+      maxLoanAmount: 100000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: true,
+      features: ["24시간 신청", "즉시 승인", "조기상환 수수료 면제"],
+      description: "비트코인을 담보로 한 단기 대출 상품"
+    },
+    {
+      id: "jb-btc-medium",
+      productName: "비트코인 담보 중기대출",
+      bankName: "전북은행",
+      collateralAsset: "BTC",
+      loanTerm: "3개월",
+      ltv: 65,
+      interestRate: 4.0,
+      minLoanAmount: 2000000,
+      maxLoanAmount: 200000000,
+      earlyRepaymentFee: "원금의 0.5%",
+      additionalCollateralAllowed: true,
+      features: ["담보 추가 가능", "이자 분납 가능"],
+      description: "비트코인을 담보로 한 중기 대출 상품"
+    },
+    {
+      id: "jb-btc-long",
+      productName: "비트코인 담보 장기대출",
+      bankName: "전북은행",
+      collateralAsset: "BTC",
+      loanTerm: "1년",
+      ltv: 70,
+      interestRate: 4.8,
+      minLoanAmount: 5000000,
+      maxLoanAmount: 500000000,
+      earlyRepaymentFee: "원금의 1.0%",
+      additionalCollateralAllowed: true,
+      features: ["최대 LTV 70%", "장기 저금리"],
+      description: "비트코인을 담보로 한 장기 대출 상품"
+    },
+    {
+      id: "jb-eth-short",
+      productName: "이더리움 담보 단기대출",
+      bankName: "전북은행",
+      collateralAsset: "ETH",
+      loanTerm: "1개월",
+      ltv: 55,
+      interestRate: 3.8,
+      minLoanAmount: 1000000,
+      maxLoanAmount: 80000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: true,
+      features: ["24시간 신청", "조기상환 수수료 면제"],
+      description: "이더리움을 담보로 한 단기 대출 상품"
+    },
+    {
+      id: "jb-eth-medium",
+      productName: "이더리움 담보 중기대출",
+      bankName: "전북은행",
+      collateralAsset: "ETH",
+      loanTerm: "6개월",
+      ltv: 60,
+      interestRate: 4.3,
+      minLoanAmount: 3000000,
+      maxLoanAmount: 150000000,
+      earlyRepaymentFee: "원금의 0.8%",
+      additionalCollateralAllowed: true,
+      features: ["중기 안정성", "담보 추가 가능"],
+      description: "이더리움을 담보로 한 중기 대출 상품"
+    },
+    {
+      id: "jb-usdt-stable",
+      productName: "테더 담보 안정형대출",
+      bankName: "전북은행",
+      collateralAsset: "USDT",
+      loanTerm: "3개월",
+      ltv: 80,
+      interestRate: 3.2,
+      minLoanAmount: 500000,
+      maxLoanAmount: 300000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: false,
+      features: ["최고 LTV 80%", "안정적 담보", "낮은 금리"],
+      description: "안정적인 테더를 담보로 한 저금리 대출 상품"
+    },
+    {
+      id: "jb-multi-premium",
+      productName: "다중자산 담보 프리미엄",
+      bankName: "전북은행",
+      collateralAsset: "BTC, ETH, USDT",
+      loanTerm: "6개월",
+      ltv: 75,
+      interestRate: 4.5,
+      minLoanAmount: 10000000,
+      maxLoanAmount: 1000000000,
+      earlyRepaymentFee: "원금의 0.3%",
+      additionalCollateralAllowed: true,
+      features: ["다중 자산 담보", "대용량 대출", "프리미엄 서비스"],
+      description: "여러 가상자산을 함께 담보로 하는 프리미엄 대출 상품"
+    },
+    {
+      id: "jb-btc-premium",
+      productName: "비트코인 VIP 대출",
+      bankName: "전북은행",
+      collateralAsset: "BTC",
+      loanTerm: "1년",
+      ltv: 75,
+      interestRate: 4.2,
+      minLoanAmount: 50000000,
+      maxLoanAmount: 2000000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: true,
+      features: ["VIP 전용", "최우대 금리", "전담 매니저"],
+      description: "고액 고객을 위한 VIP 비트코인 담보 대출"
+    },
+    {
+      id: "jb-eth-auto",
+      productName: "이더리움 자동연장대출",
+      bankName: "전북은행",
+      collateralAsset: "ETH",
+      loanTerm: "3개월 (자동연장)",
+      ltv: 65,
+      interestRate: 4.1,
+      minLoanAmount: 2000000,
+      maxLoanAmount: 120000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: true,
+      features: ["자동 연장", "갱신 수수료 무료", "유연한 관리"],
+      description: "자동으로 연장되는 이더리움 담보 대출 상품"
+    },
+    {
+      id: "jb-usdt-express",
+      productName: "테더 초고속대출",
+      bankName: "전북은행",
+      collateralAsset: "USDT",
+      loanTerm: "1개월",
+      ltv: 70,
+      interestRate: 3.0,
+      minLoanAmount: 300000,
+      maxLoanAmount: 50000000,
+      earlyRepaymentFee: "면제",
+      additionalCollateralAllowed: false,
+      features: ["1분 승인", "즉시 실행", "초저금리"],
+      description: "1분 내 승인되는 초고속 테더 담보 대출"
+    }
+  ];
+
+  // 보유 자산 (담보 가능한 자산)
+  const availableCollateral: CollateralAsset[] = [
+    {
+      asset: "BTC",
+      amount: 0.5,
+      currentPrice: 95000000,
+      value: 47500000,
+      volatility: 0.045,
+      supportedLTV: 75
+    },
+    {
+      asset: "ETH",
+      amount: 10,
+      currentPrice: 3200000,
+      value: 32000000,
+      volatility: 0.055,
+      supportedLTV: 70
+    },
+    {
+      asset: "USDT",
+      amount: 50000,
+      currentPrice: 1320,
+      value: 66000000,
+      volatility: 0.005,
+      supportedLTV: 80
+    }
+  ];
+
+  // 활성 대출 목록
+  const activeBankLoans: BankLoan[] = [
+    {
+      id: "loan-001",
+      product: bankLoanProducts[0], // 비트코인 담보 단기대출
+      collateralAsset: availableCollateral[0],
+      loanAmount: 30000000,
+      interestRate: 3.5,
+      healthFactor: 1.58,
+      liquidationThreshold: 0.85,
+      createdAt: "2024-01-15",
+      lastUpdated: new Date().toISOString(),
+      status: "active",
+      accruedInterest: 125000
+    },
+    {
+      id: "loan-002",
+      product: bankLoanProducts[3], // 이더리움 담보 단기대출
+      collateralAsset: availableCollateral[1],
+      loanAmount: 20000000,
+      interestRate: 3.8,
+      healthFactor: 1.12,
+      liquidationThreshold: 0.85,
+      createdAt: "2024-02-01",
+      lastUpdated: new Date().toISOString(),
+      status: "danger",
+      accruedInterest: 87500
+    }
+  ];
+
+  // 실시간 가격 피드 (시뮬레이션)
+  const priceFeed: PriceFeed[] = [
+    {
+      asset: "BTC",
+      upbitPrice: 95200000,
+      bithumbPrice: 94800000,
+      averagePrice: 95000000,
+      change24h: 2.3,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      asset: "ETH",
+      upbitPrice: 3220000,
+      bithumbPrice: 3180000,
+      averagePrice: 3200000,
+      change24h: -1.2,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      asset: "USDT",
+      upbitPrice: 1322,
+      bithumbPrice: 1318,
+      averagePrice: 1320,
+      change24h: 0.1,
+      lastUpdated: new Date().toISOString()
+    }
+  ];
+
   const lendingPositions: LendingPosition[] = [
     {
       id: "1",
@@ -109,7 +424,49 @@ export default function AdditionalServices({
     return new Intl.NumberFormat("ko-KR", {
       style: "currency",
       currency: "KRW",
-    }).format(numValue * 1300); // Simplified conversion
+    }).format(numValue);
+  };
+
+  // 헬스팩터 계산 함수
+  const calculateHealthFactor = (collateralValue: number, liquidationThreshold: number, loanAmount: number): number => {
+    if (loanAmount === 0) return Infinity;
+    return (collateralValue * liquidationThreshold) / loanAmount;
+  };
+
+  // 헬스팩터 레벨 반환 함수
+  const getHealthFactorLevel = (healthFactor: number): HealthFactorLevel => {
+    return healthFactorLevels.find(level =>
+      healthFactor >= level.min && healthFactor < level.max
+    ) || healthFactorLevels[healthFactorLevels.length - 1];
+  };
+
+  // 청산가 계산 함수
+  const calculateLiquidationPrice = (loanAmount: number, collateralAmount: number, liquidationThreshold: number): number => {
+    return loanAmount / (collateralAmount * liquidationThreshold);
+  };
+
+  // LTV 계산 함수
+  const calculateLTV = (loanAmount: number, collateralValue: number): number => {
+    if (collateralValue === 0) return 0;
+    return (loanAmount / collateralValue) * 100;
+  };
+
+  // 최대 대출 가능 금액 계산
+  const calculateMaxLoanAmount = (collateralValue: number, ltv: number): number => {
+    return collateralValue * (ltv / 100);
+  };
+
+  // 담보 추가 필요 금액 계산
+  const calculateRequiredCollateral = (loan: BankLoan, targetHealthFactor: number = 1.5): number => {
+    const requiredCollateralValue = (loan.loanAmount * targetHealthFactor) / loan.liquidationThreshold;
+    const currentCollateralValue = loan.collateralAsset.value;
+    const additionalValue = requiredCollateralValue - currentCollateralValue;
+    return Math.max(0, additionalValue / loan.collateralAsset.currentPrice);
+  };
+
+  // 일일 이자 계산
+  const calculateDailyInterest = (principal: number, annualRate: number): number => {
+    return (principal * annualRate) / 365 / 100;
   };
 
   const renderStaking = () => (
@@ -253,144 +610,482 @@ export default function AdditionalServices({
     </div>
   );
 
-  const renderLending = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+  const renderLending = () => {
+    const itemsPerPage = 5;
+
+    // 전북은행 계좌 확인
+    const jeonbukAccount = mockConnectedAccounts.find(
+      account => account.bankCode === "037" && account.status === "connected" && account.isVerified
+    );
+    const hasJeonbukAccount = !!jeonbukAccount;
+
+    // 총 대출 잔액과 담보 가치 계산
+    const totalLoanAmount = activeBankLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
+    const totalCollateralValue = activeBankLoans.reduce((sum, loan) => sum + loan.collateralAsset.value, 0);
+    const totalAccruedInterest = activeBankLoans.reduce((sum, loan) => sum + loan.accruedInterest, 0);
+    const averageHealthFactor = activeBankLoans.length > 0
+      ? activeBankLoans.reduce((sum, loan) => sum + loan.healthFactor, 0) / activeBankLoans.length
+      : 0;
+
+    // 페이징 계산
+    const totalPages = Math.ceil(bankLoanProducts.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentProducts = bankLoanProducts.slice(startIndex, endIndex);
+
+    // 페이지 변경 핸들러
+    const handlePageChange = (page: number) => {
+      setCurrentPage(page);
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* 헤더 섹션 */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">대출 서비스</h2>
+          <h2 className="text-2xl font-bold text-gray-900">가상자산 담보 대출</h2>
           <p className="text-gray-600">
-            자산을 대출하여 이자 수익을 창출하세요
+            가상자산을 담보로 은행에서 원화 대출을 받아보세요
           </p>
         </div>
-        <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-          <PlusIcon className="h-5 w-5 mr-2" />새 대출
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">총 대출 자산</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {formatCurrency(75000 * 1300)}
-              </p>
+        {/* 대출 현황 요약 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">총 대출 잔액</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {formatCurrency(totalLoanAmount)}
+                </p>
+              </div>
+              <BanknotesIcon className="h-8 w-8 text-blue-600" />
             </div>
-            <BanknotesIcon className="h-8 w-8 text-blue-600" />
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">총 담보 가치</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {formatCurrency(totalCollateralValue)}
+                </p>
+              </div>
+              <ArrowTrendingUpIcon className="h-8 w-8 text-purple-600" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">누적 이자</p>
+                <p className="text-2xl font-bold text-red-600 mt-1">
+                  {formatCurrency(totalAccruedInterest)}
+                </p>
+              </div>
+              <ClockIcon className="h-8 w-8 text-red-600" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">평균 헬스팩터</p>
+                <p className={`text-2xl font-bold mt-1 ${
+                  averageHealthFactor >= 1.5 ? 'text-green-600' :
+                  averageHealthFactor >= 1.2 ? 'text-yellow-600' :
+                  averageHealthFactor >= 1.0 ? 'text-orange-600' : 'text-red-600'
+                }`}>
+                  {averageHealthFactor.toFixed(2)}
+                </p>
+              </div>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                averageHealthFactor >= 1.5 ? 'bg-green-600' :
+                averageHealthFactor >= 1.2 ? 'bg-yellow-600' :
+                averageHealthFactor >= 1.0 ? 'bg-orange-600' : 'bg-red-600'
+              }`}>
+                <span className="text-white text-xs font-bold">HF</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">누적 수익</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">
-                {formatCurrency(6050 * 1300)}
-              </p>
+        {/* 전북은행 계좌 확인 경고 */}
+        {!hasJeonbukAccount && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <div className="flex items-start space-x-3">
+              <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                  전북은행 계좌 연결 필요
+                </h3>
+                <p className="text-yellow-700 mb-4">
+                  가상자산 담보 대출 서비스를 이용하기 위해서는 전북은행 계좌가 연결되어야 합니다.
+                  원화 대출금 지급과 상환을 위해 필수적으로 필요합니다.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="/security/accounts"
+                    className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                  >
+                    <BanknotesIcon className="h-5 w-5 mr-2" />
+                    계좌 연결하기
+                  </a>
+                  <div className="text-sm text-yellow-600">
+                    💡 전북은행 계좌가 없으시면 온라인으로 개설 가능합니다
+                  </div>
+                </div>
+              </div>
             </div>
-            <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
           </div>
-        </div>
+        )}
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">평균 APY</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">7.85%</p>
-            </div>
-            <div className="h-8 w-8 bg-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">%</span>
+        {/* 전북은행 대출 상품 목록 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">전북은행 대출 상품</h3>
+                <p className="text-sm text-gray-600 mt-1">가상자산을 담보로 원화 대출을 신청하세요</p>
+              </div>
+              {hasJeonbukAccount && (
+                <div className="flex items-center text-sm text-green-600">
+                  <CheckCircleIcon className="h-5 w-5 mr-1" />
+                  전북은행 계좌 연결됨
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">대출 포지션</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  자산
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  대출 금액
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  APY
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  누적 수익
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  만료일
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  상태
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {lendingPositions.map((position) => (
-                <tr key={position.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${position.asset.toLowerCase()}.png`}
-                        alt={position.asset}
-                        className="w-8 h-8 rounded-full mr-3"
-                        onError={(e) => {
-                          (
-                            e.target as HTMLImageElement
-                          ).src = `data:image/svg+xml;base64,${btoa(`
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                              <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
-                              <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
-                                ${position.asset}
-                              </text>
-                            </svg>
-                          `)}`;
-                        }}
-                      />
-                      <span className="font-semibold text-gray-900">
-                        {position.asset}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px]">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    상품명
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    담보자산
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    대출기간
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    LTV
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    금리
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                    대출한도
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                    조기상환수수료
+                  </th>
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    신청
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    <td className="px-3 md:px-6 py-4">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{product.productName}</div>
+                        <div className="text-xs text-gray-500 mt-1 hidden md:block">{product.description}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${product.collateralAsset.split(',')[0].trim().toLowerCase()}.png`}
+                          alt={product.collateralAsset}
+                          className="w-5 h-5 md:w-6 md:h-6 rounded-full mr-2"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="12" fill="#f3f4f6"/>
+                                <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#6b7280">
+                                  ${product.collateralAsset.split(',')[0].trim()}
+                                </text>
+                              </svg>
+                            `)}`;
+                          }}
+                        />
+                        <span className="text-sm font-medium text-gray-900 hidden md:inline">{product.collateralAsset}</span>
+                        <span className="text-xs font-medium text-gray-900 md:hidden">{product.collateralAsset.split(',')[0].trim()}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {product.loanTerm}
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-blue-600">{product.ltv}%</span>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">
+                        <span className="hidden md:inline">연 </span>{product.interestRate}%
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {position.amount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-green-600 font-semibold">
-                    {position.apy}%
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {position.earned} {position.asset}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {position.maturity}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        position.status === "active"
-                          ? "text-green-600 bg-green-50"
-                          : "text-blue-600 bg-blue-50"
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                      <div>
+                        <div>최소: {formatCurrency(product.minLoanAmount)}</div>
+                        <div>최대: {formatCurrency(product.maxLoanAmount)}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+                      <span className={`text-sm ${product.earlyRepaymentFee === '면제' ? 'text-green-600 font-medium' : 'text-gray-600'}`}>
+                        {product.earlyRepaymentFee}
+                      </span>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <button
+                        className={`px-2 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                          hasJeonbukAccount
+                            ? "bg-primary-600 text-white hover:bg-primary-700"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                        disabled={!hasJeonbukAccount}
+                      >
+                        {hasJeonbukAccount ? "신청" : "계좌필요"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 페이징 네비게이션 */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  총 {bankLoanProducts.length}개 상품 중 {startIndex + 1}-{Math.min(endIndex, bankLoanProducts.length)}개 표시
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-lg ${
+                      currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                        currentPage === page
+                          ? "bg-primary-600 text-white"
+                          : "text-gray-600 hover:bg-gray-100"
                       }`}
                     >
-                      {position.status === "active" ? "진행중" : "완료"}
-                    </span>
-                  </td>
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-lg ${
+                      currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 활성 대출 관리 */}
+        {activeBankLoans.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">활성 대출 관리</h3>
+              <p className="text-sm text-gray-600 mt-1">현재 진행 중인 대출을 관리하세요</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      대출 정보
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      담보 자산
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      대출 잔액
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      헬스팩터
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      누적 이자
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      관리
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {activeBankLoans.map((loan) => {
+                    const healthLevel = getHealthFactorLevel(loan.healthFactor);
+                    return (
+                      <tr key={loan.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{loan.product.productName}</div>
+                            <div className="text-sm text-gray-500">{loan.product.bankName} · 연 {loan.interestRate}%</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <img
+                              src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${loan.collateralAsset.asset.toLowerCase()}.png`}
+                              alt={loan.collateralAsset.asset}
+                              className="w-8 h-8 rounded-full mr-3"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                    <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                    <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                      ${loan.collateralAsset.asset}
+                                    </text>
+                                  </svg>
+                                `)}`;
+                              }}
+                            />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {loan.collateralAsset.amount} {loan.collateralAsset.asset}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {formatCurrency(loan.collateralAsset.value)}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatCurrency(loan.loanAmount)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            LTV: {calculateLTV(loan.loanAmount, loan.collateralAsset.value).toFixed(1)}%
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${healthLevel.color} ${healthLevel.bgColor}`}>
+                              {loan.healthFactor.toFixed(2)} - {healthLevel.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency(loan.accruedInterest)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button className="text-blue-600 hover:text-blue-900">상환</button>
+                            {loan.healthFactor < 1.2 && (
+                              <button className="text-orange-600 hover:text-orange-900">담보추가</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 실시간 가격 피드 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">실시간 가격 정보</h3>
+            <p className="text-sm text-gray-600 mt-1">업비트 · 빗썸 평균 가격 기준</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    자산
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    업비트
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    빗썸
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    평균 가격
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    24시간 변동
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {priceFeed.map((price) => (
+                  <tr key={price.asset} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/32/color/${price.asset.toLowerCase()}.png`}
+                          alt={price.asset}
+                          className="w-8 h-8 rounded-full mr-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `data:image/svg+xml;base64,${btoa(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="16" fill="#f3f4f6"/>
+                                <text x="16" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#6b7280">
+                                  ${price.asset}
+                                </text>
+                              </svg>
+                            `)}`;
+                          }}
+                        />
+                        <span className="font-semibold text-gray-900">{price.asset}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                      {formatCurrency(price.upbitPrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                      {formatCurrency(price.bithumbPrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                      {formatCurrency(price.averagePrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <span className={`font-medium ${
+                        price.change24h >= 0 ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {price.change24h >= 0 ? '+' : ''}{price.change24h.toFixed(2)}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderSwap = () => (
     <div className="space-y-6">
