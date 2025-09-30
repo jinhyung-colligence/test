@@ -45,7 +45,7 @@ export const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
   id: 'default',
   companyName: 'ABC Custody',
   companySubtitle: '디지털 자산 커스터디 서비스',
-  logoText: 'ABC',
+  logoText: '',
   allowedEmailDomains: [],
   isEmailDomainRequired: false,
   isActive: true,

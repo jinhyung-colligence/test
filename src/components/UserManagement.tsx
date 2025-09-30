@@ -562,8 +562,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
                     <div className="font-medium">{ROLE_NAMES[role]}</div>
                     <div className="text-sm opacity-75 mt-1">
                       {role === 'admin' && '시스템 전체 관리'}
-                      {role === 'manager' && '정책 설정, 사용자 관리'}
-                      {role === 'operator' && '일반 거래 처리, 승인'}
+                      {role === 'manager' && '정책 설정, 사용자 관리, 승인'}
+                      {role === 'operator' && '일반 거래 처리'}
                       {role === 'viewer' && '데이터 조회, 리포트 확인'}
                     </div>
                   </div>
@@ -714,8 +714,8 @@ export default function UserManagement({ plan }: UserManagementProps) {
                         <div className="font-medium">{ROLE_NAMES[role]}</div>
                         <div className="text-sm opacity-75 mt-1">
                           {role === 'admin' && '시스템 전체 관리'}
-                          {role === 'manager' && '정책 설정, 사용자 관리'}
-                          {role === 'operator' && '일반 거래 처리, 승인'}
+                          {role === 'manager' && '정책 설정, 사용자 관리, 승인'}
+                          {role === 'operator' && '일반 거래 처리'}
                           {role === 'viewer' && '데이터 조회, 리포트 확인'}
                         </div>
                       </div>

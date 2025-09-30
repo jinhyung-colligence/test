@@ -21,7 +21,8 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   BanknotesIcon,
-  CubeIcon
+  CubeIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 interface PermissionPreviewProps {
@@ -91,6 +92,12 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
         icon: ShieldCheckIcon,
         permissions: ["관리자 보안 정책 설정/확인", "Google Authenticator 설정", "관리자 접근 IP 관리", "주소 관리", "계좌 연동", "정책 관리", "알림 설정"],
         hasAccess: true
+      },
+      {
+        name: "설정 및 구독",
+        icon: SparklesIcon,
+        permissions: ["회사 정보 설정", "구독 플랜 관리", "결제 정보 관리", "시스템 설정"],
+        hasAccess: true
       }
     ],
     keyPermissions: ["전체 시스템 관리", "모든 기능 사용 가능", "최고 수준 보안 접근"]
@@ -140,6 +147,12 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
         permissions: ["Google Authenticator 설정", "주소 관리", "계좌 연동", "정책 관리"],
         hasAccess: "partial",
         restrictions: ["관리자 보안 정책 설정 불가", "관리자 접근 IP 관리 불가", "알림 템플릿 관리 불가"]
+      },
+      {
+        name: "설정 및 구독",
+        icon: SparklesIcon,
+        permissions: ["회사 정보 설정", "구독 플랜 관리", "결제 정보 관리", "시스템 설정"],
+        hasAccess: true
       }
     ],
     keyPermissions: ["사용자 관리 및 생성", "출금 승인 및 반려", "정책 관리 및 수정", "그룹 관리 및 승인"]
@@ -192,6 +205,12 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
         permissions: ["Google Authenticator 설정", "주소 조회", "계좌 조회", "정책 조회", "알림 템플릿 생성/수정", "승인자 이메일 정책 설정", "알림 내역 조회"],
         hasAccess: "partial",
         restrictions: ["주소 추가/삭제 불가", "계좌 등록/삭제 불가", "정책 생성/수정/정지 불가"]
+      },
+      {
+        name: "설정 및 구독",
+        icon: SparklesIcon,
+        permissions: ["회사 정보 설정", "구독 플랜 관리", "결제 정보 관리", "시스템 설정"],
+        hasAccess: true
       }
     ],
     keyPermissions: ["출금 요청 생성", "그룹 생성 및 관리", "부가 서비스 이용", "긴급 출금 중단", "알림 템플릿 관리"]
@@ -245,6 +264,13 @@ const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
         permissions: ["Google Authenticator 설정", "주소 조회", "계좌 조회", "정책 조회"],
         hasAccess: "partial",
         restrictions: ["모든 관리 기능 불가"]
+      },
+      {
+        name: "설정 및 구독",
+        icon: SparklesIcon,
+        permissions: ["회사 정보 조회", "구독 플랜 조회"],
+        hasAccess: "partial",
+        restrictions: ["설정 변경 불가", "결제 정보 관리 불가"]
       }
     ],
     keyPermissions: ["모든 데이터 조회", "거래 내역 확인", "리포트 다운로드", "그룹 정보 조회", "입금 현황 확인"]
