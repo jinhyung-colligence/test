@@ -23,6 +23,12 @@ import { AddCollateralModal } from "./lending/AddCollateralModal";
 import { RepaymentRequest, CollateralAddition } from "./lending/types";
 import LoanApplicationButton from "./lending/LoanApplicationButton";
 import LoanApplicationModal from "./lending/LoanApplicationModal";
+import { BankLoanProduct, CollateralAsset, BankLoan } from "@/types/lending";
+import {
+  MOCK_BANK_LOAN_PRODUCTS,
+  MOCK_AVAILABLE_COLLATERAL,
+  MOCK_ACTIVE_BANK_LOANS,
+} from "@/data/mockLendingData";
 
 interface AdditionalServicesProps {
   plan: ServicePlan;
@@ -50,45 +56,6 @@ interface LendingPosition {
 }
 
 // 은행 대출 서비스 타입 정의
-interface BankLoanProduct {
-  id: string;
-  productName: string;
-  bankName: string;
-  collateralAsset: string;
-  loanTerm: string;
-  ltv: number;
-  interestRate: number;
-  minLoanAmount: number;
-  maxLoanAmount: number;
-  earlyRepaymentFee: string;
-  additionalCollateralAllowed: boolean;
-  features: string[];
-  description: string;
-}
-
-interface CollateralAsset {
-  asset: string;
-  amount: number;
-  currentPrice: number;
-  value: number;
-  volatility: number;
-  supportedLTV: number;
-}
-
-interface BankLoan {
-  id: string;
-  product: BankLoanProduct;
-  collateralAsset: CollateralAsset;
-  loanAmount: number;
-  interestRate: number;
-  healthFactor: number;
-  liquidationThreshold: number;
-  createdAt: string;
-  lastUpdated: string;
-  status: "active" | "warning" | "danger" | "liquidation" | "liquidated";
-  accruedInterest: number;
-  nextPaymentDate?: string;
-}
 
 interface HealthFactorLevel {
   min: number;
@@ -218,217 +185,10 @@ export default function AdditionalServices({
     { min: 0, max: 1.0, status: "liquidation", color: "text-rose-600", bgColor: "bg-rose-50", label: "청산" }
   ];
 
-  // 전북은행 대출 상품 목록
-  const bankLoanProducts: BankLoanProduct[] = [
-    {
-      id: "jb-btc-short",
-      productName: "비트코인 담보 단기대출",
-      bankName: "전북은행",
-      collateralAsset: "BTC",
-      loanTerm: "1개월",
-      ltv: 60,
-      interestRate: 3.5,
-      minLoanAmount: 1000000,
-      maxLoanAmount: 100000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: true,
-      features: ["24시간 신청", "즉시 승인", "조기상환 수수료 면제"],
-      description: "비트코인을 담보로 한 단기 대출 상품"
-    },
-    {
-      id: "jb-btc-medium",
-      productName: "비트코인 담보 중기대출",
-      bankName: "전북은행",
-      collateralAsset: "BTC",
-      loanTerm: "3개월",
-      ltv: 65,
-      interestRate: 4.0,
-      minLoanAmount: 2000000,
-      maxLoanAmount: 200000000,
-      earlyRepaymentFee: "원금의 0.5%",
-      additionalCollateralAllowed: true,
-      features: ["담보 추가 가능", "이자 분납 가능"],
-      description: "비트코인을 담보로 한 중기 대출 상품"
-    },
-    {
-      id: "jb-btc-long",
-      productName: "비트코인 담보 장기대출",
-      bankName: "전북은행",
-      collateralAsset: "BTC",
-      loanTerm: "1년",
-      ltv: 70,
-      interestRate: 4.8,
-      minLoanAmount: 5000000,
-      maxLoanAmount: 500000000,
-      earlyRepaymentFee: "원금의 1.0%",
-      additionalCollateralAllowed: true,
-      features: ["최대 LTV 70%", "장기 저금리"],
-      description: "비트코인을 담보로 한 장기 대출 상품"
-    },
-    {
-      id: "jb-eth-short",
-      productName: "이더리움 담보 단기대출",
-      bankName: "전북은행",
-      collateralAsset: "ETH",
-      loanTerm: "1개월",
-      ltv: 55,
-      interestRate: 3.8,
-      minLoanAmount: 1000000,
-      maxLoanAmount: 80000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: true,
-      features: ["24시간 신청", "조기상환 수수료 면제"],
-      description: "이더리움을 담보로 한 단기 대출 상품"
-    },
-    {
-      id: "jb-eth-medium",
-      productName: "이더리움 담보 중기대출",
-      bankName: "전북은행",
-      collateralAsset: "ETH",
-      loanTerm: "6개월",
-      ltv: 60,
-      interestRate: 4.3,
-      minLoanAmount: 3000000,
-      maxLoanAmount: 150000000,
-      earlyRepaymentFee: "원금의 0.8%",
-      additionalCollateralAllowed: true,
-      features: ["중기 안정성", "담보 추가 가능"],
-      description: "이더리움을 담보로 한 중기 대출 상품"
-    },
-    {
-      id: "jb-usdt-stable",
-      productName: "테더 담보 안정형대출",
-      bankName: "전북은행",
-      collateralAsset: "USDT",
-      loanTerm: "3개월",
-      ltv: 80,
-      interestRate: 3.2,
-      minLoanAmount: 500000,
-      maxLoanAmount: 300000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: false,
-      features: ["최고 LTV 80%", "안정적 담보", "낮은 금리"],
-      description: "안정적인 테더를 담보로 한 저금리 대출 상품"
-    },
-    {
-      id: "jb-multi-premium",
-      productName: "다중자산 담보 프리미엄",
-      bankName: "전북은행",
-      collateralAsset: "BTC, ETH, USDT",
-      loanTerm: "6개월",
-      ltv: 75,
-      interestRate: 4.5,
-      minLoanAmount: 10000000,
-      maxLoanAmount: 1000000000,
-      earlyRepaymentFee: "원금의 0.3%",
-      additionalCollateralAllowed: true,
-      features: ["다중 자산 담보", "대용량 대출", "프리미엄 서비스"],
-      description: "여러 가상자산을 함께 담보로 하는 프리미엄 대출 상품"
-    },
-    {
-      id: "jb-btc-premium",
-      productName: "비트코인 VIP 대출",
-      bankName: "전북은행",
-      collateralAsset: "BTC",
-      loanTerm: "1년",
-      ltv: 75,
-      interestRate: 4.2,
-      minLoanAmount: 50000000,
-      maxLoanAmount: 2000000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: true,
-      features: ["VIP 전용", "최우대 금리", "전담 매니저"],
-      description: "고액 고객을 위한 VIP 비트코인 담보 대출"
-    },
-    {
-      id: "jb-eth-auto",
-      productName: "이더리움 자동연장대출",
-      bankName: "전북은행",
-      collateralAsset: "ETH",
-      loanTerm: "3개월 (자동연장)",
-      ltv: 65,
-      interestRate: 4.1,
-      minLoanAmount: 2000000,
-      maxLoanAmount: 120000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: true,
-      features: ["자동 연장", "갱신 수수료 무료", "유연한 관리"],
-      description: "자동으로 연장되는 이더리움 담보 대출 상품"
-    },
-    {
-      id: "jb-usdt-express",
-      productName: "테더 초고속대출",
-      bankName: "전북은행",
-      collateralAsset: "USDT",
-      loanTerm: "1개월",
-      ltv: 70,
-      interestRate: 3.0,
-      minLoanAmount: 300000,
-      maxLoanAmount: 50000000,
-      earlyRepaymentFee: "면제",
-      additionalCollateralAllowed: false,
-      features: ["1분 승인", "즉시 실행", "초저금리"],
-      description: "1분 내 승인되는 초고속 테더 담보 대출"
-    }
-  ];
-
-  // 보유 자산 (담보 가능한 자산)
-  const availableCollateral: CollateralAsset[] = [
-    {
-      asset: "BTC",
-      amount: 0.5,
-      currentPrice: 95000000,
-      value: 47500000,
-      volatility: 0.045,
-      supportedLTV: 75
-    },
-    {
-      asset: "ETH",
-      amount: 10,
-      currentPrice: 3200000,
-      value: 32000000,
-      volatility: 0.055,
-      supportedLTV: 70
-    },
-    {
-      asset: "USDT",
-      amount: 50000,
-      currentPrice: 1320,
-      value: 66000000,
-      volatility: 0.005,
-      supportedLTV: 80
-    }
-  ];
-
-  // 활성 대출 목록
-  const activeBankLoans: BankLoan[] = [
-    {
-      id: "loan-001",
-      product: bankLoanProducts[0], // 비트코인 담보 단기대출
-      collateralAsset: availableCollateral[0],
-      loanAmount: 30000000,
-      interestRate: 3.5,
-      healthFactor: 1.58,
-      liquidationThreshold: 0.85,
-      createdAt: "2024-01-15",
-      lastUpdated: new Date().toISOString(),
-      status: "active",
-      accruedInterest: 125000
-    },
-    {
-      id: "loan-002",
-      product: bankLoanProducts[3], // 이더리움 담보 단기대출
-      collateralAsset: availableCollateral[1],
-      loanAmount: 20000000,
-      interestRate: 3.8,
-      healthFactor: 1.12,
-      liquidationThreshold: 0.85,
-      createdAt: "2024-02-01",
-      lastUpdated: new Date().toISOString(),
-      status: "danger",
-      accruedInterest: 87500
-    }
-  ];
+  // Mock 데이터 import
+  const bankLoanProducts = MOCK_BANK_LOAN_PRODUCTS;
+  const availableCollateral = MOCK_AVAILABLE_COLLATERAL;
+  const activeBankLoans = MOCK_ACTIVE_BANK_LOANS;
 
   // 실시간 가격 피드 (시뮬레이션)
   const priceFeed: PriceFeed[] = [
@@ -498,6 +258,41 @@ export default function AdditionalServices({
     return healthFactorLevels.find(level =>
       healthFactor >= level.min && healthFactor < level.max
     ) || healthFactorLevels[healthFactorLevels.length - 1];
+  };
+
+  // 남은 일수 계산
+  const calculateRemainingDays = (maturityDate: string): number => {
+    const today = new Date();
+    const maturity = new Date(maturityDate);
+    const diffTime = maturity.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // 남은 기간 포맷팅
+  const formatRemainingTerm = (maturityDate: string): { text: string; color: string; bgColor: string } => {
+    const remainingDays = calculateRemainingDays(maturityDate);
+
+    if (remainingDays < 0) {
+      return { text: "만기 도래", color: "text-gray-600", bgColor: "bg-gray-100" };
+    } else if (remainingDays === 0) {
+      return { text: "오늘 만기", color: "text-red-600", bgColor: "bg-red-50" };
+    } else if (remainingDays <= 7) {
+      return { text: `${remainingDays}일 남음`, color: "text-red-600", bgColor: "bg-red-50" };
+    } else if (remainingDays <= 30) {
+      return { text: `${remainingDays}일 남음`, color: "text-yellow-600", bgColor: "bg-yellow-50" };
+    } else if (remainingDays <= 90) {
+      const months = Math.floor(remainingDays / 30);
+      const days = remainingDays % 30;
+      return {
+        text: days > 0 ? `${months}개월 ${days}일 남음` : `${months}개월 남음`,
+        color: "text-sky-600",
+        bgColor: "bg-sky-50"
+      };
+    } else {
+      const months = Math.floor(remainingDays / 30);
+      return { text: `${months}개월 남음`, color: "text-sky-600", bgColor: "bg-sky-50" };
+    }
   };
 
   // 청산가 계산 함수
@@ -1005,6 +800,9 @@ export default function AdditionalServices({
                       헬스팩터
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      남은 기간
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       누적 이자
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1064,6 +862,16 @@ export default function AdditionalServices({
                               {loan.healthFactor.toFixed(2)} - {healthLevel.label}
                             </span>
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {(() => {
+                            const remaining = formatRemainingTerm(loan.maturityDate);
+                            return (
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${remaining.color} ${remaining.bgColor}`}>
+                                {remaining.text}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatCurrency(loan.accruedInterest)}
