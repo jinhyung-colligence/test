@@ -160,8 +160,9 @@ export function CreateWithdrawalModal({
 
   return (
     <Modal isOpen={true}>
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+        {/* 헤더 - 고정 */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h3 className="text-xl font-semibold text-gray-900">
             새 출금 신청
           </h3>
@@ -185,7 +186,9 @@ export function CreateWithdrawalModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 콘텐츠 - 스크롤 */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-4">
           {/* 출금 제목 */}
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -492,23 +495,32 @@ export function CreateWithdrawalModal({
               </div>
             )}
           </div>
-
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              신청 제출
-            </button>
           </div>
         </form>
+
+        {/* 하단 버튼 - 고정 */}
+        <div className="flex space-x-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              const form = e.currentTarget.closest('.flex.flex-col')?.querySelector('form') as HTMLFormElement;
+              if (form) {
+                form.requestSubmit();
+              }
+            }}
+            className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            신청 제출
+          </button>
+        </div>
       </div>
     </Modal>
   );
