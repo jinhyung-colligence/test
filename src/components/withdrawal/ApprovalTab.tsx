@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ClockIcon, DocumentIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { WithdrawalRequest } from "@/types/withdrawal";
 import {
   getStatusInfo,
@@ -27,6 +27,20 @@ export default function ApprovalTab({
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // 파일 크기 포맷
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
+  // 파일 다운로드 핸들러 (Mock)
+  const handleFileDownload = (fileName: string) => {
+    alert(`${fileName} 다운로드 기능은 실제 서버 연동 시 구현됩니다.`);
+  };
 
   // 결재 승인 필터링 로직
   const getFilteredRequests = () => {
@@ -389,6 +403,44 @@ export default function ApprovalTab({
                             {request.description}
                           </p>
                         </div>
+
+                        {/* 첨부 파일 */}
+                        {request.attachments && request.attachments.length > 0 && (
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h6 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                              <DocumentIcon className="w-4 h-4 mr-2 text-gray-500" />
+                              첨부 파일 ({request.attachments.length})
+                            </h6>
+                            <div className="space-y-2">
+                              {request.attachments.map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                                >
+                                  <div className="flex items-center flex-1 min-w-0">
+                                    <DocumentIcon className="h-5 w-5 text-gray-400 flex-shrink-0 mr-2" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {file.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {formatFileSize(file.fileSize)} • {formatDateTime(file.uploadedAt)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleFileDownload(file.fileName)}
+                                    className="ml-3 p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                                    title="다운로드"
+                                  >
+                                    <ArrowDownTrayIcon className="h-5 w-5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="space-y-3">
                           <div className="flex items-center justify-between text-sm">

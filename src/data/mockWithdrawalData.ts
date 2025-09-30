@@ -143,6 +143,24 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     status: "submitted",
     priority: "medium",
     description: "직원 급여 지급을 위한 스테이블코인 출금",
+    attachments: [
+      {
+        id: "att-001",
+        fileName: "급여명세서_9월.xlsx",
+        fileSize: 245760,
+        fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        uploadedAt: "2025-08-31T15:45:00Z",
+        uploadedBy: "박인사팀장",
+      },
+      {
+        id: "att-002",
+        fileName: "급여지급_내부결재서.pdf",
+        fileSize: 1024000,
+        fileType: "application/pdf",
+        uploadedAt: "2025-08-31T15:50:00Z",
+        uploadedBy: "박인사팀장",
+      },
+    ],
     requiredApprovals: ["박CFO", "이CISO", "김CTO"],
     approvals: [],
     rejections: [],
@@ -844,6 +862,32 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
     status: "submitted",
     priority: "critical",
     description: "자사 메인넷 런칭을 위한 초기 유동성 공급",
+    attachments: [
+      {
+        id: "att-003",
+        fileName: "메인넷_런칭계획서.pdf",
+        fileSize: 3145728,
+        fileType: "application/pdf",
+        uploadedAt: "2025-09-07T08:30:00Z",
+        uploadedBy: "정CTO",
+      },
+      {
+        id: "att-004",
+        fileName: "유동성공급_승인요청서.hwp",
+        fileSize: 512000,
+        fileType: "application/x-hwp",
+        uploadedAt: "2025-09-07T08:40:00Z",
+        uploadedBy: "정CTO",
+      },
+      {
+        id: "att-005",
+        fileName: "예산집행_세부내역.xlsx",
+        fileSize: 189440,
+        fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        uploadedAt: "2025-09-07T08:45:00Z",
+        uploadedBy: "정CTO",
+      },
+    ],
     requiredApprovals: ["박CFO", "이CISO", "김CTO", "정법무이사", "최CEO"],
     approvals: [
       {

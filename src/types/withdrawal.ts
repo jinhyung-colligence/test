@@ -33,6 +33,16 @@ export interface WithdrawalRequest {
   priority: "low" | "medium" | "high" | "critical";
   description: string;
 
+  // 첨부 파일
+  attachments?: Array<{
+    id: string;
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    uploadedAt: string;
+    uploadedBy: string;
+  }>;
+
   // 결재 관련
   requiredApprovals: string[];
   approvals: Array<{
