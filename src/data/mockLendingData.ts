@@ -202,8 +202,8 @@ export const MOCK_ACTIVE_BANK_LOANS: BankLoan[] = [
     interestRate: 3.5,
     healthFactor: 1.58,
     liquidationThreshold: 0.85,
-    createdAt: "2025-09-15",
-    maturityDate: "2025-10-14", // 1개월 후
+    createdAt: "2025-09-05",
+    maturityDate: "2025-10-04", // 1개월 후
     lastUpdated: new Date().toISOString(),
     status: "active",
     accruedInterest: 125000
