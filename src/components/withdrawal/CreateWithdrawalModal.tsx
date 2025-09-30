@@ -310,20 +310,6 @@ export function CreateWithdrawalModal({
             />
           </div>
 
-          {/* 보안 알림 */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <div className="flex items-center">
-              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
-              <p className="text-yellow-800 text-sm font-medium">
-                보안 알림
-              </p>
-            </div>
-            <p className="text-yellow-700 text-sm mt-1">
-              모든 출금은 필수 결재자의 승인을 받아야 하며, Air-gap 환경에서
-              최종 서명이 진행됩니다.
-            </p>
-          </div>
-
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
