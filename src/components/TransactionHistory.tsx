@@ -134,11 +134,11 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
   const getStatusColor = (status: TransactionStatus) => {
     switch (status) {
       case "completed":
-        return "text-sky-600 bg-sky-50 border-sky-200";
+        return "text-sky-800 bg-sky-100";
       case "pending":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+        return "text-yellow-800 bg-yellow-100";
       case "failed":
-        return "text-red-600 bg-red-50 border-red-200";
+        return "text-red-800 bg-red-100";
     }
   };
 
@@ -343,7 +343,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                         tx.status
                       )}`}
                     >
@@ -465,7 +465,7 @@ export default function TransactionHistory({ plan }: TransactionHistoryProps) {
                       <div>
                         <div className="flex items-center space-x-2">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                               transaction.status
                             )}`}
                           >
