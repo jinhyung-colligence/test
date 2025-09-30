@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
@@ -70,6 +70,46 @@ export default function LoanApplicationModal({
   const [loanAmount, setLoanAmount] = useState(1000000);
   const [loanTerm, setLoanTerm] = useState(12);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // loanTerm 문자열을 월 단위로 변환 (예: "1개월" → 1, "3개월" → 3, "1년" → 12)
+  const parseLoanTermToMonths = (loanTermString: string): number => {
+    if (loanTermString.includes("년")) {
+      const years = parseInt(loanTermString);
+      return years * 12;
+    } else if (loanTermString.includes("개월")) {
+      return parseInt(loanTermString);
+    }
+    return 12; // 기본값
+  };
+
+  // 상품의 최대 대출 기간(월)
+  const maxLoanTermMonths = product ? parseLoanTermToMonths(product.loanTerm) : 12;
+
+  // 사용 가능한 대출 기간 옵션 생성
+  const getLoanTermOptions = () => {
+    const allOptions = [
+      { value: 1, label: "1개월" },
+      { value: 3, label: "3개월" },
+      { value: 6, label: "6개월" },
+      { value: 12, label: "1년" },
+    ];
+
+    // 상품의 최대 기간 이하인 옵션만 반환
+    return allOptions.filter(option => option.value <= maxLoanTermMonths);
+  };
+
+  const loanTermOptions = getLoanTermOptions();
+
+  // 상품이 변경되면 대출 기간을 최대값 또는 첫 번째 옵션으로 초기화
+  useEffect(() => {
+    if (product && loanTermOptions.length > 0) {
+      // 현재 선택된 값이 허용 범위를 벗어나면 첫 번째 옵션으로 초기화
+      const validOption = loanTermOptions.find(opt => opt.value === loanTerm);
+      if (!validOption) {
+        setLoanTerm(loanTermOptions[0].value);
+      }
+    }
+  }, [product, loanTerm, loanTermOptions]);
 
   if (!product) return null;
 
@@ -160,6 +200,12 @@ export default function LoanApplicationModal({
   };
 
   const handleSubmit = async () => {
+    // 유효성 검증: 선택한 기간이 상품의 최대 기간을 초과하는지 확인
+    if (loanTerm > maxLoanTermMonths) {
+      alert(`대출 기간은 최대 ${product.loanTerm}까지 선택 가능합니다.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 2000)); // 시뮬레이션
@@ -431,16 +477,20 @@ export default function LoanApplicationModal({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 대출기간
+                <span className="ml-2 text-xs text-gray-500">
+                  (최대 {product.loanTerm}까지 선택 가능)
+                </span>
               </label>
               <select
                 value={loanTerm}
                 onChange={(e) => setLoanTerm(Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
               >
-                <option value={1}>1개월</option>
-                <option value={3}>3개월</option>
-                <option value={6}>6개월</option>
-                <option value={12}>1년</option>
+                {loanTermOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 

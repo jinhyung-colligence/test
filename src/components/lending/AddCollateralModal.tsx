@@ -42,7 +42,7 @@ interface AddCollateralModalProps {
   onSubmit: (addition: CollateralAddition) => void;
 }
 
-interface SelectedAsset {
+interface AssetInput {
   asset: string;
   amount: number;
   maxAmount: number;
@@ -57,7 +57,7 @@ export function AddCollateralModal({
   availableAssets,
   onSubmit
 }: AddCollateralModalProps) {
-  const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([]);
+  const [assetInputs, setAssetInputs] = useState<AssetInput[]>([]);
   const [note, setNote] = useState("");
   const [impact, setImpact] = useState<CollateralImpact | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -100,7 +100,7 @@ export function AddCollateralModal({
     if (!loan) return null;
 
     const currentCollateralValue = loan.collateralAsset.value;
-    const addedValue = selectedAssets.reduce((total, asset) => total + asset.value, 0);
+    const addedValue = assetInputs.reduce((total, asset) => total + asset.value, 0);
     const totalCollateralValue = currentCollateralValue + addedValue;
 
     const currentLTV = (loan.loanAmount / currentCollateralValue) * 100;
@@ -120,10 +120,39 @@ export function AddCollateralModal({
     };
   };
 
-  // 선택된 자산 변경 시 영향 재계산
+  // 대출 상품의 담보 자산 유형과 일치하는 자산만 필터링
+  const getCompatibleAssets = () => {
+    if (!loan) return [];
+
+    // 대출 상품의 지원 담보 자산 유형 확인
+    const productCollateralAssets = loan.product.collateralAsset.split(', ');
+
+    return availableAssets.filter(asset =>
+      asset.amount > 0 &&
+      productCollateralAssets.includes(asset.asset)
+    );
+  };
+
+  // 입력값 변경 시 영향 재계산
   useEffect(() => {
     setImpact(calculateImpact());
-  }, [selectedAssets, loan]);
+  }, [assetInputs, loan]);
+
+  // 추가 가능한 자산 목록이 변경되면 입력 배열 초기화
+  useEffect(() => {
+    if (!loan) return;
+
+    const compatibleAssets = getCompatibleAssets();
+    setAssetInputs(
+      compatibleAssets.map(asset => ({
+        asset: asset.asset,
+        amount: 0,
+        maxAmount: asset.amount,
+        currentPrice: asset.currentPrice,
+        value: 0
+      }))
+    );
+  }, [loan, availableAssets]);
 
   // 금액 포맷팅
   const formatCurrency = (amount: number): string => {
@@ -135,25 +164,9 @@ export function AddCollateralModal({
     }).format(amount);
   };
 
-  // 자산 선택/해제
-  const toggleAssetSelection = (asset: CollateralAsset) => {
-    const existing = selectedAssets.find(a => a.asset === asset.asset);
-    if (existing) {
-      setSelectedAssets(prev => prev.filter(a => a.asset !== asset.asset));
-    } else {
-      setSelectedAssets(prev => [...prev, {
-        asset: asset.asset,
-        amount: 0,
-        maxAmount: asset.amount,
-        currentPrice: asset.currentPrice,
-        value: 0
-      }]);
-    }
-  };
-
   // 자산 수량 변경
   const updateAssetAmount = (asset: string, amount: number) => {
-    setSelectedAssets(prev => prev.map(a =>
+    setAssetInputs(prev => prev.map(a =>
       a.asset === asset ? {
         ...a,
         amount,
@@ -168,13 +181,13 @@ export function AddCollateralModal({
     return numericValue;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loan || selectedAssets.length === 0) return;
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!loan || assetInputs.length === 0) return;
 
     const addition: CollateralAddition = {
       loanId: loan.id,
-      assets: selectedAssets
+      assets: assetInputs
         .filter(asset => asset.amount > 0)
         .map(asset => ({
           asset: asset.asset,
@@ -229,21 +242,8 @@ export function AddCollateralModal({
     );
   }
 
-  // 대출 상품의 담보 자산 유형과 일치하는 자산만 필터링
-  const getCompatibleAssets = () => {
-    if (!loan) return [];
-
-    // 대출 상품의 지원 담보 자산 유형 확인
-    const productCollateralAssets = loan.product.collateralAsset.split(', ');
-
-    return availableAssets.filter(asset =>
-      asset.amount > 0 &&
-      productCollateralAssets.includes(asset.asset)
-    );
-  };
-
   const validAssets = getCompatibleAssets();
-  const hasValidSelections = selectedAssets.some(asset => asset.amount > 0);
+  const hasValidSelections = assetInputs.some(asset => asset.amount > 0);
 
   return (
     <Modal isOpen={true} onClose={onClose}>
@@ -295,7 +295,7 @@ export function AddCollateralModal({
               {/* 추가 가능한 담보 자산 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  추가할 담보 자산 선택
+                  추가할 담보 자산
                 </label>
                 <p className="text-xs text-gray-600 mb-4">
                   {loan?.product.collateralAsset} 자산만 이 대출의 담보로 추가할 수 있습니다.
@@ -311,27 +311,17 @@ export function AddCollateralModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {validAssets.map((asset) => {
-                      const isSelected = selectedAssets.some(a => a.asset === asset.asset);
-                      const selectedAsset = selectedAssets.find(a => a.asset === asset.asset);
+                      const assetInput = assetInputs.find(a => a.asset === asset.asset);
 
                       return (
                         <div
                           key={asset.asset}
-                          className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                            isSelected ? 'border-primary-300 bg-primary-50' : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => toggleAssetSelection(asset)}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => {}}
-                                className="mr-3 text-primary-600 focus:ring-primary-500"
-                              />
                               <CryptoIcon symbol={asset.asset} size={32} className="mr-3" />
                               <div>
                                 <div className="font-semibold text-gray-900">{asset.asset}</div>
@@ -353,45 +343,39 @@ export function AddCollateralModal({
                             </div>
                           </div>
 
-                          {isSelected && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                추가할 수량
-                              </label>
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="text"
-                                  value={selectedAsset?.amount || ''}
-                                  onChange={(e) => {
-                                    const value = formatAssetAmount(e.target.value);
-                                    const numValue = parseFloat(value) || 0;
-                                    if (numValue <= asset.amount) {
-                                      updateAssetAmount(asset.asset, numValue);
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                  placeholder="0"
-                                />
-                                <span className="text-gray-500">{asset.asset}</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateAssetAmount(asset.asset, asset.amount);
-                                  }}
-                                  className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                >
-                                  최대
-                                </button>
-                              </div>
-                              {selectedAsset && selectedAsset.amount > 0 && (
-                                <p className="text-sm text-gray-600 mt-2">
-                                  추가 담보 가치: {formatCurrency(selectedAsset.value)}
-                                </p>
-                              )}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              추가할 수량
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <input
+                                type="text"
+                                value={assetInput?.amount || ''}
+                                onChange={(e) => {
+                                  const value = formatAssetAmount(e.target.value);
+                                  const numValue = parseFloat(value) || 0;
+                                  if (numValue <= asset.amount) {
+                                    updateAssetAmount(asset.asset, numValue);
+                                  }
+                                }}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                placeholder="0"
+                              />
+                              <span className="text-gray-500 min-w-[60px]">{asset.asset}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateAssetAmount(asset.asset, asset.amount)}
+                                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                              >
+                                최대
+                              </button>
                             </div>
-                          )}
+                            {assetInput && assetInput.amount > 0 && (
+                              <p className="text-sm text-sky-600 mt-2">
+                                추가 담보 가치: {formatCurrency(assetInput.value)}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -527,7 +511,7 @@ export function AddCollateralModal({
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-4">추가할 담보 내역</h4>
                 <div className="space-y-3">
-                  {selectedAssets.filter(asset => asset.amount > 0).map((asset) => (
+                  {assetInputs.filter(asset => asset.amount > 0).map((asset) => (
                     <div key={asset.asset} className="flex items-center justify-between">
                       <div className="flex items-center">
                         <CryptoIcon symbol={asset.asset} size={24} className="mr-3" />
