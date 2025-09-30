@@ -238,7 +238,7 @@ export default function AuditTab({ withdrawalRequests }: AuditTabProps) {
                               #{request.id}
                             </span>
                             <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${
+                              className={`px-2 py-1 text-xs font-medium rounded border ${
                                 getStatusInfo(request.status).color
                               }`}
                             >

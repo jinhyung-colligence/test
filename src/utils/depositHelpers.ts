@@ -5,50 +5,44 @@ export const getStatusInfo = (status: DepositStatus) => {
     case "detected":
       return {
         name: "감지됨",
-        color: "text-blue-600 bg-blue-50 border-blue-200",
+        color: "bg-blue-50 text-blue-600 border-blue-200",
         bgColor: "bg-blue-50",
         textColor: "text-blue-600",
-        icon: "🔵"
       };
     case "confirming":
       return {
         name: "컨펌 진행중",
-        color: "text-yellow-600 bg-yellow-50 border-yellow-200",
+        color: "bg-yellow-50 text-yellow-600 border-yellow-200",
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-600",
-        icon: "🟡"
       };
     case "confirmed":
       return {
         name: "컨펌 완료",
-        color: "text-sky-600 bg-sky-50 border-sky-200",
+        color: "bg-sky-50 text-sky-600 border-sky-200",
         bgColor: "bg-sky-50",
         textColor: "text-sky-600",
-        icon: "🟢"
       };
     case "credited":
       return {
         name: "입금 완료",
-        color: "text-sky-700 bg-sky-100 border-sky-300",
-        bgColor: "bg-sky-100",
-        textColor: "text-sky-700",
-        icon: "✅"
+        color: "bg-sky-50 text-sky-600 border-sky-200",
+        bgColor: "bg-sky-50",
+        textColor: "text-sky-600",
       };
     case "failed":
       return {
         name: "실패",
-        color: "text-red-600 bg-red-50 border-red-200",
+        color: "bg-red-50 text-red-600 border-red-200",
         bgColor: "bg-red-50",
         textColor: "text-red-600",
-        icon: "🔴"
       };
     default:
       return {
         name: "알 수 없음",
-        color: "text-gray-600 bg-gray-50 border-gray-200",
+        color: "bg-gray-50 text-gray-600 border-gray-200",
         bgColor: "bg-gray-50",
         textColor: "text-gray-600",
-        icon: "⚪"
       };
   }
 };

@@ -349,7 +349,7 @@ export default function AirgapTab({ withdrawalRequests }: AirgapTabProps) {
                       <div>
                         <div className="flex items-center space-x-2">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            className={`px-2 py-1 text-xs font-medium rounded-full border ${
                               getStatusInfo(request.status).color
                             }`}
                           >
