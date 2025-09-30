@@ -69,6 +69,22 @@ export function CreateGroupWithdrawalModal({
     onSubmit(newRequest);
   };
 
+  // currency에서 network를 매핑하는 헬퍼 함수
+  const getCurrencyNetwork = (currency: string): string => {
+    switch (currency) {
+      case "BTC":
+        return "Bitcoin";
+      case "ETH":
+      case "USDT":
+      case "USDC":
+        return "Ethereum";
+      case "SOL":
+        return "Solana";
+      default:
+        return "";
+    }
+  };
+
   // 선택된 그룹 정보 가져오기
   const selectedGroup = groups.find(group => group.id === newRequest.groupId);
 
@@ -108,9 +124,20 @@ export function CreateGroupWithdrawalModal({
             <select
               required
               value={newRequest.groupId}
-              onChange={(e) =>
-                onRequestChange({ ...newRequest, groupId: e.target.value })
-              }
+              onChange={(e) => {
+                const selectedGroupId = e.target.value;
+                const group = groups.find(g => g.id === selectedGroupId);
+                const currency = group?.balance.currency || "";
+                const network = getCurrencyNetwork(currency);
+
+                onRequestChange({
+                  ...newRequest,
+                  groupId: selectedGroupId,
+                  network: network,
+                  currency: currency,
+                  toAddress: "" // 주소는 초기화
+                });
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">그룹을 선택하세요</option>
@@ -177,13 +204,23 @@ export function CreateGroupWithdrawalModal({
                     toAddress: "",
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                disabled={!!newRequest.groupId}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                  newRequest.groupId ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               >
-                <option value="">네트워크를 선택하세요</option>
+                <option value="">
+                  {newRequest.groupId ? newRequest.network || "자동 선택됨" : "네트워크를 선택하세요"}
+                </option>
                 <option value="Bitcoin">Bitcoin Network</option>
                 <option value="Ethereum">Ethereum Network</option>
                 <option value="Solana">Solana Network</option>
               </select>
+              {newRequest.groupId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  선택한 그룹의 자산에 따라 자동 설정됩니다
+                </p>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -198,13 +235,13 @@ export function CreateGroupWithdrawalModal({
                     toAddress: "",
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                disabled={!newRequest.network}
+                disabled={!!newRequest.groupId}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                  newRequest.groupId ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               >
                 <option value="">
-                  {newRequest.network
-                    ? "자산을 선택하세요"
-                    : "먼저 네트워크를 선택하세요"}
+                  {newRequest.groupId ? newRequest.currency || "자동 선택됨" : "자산을 선택하세요"}
                 </option>
                 {newRequest.network &&
                   networkAssets[
@@ -215,6 +252,11 @@ export function CreateGroupWithdrawalModal({
                     </option>
                   ))}
               </select>
+              {newRequest.groupId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  선택한 그룹의 자산에 따라 자동 설정됩니다
+                </p>
+              )}
             </div>
           </div>
 
