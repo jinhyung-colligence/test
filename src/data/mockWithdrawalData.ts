@@ -1194,10 +1194,11 @@ export const mockWithdrawalRequests: WithdrawalRequest[] = [
 
 // 네트워크별 지원 자산 매핑
 export const networkAssets = {
-  Bitcoin: [{ value: "KRW", name: "Tether", symbol: "KRW" }],
+  Bitcoin: [{ value: "BTC", name: "Bitcoin", symbol: "BTC" }],
   Ethereum: [
-    { value: "KRW", name: "Korean Won", symbol: "KRW" },
-    { value: "KRW", name: "Tether (ERC-20)", symbol: "KRW" },
+    { value: "ETH", name: "Ethereum", symbol: "ETH" },
+    { value: "USDT", name: "Tether (ERC-20)", symbol: "USDT" },
+    { value: "USDC", name: "USD Coin (ERC-20)", symbol: "USDC" },
   ],
   Solana: [{ value: "SOL", name: "Solana", symbol: "SOL" }],
 };
@@ -1208,7 +1209,7 @@ export const whitelistedAddresses = [
     id: "1",
     label: "비트코인 출금주소",
     address: "1KCgwGz3rE1NDSzT3GYheLp2PKDCmpTNho",
-    coin: "KRW",
+    coin: "BTC",
     network: "Bitcoin",
     type: "personal" as const,
   },
@@ -1216,15 +1217,15 @@ export const whitelistedAddresses = [
     id: "2",
     label: "이더리움 출금주소",
     address: "0xBEf0900e3de07345Ae4d7f89Bb0934B2f6e8Ed7B",
-    coin: "KRW",
+    coin: "ETH",
     network: "Ethereum",
     type: "vasp" as const,
   },
   {
     id: "3",
-    label: "이더리움 KRW 주소",
+    label: "이더리움 USDT 주소",
     address: "0x8ba1f109551bd432803012645hac136c6ad4cfc7",
-    coin: "KRW",
+    coin: "USDT",
     network: "Ethereum",
     type: "vasp" as const,
   },
@@ -1232,7 +1233,7 @@ export const whitelistedAddresses = [
     id: "4",
     label: "이더리움 USDC 주소",
     address: "0x742d35cc6ad4cfc7cc5a0e0e68b4b55a2c7e9f3a",
-    coin: "KRW",
+    coin: "USDC",
     network: "Ethereum",
     type: "personal" as const,
   },
