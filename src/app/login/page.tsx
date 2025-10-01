@@ -431,9 +431,12 @@ export default function LoginPage() {
         {/* 도움말 */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
-            로그인에 문제가 있으신가요?{' '}
-            <button className="text-primary-600 hover:text-primary-700">
-              관리자에게 문의
+            아직 회원이 아니신가요?{' '}
+            <button
+              onClick={() => router.push('/signup')}
+              className="text-primary-600 hover:text-primary-700"
+            >
+              회원가입
             </button>
           </p>
         </div>
