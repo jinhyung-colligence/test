@@ -192,19 +192,19 @@ export const DEFAULT_TEMPLATES: NotificationTemplate[] = [
 export const DEFAULT_CONFIG: NotificationConfig = {
   approverEmail: {
     "박CFO": "cfo@company.com",
-    "이CISO": "ciso@company.com", 
+    "이CISO": "ciso@company.com",
     "김CTO": "cto@company.com",
     "정법무이사": "legal@company.com",
     "최CEO": "ceo@company.com",
     "한비즈데브이사": "bizdev@company.com"
   },
   slackWebhooks: {
-    "finance": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
-    "security": "https://hooks.slack.com/services/T00000000/B00000001/XXXXXXXXXXXXXXXXXXXXXXXX",
-    "tech": "https://hooks.slack.com/services/T00000000/B00000002/XXXXXXXXXXXXXXXXXXXXXXXX"
+    "finance": process.env.NEXT_PUBLIC_SLACK_WEBHOOK_FINANCE || "",
+    "security": process.env.NEXT_PUBLIC_SLACK_WEBHOOK_SECURITY || "",
+    "tech": process.env.NEXT_PUBLIC_SLACK_WEBHOOK_TECH || ""
   },
   teamsWebhooks: {
-    "management": "https://outlook.office.com/webhook/XXXXXXXX/XXXXXXXX"
+    "management": process.env.NEXT_PUBLIC_TEAMS_WEBHOOK_MANAGEMENT || ""
   },
   globalWebhooks: [],
   defaultChannels: ["email", "in_app"],
@@ -228,12 +228,12 @@ export class NotificationSystem {
    */
   private replaceVariables(template: string, variables: Record<string, any>): string {
     let result = template;
-    
+
     for (const [key, value] of Object.entries(variables)) {
       const regex = new RegExp(`{{${key}}}`, 'g');
       result = result.replace(regex, String(value || ''));
     }
-    
+
     return result;
   }
 
@@ -241,7 +241,7 @@ export class NotificationSystem {
    * 결재 대기 알림 발송
    */
   async sendApprovalPendingNotification(
-    request: WithdrawalRequest, 
+    request: WithdrawalRequest,
     pendingApprover: string
   ): Promise<NotificationLog[]> {
     const template = this.templates.find(t => t.id === "approval_pending");
@@ -268,7 +268,7 @@ export class NotificationSystem {
    * 결재 지연 알림 발송
    */
   async sendOverdueNotification(
-    request: WithdrawalRequest, 
+    request: WithdrawalRequest,
     pendingApprover: string,
     overdueHours: number
   ): Promise<NotificationLog[]> {
@@ -358,7 +358,7 @@ export class NotificationSystem {
    * 긴급 결재 알림 발송
    */
   async sendEmergencyApprovalNotification(
-    request: WithdrawalRequest, 
+    request: WithdrawalRequest,
     approver: string,
     emergencyReason: string
   ): Promise<NotificationLog[]> {
@@ -461,7 +461,7 @@ export class NotificationSystem {
     console.log(`📧 Email sent to ${email}:`);
     console.log(`Subject: ${subject}`);
     console.log(`Message: ${message.substring(0, 100)}...`);
-    
+
     return true;
   }
 
@@ -472,7 +472,7 @@ export class NotificationSystem {
     // 실제 환경에서는 Slack Webhook API 호출
     console.log(`📱 Slack message sent to ${recipient}:`);
     console.log(`${subject}\n${message.substring(0, 100)}...`);
-    
+
     return true;
   }
 
@@ -483,7 +483,7 @@ export class NotificationSystem {
     // 실제 환경에서는 Teams Webhook API 호출
     console.log(`💬 Teams message sent to ${recipient}:`);
     console.log(`${subject}\n${message.substring(0, 100)}...`);
-    
+
     return true;
   }
 
@@ -494,7 +494,7 @@ export class NotificationSystem {
     // 실제 환경에서는 커스텀 Webhook API 호출
     console.log(`🔗 Webhook sent for ${recipient}:`);
     console.log(`${subject}\n${message.substring(0, 100)}...`);
-    
+
     return true;
   }
 
@@ -505,7 +505,7 @@ export class NotificationSystem {
     // 실제 환경에서는 앱 내 알림 시스템에 저장
     console.log(`🔔 In-app notification for ${recipient}:`);
     console.log(`${subject}\n${message.substring(0, 100)}...`);
-    
+
     return true;
   }
 
@@ -522,7 +522,7 @@ export class NotificationSystem {
       // 다음 결재자 찾기
       const nextApproverIndex = request.approvals.length;
       const nextApprover = request.requiredApprovals[nextApproverIndex];
-      
+
       if (!nextApprover) continue;
 
       // 지연 시간 계산
@@ -552,8 +552,8 @@ export class NotificationSystem {
    * 실패한 알림 재시도
    */
   async retryFailedNotifications(): Promise<NotificationLog[]> {
-    const failedLogs = this.logs.filter(log => 
-      log.status === "failed" && 
+    const failedLogs = this.logs.filter(log =>
+      log.status === "failed" &&
       log.retryCount < this.config.retryAttempts &&
       (!log.nextRetryAt || new Date(log.nextRetryAt) <= new Date())
     );
@@ -566,12 +566,12 @@ export class NotificationSystem {
 
       log.retryCount++;
       log.status = "retry";
-      
+
       try {
         const sent = await this.sendToChannel(log.channel, log.recipient, "", ""); // 실제로는 원래 메시지 재전송
         log.status = sent ? "sent" : "failed";
         log.sentAt = sent ? new Date().toISOString() : undefined;
-        
+
         if (!sent && log.retryCount < this.config.retryAttempts) {
           log.nextRetryAt = new Date(
             Date.now() + this.config.retryDelayMinutes * 60 * 1000
